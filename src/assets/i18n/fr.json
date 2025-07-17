@@ -1,0 +1,54 @@
+{
+ "MESSAGES": {
+    "HOME": {
+      "TITRE":"game manager studio",
+      "MAINTAIN":"en maintenance",
+      "WELCOME": "s'il vous plait connectez-vous afin d'avoir acces a votre compte",
+      "BUTTON":"Connexion",
+      "REGISTER":"s'enregistrer",
+      "LOGOUT": "Se déconnecter",
+      "MESSAGE":"decouvrez la passion de jouer et creer votre propre espace de pari sur",
+      "PLACE":"Placez un paris",
+      "GET":"get",
+      "ALERT": "Etes-vous sur d'avoir plus de 18 ans ?",
+      "ADMIN_CREATE": "compte admin cree avec succes"
+    },
+    "TOPBAR":{
+      "WELCOME":"bienvenue"
+    },
+    "AUTH": {
+      "WELCOME": "Bienvenue sur la page de connexion",
+      "CONSIGNE": "Enregistrez-vous et profitez de votre compte Loto studio!",
+      "FORM":{
+        "USERNAME": "Nom d'utilisateur",
+        "FORGOT":"Mot de passe oublié ?",
+        "PASSWORD": "Mot de passe",
+        "REMEMBER":"se souvenir",
+        "SIGN":"S'identifier",
+        "SIGNUP": "S'enregistrer",
+        "LOAD":"Chargement....",
+        "WITH":"S'identifier avec"
+      }
+    },
+    "ERRORS": {
+      "LOAD": "Une erreur inconnue s'est produite lors du traitement de votre demande, essayez plus tard",
+      "REQUIRED": "le champ est requis",
+      "SIZE-NIM": "taille minimale requise",
+      "SIZE-MAX": "taille maximale requise",
+      "EMAIL-NOT-VALIDE": "adresse e-mail non valide",
+      "USERNAME-NOT-VALIDE": "nom d'utilisateur non valide",
+      "PASSWORD-NOT-VALIDE": "mot de passe non valide",
+      "REMEMBER-NOT-VALIDE": "rappel pas valide",
+      "SIGN-NOT-VALIDE": "signe non valide",
+      "LOAD-NOT-VALIDE": "chargement non valide",
+      "MIN": "valeur minimale requise",
+      "MAX": "valeur maximale requise",
+      "NO":"pas de données disponibles",
+      "MAX_MULTIPLIER_MEGA": "le multiplicateur ne peut pas être superieur à 1"
+    },
+    "SUCCESS_ACTION": {
+      "GAME_CREATE": "jeu cree avec success",
+      "ADMIN_CREATE": "administrateur cree avec success"
+    }
+  }
+}

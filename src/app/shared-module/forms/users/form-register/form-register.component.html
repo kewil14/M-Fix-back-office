@@ -1,0 +1,87 @@
+<form class="needs-validation" name="signupForm" [formGroup]="signupForm" (ngSubmit)="onSubmit()"
+  novalidate>
+
+  <!-- <alert type="success" *ngIf="successmsg" [dismissible]="false">Registeration successfull.
+  </alert> -->
+
+  <!-- <alert type="danger" *ngIf="error" [dismissible]="false">{{ error }}</alert> -->
+
+  <div class="mb-3">
+    <label for="username" class="form-label">Username</label>
+
+    <input type="text" formControlName="username" class="form-control"
+      [ngClass]="{ 'is-invalid': submitted && f.username.errors }" id="username"
+      placeholder="Enter username" />
+
+    <div *ngIf="submitted && f.username.errors" class="invalid-feedback">
+      <div *ngIf="f.username.errors.required">Userame is required</div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label for="phone" class="form-label">Phone number</label>
+
+    <input type="text" formControlName="phone" class="form-control"
+      [ngClass]="{ 'is-invalid': submitted && f.phone.errors }" id="phone"
+      placeholder="Enter phone number" />
+
+    <div *ngIf="submitted && f.phone.errors" class="invalid-feedback">
+      <div *ngIf="f.phone.errors.required">  phone number is required</div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label for="email" class="form-label">Email</label>
+
+    <input type="email" formControlName="email" class="form-control"
+      [ngClass]="{ 'is-invalid': submitted && f.email.errors }" id="email" placeholder="Email" />
+
+    <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
+      <div *ngIf="f.email.errors.required">Email is required</div>
+      <div *ngIf="f.email.errors.email">Email must be a valid email address</div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label for="password" class="form-label">Password</label>
+
+    <input type="password" formControlName="password" class="form-control"
+      [ngClass]="{ 'is-invalid': submitted && f.password.errors }" id="password" placeholder="Password" />
+
+    <div *ngIf="submitted && f.password.errors" class="invalid-feedback">
+      <div *ngIf="f.password.errors.required">Password is required</div>
+    </div>
+  </div>
+
+  <div class="mt-4 d-grid">
+    <button class="btn btn-success" type="submit">Register</button>
+  </div>
+
+  <div class="mt-4 text-center">
+    <h5 class="font-size-14 mb-3">Sign in with</h5>
+
+    <ul class="list-inline">
+      <!-- <li class="list-inline-item">
+        <a href="javascript::void()" class="social-list-item bg-primary text-white border-primary">
+          <i class="mdi mdi-facebook"></i>
+        </a>
+      </li>
+      <li class="list-inline-item">
+        <a href="javascript::void()" class="social-list-item bg-info text-white border-info">
+          <i class="mdi mdi-twitter"></i>
+        </a>
+      </li> -->
+      <li class="list-inline-item">
+        <a href="javascript::void()" class="social-list-item bg-danger text-white border-danger">
+          <i class="mdi mdi-google"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="mt-4 text-center">
+    <p class="mb-0">En t'enregistrant vous etes d'accord <a href="javascript: void(0);"
+        class="text-primary">Termes et conditions d'utilisation</a></p>
+  </div>
+  
+</form>

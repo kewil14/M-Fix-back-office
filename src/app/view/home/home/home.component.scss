@@ -1,0 +1,488 @@
+.fixed-top-contact-bar {
+  background: linear-gradient(to right, #283890, #ee1d23);
+  padding:0;
+  font-size: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1050;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
+  color: white;
+  height: 38px;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+
+
+  font-weight: 900;
+  letter-spacing: 0.5px;
+
+  .social-icons i {
+    font-weight: 700;
+  }
+
+  .social-icons a {
+    color: white;
+    font-size: 1.25rem;
+
+    &:hover {
+      color: #f8f9fa;
+    }
+  }
+}
+
+
+.navbar-collapse {
+  transition: all 0.3s ease-in-out;
+}
+
+.navbar-toggler {
+  border: none;
+  padding: 4px 8px;
+  
+  &:focus {
+    box-shadow: none;
+  }
+}
+
+
+
+.top-contact-bar {
+  position: fixed;
+
+}
+
+.navbar {
+  top: 38px;
+}
+
+//style du bouton pour demander un devis
+.btn-willo {
+  background: linear-gradient(to right, #283890, #ee1d23);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 18px;
+  border-radius: 50px;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(238, 29, 35, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-willo:hover {
+  background: linear-gradient(to right, #ee1d23, #283890);
+  box-shadow: 0 0 15px rgba(238, 29, 35, 0.8);
+  transform: scale(1.05);
+  color: #fff;
+}
+
+.btn-attract {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(238, 29, 35, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(238, 29, 35, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(238, 29, 35, 0);
+  }
+}
+
+
+//pour aligner les photo dans la baniere
+.hero-slider-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero-slider-background .slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  animation: zoomEffect 15s ease-in-out infinite;
+}
+
+.hero-slider-background .slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+@keyframes zoomEffect {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+.hero-section {
+  position: relative;
+  z-index: 1;
+  padding-top: 140px;
+  padding-bottom: 140px;
+}
+
+//pour la section a propos
+#about {
+  scroll-margin-top: 100px;
+}
+
+#about h2.fw-bold {
+  font-size: 2.5rem;
+}
+
+#about p {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+#about .small-title {
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+#about .key-stats {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+/* Chiffres clés individuels */
+#about .key-stats div {
+  flex: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 0.75rem;
+  padding: 1rem 0.5rem;
+}
+
+/* Hover effet : agrandit légèrement */
+#about .key-stats div:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  background-color: #f8f9fa;
+}
+
+/* Chiffres visuels */
+#about .key-stats h2 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+#about .key-stats small {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #about .key-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.stat-box {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.con{
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+}
+
+.stat-box:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(40, 56, 144, 0.3);
+}
+
+.stat-box h3 {
+  font-size: 2.5rem;
+  color: #ee1d23;
+  font-weight: 700;
+}
+
+.stat-box span {
+  font-size: 2.5rem;
+
+  font-weight: 500;
+}
+.stat-box p {
+  color: #283890;
+  font-weight: 500;
+}
+
+//section process de demenagement
+.btn-danger {
+  background-color: #ee1d23;
+  border: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-danger:hover {
+  background-color: #c9171d;
+  transform: scale(1.05);
+}
+
+//pour les boutons des formules
+.btn-primary {
+  background: linear-gradient(to right, #283890, #1a2a6c);
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-primary:hover {
+  background: #1a2a6c;
+  transform: scale(1.05);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Style du bouton Demander un devis */
+.btn-danger {
+  background: linear-gradient(to right, #ee1d23, #d10f1b);
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-danger:hover {
+  background: #c9171d;
+  transform: scale(1.07);
+  box-shadow: 0px 4px 12px rgba(255, 0, 0, 0.3);
+}
+
+//formulaire de contact
+.card {
+  border-radius: 12px;
+  transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.btn-danger {
+  background: linear-gradient(to right, #ee1d23, #d10f1b);
+  border: none;
+  padding: 12px;
+  font-weight: bold;
+  border-radius: 30px;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-danger:hover {
+  background: #c9171d;
+  transform: scale(1.05);
+  box-shadow: 0px 4px 12px rgba(238, 29, 35, 0.5);
+}
+
+
+//footer
+/* Fond bleu foncé du footer */
+.landing-footer {
+  background: linear-gradient(to bottom, #1a2a6c, #101d42);
+  color: white;
+  padding: 50px 0;
+}
+
+/* Bordures et séparation */
+.footer-border {
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Liens du footer */
+.footer-link {
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease-in-out;
+}
+
+.footer-link:hover {
+  color: #ee1d23;
+}
+
+/* Carte Google avec bord arrondi */
+iframe {
+  border-radius: 8px;
+}
+
+/* Icônes des réseaux sociaux */
+.mdi {
+  color: white;
+  transition: transform 0.3s ease-in-out;
+}
+
+.mdi:hover {
+  transform: scale(1.2);
+  color: #ee1d23;
+}
+
+
+.fixed-top-contact-bar {
+  background-color: #007bff;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.social-icons a {
+  color: white;
+  font-size: 18px;
+  margin-left: 5px;
+}
+
+@media (max-width: 767.98px) {
+  .fixed-top-contact-bar .container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .contact-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+
+// style pour la partie nous contacter
+.bg-image {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/assets/images/willo_truck.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+
+
+
+
+// ***********************************************
+.section {
+  min-height: 60vh;
+  
+  &.bg-with-image {
+    background-image: url('../../../../assets/images/bg-for white place.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+}
+
+.bg-overlay-personilize {
+  background: linear-gradient(
+    135deg, 
+    rgba(255, 255, 255, 0.85) 0%, 
+    rgba(248, 249, 250, 0.8) 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
+.text-primary {
+  color: #ee1d23 !important;
+}
+
+.text-secondary {
+  color: #283890 !important;
+}
+
+.btn-primary {
+  background-color: #ee1d23;
+  border-color: #ee1d23;
+  
+  &:hover {
+    background-color: darken(#ee1d23, 10%);
+    border-color: darken(#ee1d23, 10%);
+  }
+}
+
+.btn-outline-secondary {
+  border-color: #283890;
+  color: #283890;
+  
+  &:hover {
+    background-color: #283890;
+    border-color: #283890;
+  }
+}
+
+.btn-outline-primary {
+  border-color: #ee1d23;
+  color: #ee1d23;
+  
+  &:hover {
+    background-color: #ee1d23;
+    border-color: #ee1d23;
+  }
+}
+
+.stat-box {
+  .counter {
+    font-size: 2.5rem;
+    font-weight: 700;
+  }
+}
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+.small-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .section.bg-with-image {
+    background-attachment: scroll;
+  }
+  
+  .stat-box .counter {
+    font-size: 2rem;
+  }
+}
+
+
+

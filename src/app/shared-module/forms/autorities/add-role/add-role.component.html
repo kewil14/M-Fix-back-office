@@ -1,0 +1,57 @@
+    <form (ngSubmit)="createRole()" [formGroup]="roleForm"> 
+
+    <div class="row ">
+       
+      <div class="col-lg-12">
+          <div class="mb-3">
+              <label for="name" class="form-label">Nom</label>
+              <input type="text" class="form-control" id="name"
+                  formControlName="name"
+                  [ngClass]="{'is-invalid': isRoleSubmitted && role['name'].errors}" placeholder="Nom">
+              <div *ngIf="isRoleSubmitted && role['name'].errors" class="invalid-feedback">
+                  <div *ngIf="role['name'].errors!['required']">{{'MESSAGES.ERRORS.REQUIRED' | translate | titlecase }}</div>
+                  <div *ngIf="role['name'].errors!['minlength']"> {{'MESSAGES.ERRORS.SIZE-NIM' | translate | titlecase }} </div>
+                  <div *ngIf="role['name'].errors!['maxlength']"> {{'MESSAGES.ERRORS.SIZE-MAX' | translate | titlecase }} </div>
+              </div>
+          </div>
+      </div>
+  
+      <div class="col-lg-12">
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea rows="5" type="text" class="form-control" id="description"
+                formControlName="description"
+                [ngClass]="{'is-invalid': isRoleSubmitted && role['description'].errors}" placeholder="Description" ></textarea>
+            <div *ngIf="isRoleSubmitted && role['description'].errors" class="invalid-feedback">
+                <div *ngIf="role['description'].errors!['required']">{{'MESSAGES.ERRORS.REQUIRED' | translate | titlecase }}</div>
+                <div *ngIf="role['description'].errors!['minlength']"> {{'MESSAGES.ERRORS.SIZE-NIM' | translate | titlecase }} </div>
+                <div *ngIf="role['description'].errors!['maxlength']"> {{'MESSAGES.ERRORS.SIZE-MAX' | translate | titlecase }} </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="col-lg-12 col-md-6">
+            <div class="mb-3">
+              
+                    <label for="choices-multiple-groups" class="form-label">Aurhorisations</label>
+                <ng-select [items]="(autorisationState$|async).ruleItems" [multiple]="true" bindLabel="authorisationName" bindValue="authorisationKey" formControlName="authorisationKeys"
+                   >
+                    <ng-template ng-optgroup-tmp let-item="item">
+                        {{item.authorisationName}}
+                    </ng-template>
+                </ng-select>
+            </div>
+           
+        </div>
+    
+    </div>
+     
+    <div class="text-end mt-2">
+          <div class="hstack justify-content-end gap-2">
+              <button type="button" class="btn btn-ghost-danger"(click)="cancel()"><i
+                      class="ri-close-line align-bottom"></i> Annuler </button>
+              <button type="submit" class="btn" [ngClass]="{'btn-success': operattion == operationEnum.CREATE, 'btn-warning': operattion == operationEnum.UPDATE}">{{operattion == operationEnum.CREATE ?  ("Enregistrer") : ("modifier")}}</button>
+          </div>
+    </div>
+  </form>

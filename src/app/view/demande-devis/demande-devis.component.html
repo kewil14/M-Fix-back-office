@@ -1,0 +1,574 @@
+
+<!-- <div class="d-flex justify-content-start">
+  <div class="col-12 col-md-6">
+    <h1 class="mb-4">Demande de devis</h1>
+    <p class="lead">Remplissez le formulaire ci-dessous pour obtenir un devis personnalisé.</p>
+  </div>
+  <div class="col-12 col-md-6 text-end">
+    <img src="assets/images/demande-devis.png" alt="Demande de devis" class="img-fluid">
+  </div>
+</div> -->
+
+<willo-header-shared></willo-header-shared>
+
+
+<div class="container py-4 mt-4">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form [formGroup]="quoteRequestForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Progress Steps -->
+        <div class="mb-4 d-flex justify-content-between">
+          <div class="text-center flex-fill" [ngClass]="{'text-primary fw-bold': currentStep === 1}">
+            <div class="rounded-circle bg-light border d-inline-block px-3 py-2 mb-1">{{ 1 }}</div>
+            <div>Vos informations</div>
+          </div>
+          <div class="text-center flex-fill" [ngClass]="{'text-primary fw-bold': currentStep === 2}">
+            <div class="rounded-circle bg-light border d-inline-block px-3 py-2 mb-1">{{ 2 }}</div>
+            <div>Vos adresses</div>
+          </div>
+          <div class="text-center flex-fill" [ngClass]="{'text-primary fw-bold': currentStep === 3}">
+            <div class="rounded-circle bg-light border d-inline-block px-3 py-2 mb-1">{{ 3 }}</div>
+            <div>Choix de la formule</div>
+          </div>
+          <div class="text-center flex-fill" [ngClass]="{'text-primary fw-bold': currentStep === 4}">
+            <div class="rounded-circle bg-light border d-inline-block px-3 py-2 mb-1">{{ 4 }}</div>
+            <div>Volume</div>
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <!-- <div *ngIf="currentStep === 1">
+          <div class="row m-2">
+            <div  class="d-flex justify-content-center align-items-center mb-3"> 
+              <h4 class="mb-3">Coordonnées</h4>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label d-block">Civilité</label>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="gender" id="gender-madame" value="Madame">
+                <label class="form-check-label" for="gender-madame">Madame</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="gender" id="gender-monsieur" value="Monsieur">
+                <label class="form-check-label" for="gender-monsieur">Monsieur</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" formControlName="gender" id="gender-other" value="Autre">
+                <label class="form-check-label" for="gender-other">Autre</label>
+              </div>
+            </div>
+  
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="lastname">Nom *</label>
+                <input type="text" class="form-control" formControlName="lastname" placeholder="Votre nom" required>
+                <div class="invalid-feedback d-block" *ngIf="formControls.lastname.invalid && formControls.lastname.touched">
+                  Le nom est requis
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="firstname">Prénom *</label>
+                <input type="text" class="form-control" formControlName="firstname" placeholder="Votre prénom" required>
+                <div class="invalid-feedback d-block" *ngIf="formControls.firstname.invalid && formControls.firstname.touched">
+                  Le prénom est requis
+                </div>
+              </div>
+            </div>
+  
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="email">Email *</label>
+                <input type="email" class="form-control" formControlName="email" placeholder="Votre e-mail" required>
+                <div class="invalid-feedback d-block" *ngIf="formControls.email.invalid && formControls.email.touched">
+                  L'email valide est requis
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label text-white">{{'FORMS.PHONE'|translate | uppercase}}*</label>
+                  <div class="input-group" data-input-flag>
+                      <button class="btn btn-light border me-2" type="button" data-bs-toggle="dropdown" aria-expanded="false"><img src="assets/images/flags/french.jpg" alt="flag img" height="20" class="country-flagimg rounded"><span class="ms-2 country-codeno">+ 33</span></button>
+                      <input type="text" class="form-control rounded-end flag-input backgroundInput" value="" [maxLength]="10"
+                      placeholder="Phone" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');"
+                      formControlName="phone" 
+                      id="phone11"
+                     />
+                      <div class="invalid-feedback d-block" *ngIf="formControls.phone.invalid && formControls.phone.touched">
+                        Le téléphone est requis
+                      </div>
+
+                      <div class="dropdown-menu w-100"
+                      >
+                          <div class="p-2 px-3 pt-1 searchlist-input">
+                              <input type="text" class="form-control form-control-sm border search-countryList backgroundInput" placeholder="Search country name or country code..." />
+                          </div>
+                          <ul class="list-unstyled dropdown-menu-list mb-0"></ul>
+                      </div>
+                      
+                  </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="text-end mt-2">
+            <button class="btn btn-primary" type="button" (click)="nextStep()"
+            >
+              <span *ngIf="(userState$|async)?.dataState !== dataStateEnum.LOADING ">
+                Étape suivante
+              </span>
+
+              <span *ngIf="(userState$|async)?.dataState == dataStateEnum.LOADING" class="d-flex align-items-center justify-content-center">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+              </span>
+            </button>
+          </div>
+          
+        </div> -->
+
+        <!-- Step 2 -->
+        <div *ngIf="currentStep === 1" class="row">
+            <div class="col-md-6 mb-3">
+              <!-- Période de déménagement -->
+              <div class="row mt-2 mb-2">
+                <h2 class="section-title">Période de déménagement</h2>
+                <div class="section-description fs-6">
+                  Choisissez une période durant laquelle vous êtes apte à déménager.
+                  Nous vous contacterons par la suite pour définir ensemble d'une date précise.
+                </div>
+                
+                <div class="row mb-2 mt-2">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="fromDate">À partir du : <span class="required">*</span></label>
+                      <input type="date" formControlName="fromDate" class="form-control" required>
+                      <div class="invalid-feedback d-block" *ngIf="formControls.fromDate.invalid && formControls.fromDate.touched">
+                        La date de début est requise
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="toDate">Jusqu'au : <span class="required">*</span></label>
+                      <input type="date" formControlName="toDate" class="form-control" required>
+                      <div class="invalid-feedback d-block" *ngIf="formControls.toDate.invalid && formControls.toDate.touched">
+                        La date de fin est requise
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-12 mt-3">
+                    <div class="form-group">
+                      <label for="startDetails">Détails à connaître :</label>
+                      <textarea formControlName="startDetails" class="form-control" placeholder="Arriver par la rue..."
+                        [rows]="5" [cols]="30" [ngClass]="{'is-invalid': formControls.startDetails.invalid && formControls.startDetails.touched}"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                </div>
+              
+                
+              
+                
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <!-- Lieux de déménagement -->
+              <div class="row mt-2">
+                <h2 class="section-title">Lieux de déménagement</h2>
+            
+                <!-- Adresse de départ -->
+                <div class="form-group address-group">
+                  <label>Adresse de Départ : <span class="required">*</span></label>
+
+                  <div class="row">
+                    <div class="col-xl-4 col-md-3">
+                      <!-- <input 
+                      type="text" 
+                      formControlName="startAddress" 
+                      class="form-control col-xl-3 col-md-3" 
+                      placeholder="Où habitez-vous ?" 
+                      (input)="onAddressInput($event.target.value)"
+                      required
+                      > -->
+                      <!-- <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAddressSelected($event.option.value)">
+                        <mat-option *ngFor="let addr of addressList$ | async" [value]="addr.label">
+                          {{ addr.label }}
+                        </mat-option>
+                      </mat-autocomplete> -->
+                    </div>
+                    <div class="col-xl-4 col-md-3">
+                      <input type="text" formControlName="startCity" class="form-control col-xl-3 col-md-3" placeholder="Ville" required>
+                    </div>
+                    <div class="col-xl-4 col-md-3">
+                      <input type="text" formControlName="startZipCode" class="form-control col-xl-3 col-md-3" placeholder="Code postal" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex-row">
+                  <div class="form-group half-width">
+                    <label for="endFloor">Etage ? <span class="required">*</span></label>
+                    <select formControlName="endFloor" class="form-control" required>
+                      <option value="rdc">rdc</option>
+                      <option value="1er étage">1er étage</option>
+                      <option value="2ème étage">2ème étage</option>
+                      <option value="3ème étage">3ème étage</option>
+                      <option value="4ème étage">4ème étage</option>
+                      <option value="5ème étage">5ème étage</option>
+                      <option value="6ème étage">6ème étage</option>
+                      <option value="7ème étage">7ème étage</option>
+                      <option value="8ème étage">8ème étage</option>
+                      <option value="9ème étage">9ème étage</option>
+                      <option value="10ème étage ou plus">10ème étage ou plus</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group half-width mt-3">
+                    <label>Ascenseur ? <span class="required">*</span></label>
+                    <div class="radio-group">
+                      <div class="row">
+                        <div class="d-flex align-items-center">
+                          <div class="radio-option">
+                            <input formControlName="endElevator" type="radio" value="Oui" id="end-elevator-yes">
+                            <label class="ms-1" for="end-elevator-yes">Oui</label>
+                          </div>
+                          <div class="radio-option ms-2">
+                            <input formControlName="endElevator" type="radio" value="Non" id="end-elevator-no">
+                            <label class="ms-1" for="end-elevator-no">Non</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Adresse d'arrivée -->
+                <div class="form-group address-group mt-2">
+                  <label>Adresse d'arrivée : <span class="required">*</span></label>
+                  <div class="address-city-zip">
+                    <div class="form-group">
+                      <div class="row">
+                        <div class="col-xl-4 col-md-3">
+                          <input type="text" formControlName="endAddress" class="form-control" placeholder="Où déménagez-vous ?" required>
+                        </div>
+                        <div class="col-xl-4 col-md-3">
+                          <input type="text" formControlName="endCity" class="form-control" placeholder="Ville" required>
+                        </div>
+                        <div class="col-xl-4 col-md-3">
+                          <input type="text" formControlName="endZipCode" class="form-control" placeholder="Code postal" required>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="flex-row mt-2">
+                  <div class="form-group half-width">
+                    <label for="startFloor">Etage ? <span class="required">*</span></label>
+                    <select formControlName="startFloor" class="form-control" required>
+                      <option value="rdc">rdc</option>
+                      <option value="1er étage">1er étage</option>
+                      <option value="2ème étage">2ème étage</option>
+                      <option value="3ème étage">3ème étage</option>
+                      <option value="4ème étage">4ème étage</option>
+                      <option value="5ème étage">5ème étage</option>
+                      <option value="6ème étage">6ème étage</option>
+                      <option value="7ème étage">7ème étage</option>
+                      <option value="8ème étage">8ème étage</option>
+                      <option value="9ème étage">9ème étage</option>
+                      <option value="10ème étage ou plus">10ème étage ou plus</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group half-width m-3">
+                    <label>Ascenseur ? <span class="required">*</span></label>
+                    <div class="radio-group">
+                      <div class="row">
+                        <div class="d-flex align-items-center">
+                          <div class="radio-option">
+                            <input formControlName="startElevator" type="radio" value="Oui" id="start-elevator-yes">
+                            <label class="ms-1" for="start-elevator-yes">Oui</label>
+                          </div>
+                          <div class="radio-option ms-2">
+                            <input formControlName="startElevator" type="radio" value="Non" id="start-elevator-no">
+                            <label class="ms-1" for="start-elevator-no">Non</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            
+
+
+            <div class="text-end mt-2">
+              <button type="button" class="btn btn-secondary" (click)="previousStep()">Étape précédente</button>
+              <button type="button" class="btn btn-primary ms-2" (click)="nextStep()">Étape suivante</button>
+            </div>
+        </div>
+
+
+        
+
+        <!-- Étapes 2 & 3 à styliser de manière similaire... -->
+        <div *ngIf="currentStep === 3">
+          <div  class="d-flex justify-content-center align-items-center mb-3"> 
+            <h4 class="mb-3">Coordonnées</h4>
+          </div>
+          <div class="form-page-fields">
+            <div class="formula-selection">
+              <div class="radio-option" *ngFor="let formula of formulas">
+                <input type="radio" formControlName="formula" [value]="formula.value" [id]="'formula-' + formula.value">
+                <label [for]="'formula-' + formula.value">Je choisis la formule {{ formula.label }}</label>
+              </div>
+            </div>
+            
+            <div class="options-container" [ngSwitch]="quoteRequestForm.get('formula')?.value">
+              <div class="options-display" *ngSwitchCase="'simplicite'">
+                <div class="options-list">
+                  <h3>Services inclus :</h3>
+                  <div class="option active" *ngFor="let option of formulaOptions.simplicite">{{ option }}</div>
+                </div>
+              </div>
+              <div class="options-display" *ngSwitchCase="'complicite'">
+                <div class="options-list">
+                  <h3>Services inclus :</h3>
+                  <div class="option active" *ngFor="let option of formulaOptions.complicite">{{ option }}</div>
+                </div>
+              </div>
+              <div class="options-display" *ngSwitchCase="'tranquilite'">
+                <div class="options-list">
+                  <h3>Services inclus :</h3>
+                  <div class="option active" *ngFor="let option of formulaOptions.tranquilite">{{ option }}</div>
+                </div>
+              </div>
+              <div class="options-display" *ngSwitchCase="'serenité'">
+                <div class="options-list">
+                  <h3>Services inclus :</h3>
+                  <div class="option active" *ngFor="let option of formulaOptions.serenite">{{ option }}</div>
+                </div>
+              </div>
+            </div>
+            
+            <h2 class="section-title">Pour plus de confort, nous vous proposons des options supplémentaires :</h2>
+            
+            <div class="additional-options">
+              <div class="option-checkbox">
+                <input type="checkbox" formControlName="storageOption" id="storage-option">
+                <label for="storage-option">Location Garde Meubles</label>
+              </div>
+              <div class="option-description" *ngIf="quoteRequestForm.get('storageOption')?.value">
+                La mise en garde-meubles de votre mobilier pour quelques jours ou plusieurs années.
+              </div>
+            </div>
+          </div>
+
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary" (click)="previousStep()">Étape précédente</button>
+            <button type="button" class="btn btn-primary ms-2" (click)="nextStep()">Étape suivante</button>
+          </div>
+        </div>
+
+        <div *ngIf="currentStep === 4">
+          <div class="form-page-fields">
+            <div class="form-group">
+              <label for="volume">Je connais déjà le volume de mes biens : <span class="required">*</span></label>
+              <input type="number" formControlName="volume" class="form-control" placeholder="Volume en m3" min="0" step="0.1">
+              <div class="field-description">Renseignez le volume de vos biens en m3</div>
+              <div class="error-message" *ngIf="formControls.volume.invalid && formControls.volume.touched">
+                Le volume est requis
+              </div>
+            </div>
+            
+            <h2 class="section-title">Ou</h2>
+            
+            <div class="volume-calculator">
+              <label>Je calcule le volume de mes biens :</label>
+              <p>Obtenez le volume exact de vos biens en quelques clics.</p>
+              <button type="button" class="btn btn-primary" (click)="openVolumeCalculator()">Calculer mon volume</button>
+            </div>
+          </div>
+          
+          <!-- <div class="form-page-footer">
+            <button type="button" class="btn btn-secondary" (click)="previousStep()">Étape précédente</button>
+            <button type="submit" class="btn btn-primary" [disabled]="quoteRequestForm.invalid">Valider mes étapes</button>
+          </div> -->
+
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary" (click)="previousStep()">Étape précédente</button>
+              <button type="submit" class="btn btn-primary ms-2" [disabled]="quoteRequestForm.invalid">Valider mes étapes</button>
+            </div>
+
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal pour le calculateur de volume -->
+<div class="modal" id="volumeCalculatorModal" [ngClass]="{'show': showVolumeCalculator}" *ngIf="showVolumeCalculator">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Je calcule le volume de mes biens :</h5>
+        <button type="button" class="close" (click)="closeVolumeCalculator()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="calculator-form">
+          <div class="calculator-categories">
+            <ul class="category-list">
+              <li *ngFor="let category of furnitureCategories" 
+                  (click)="selectCategory(category)"
+                  [ngClass]="{'active': selectedCategory === category}">
+                {{ category }}
+              </li>
+            </ul>
+          </div>
+          
+          <div class="furniture-icons">
+            <div *ngFor="let item of getItemsByCategory(selectedCategory)" class="furniture-item">
+              <div class="item-image">
+                <img [src]="item.image" [alt]="item.name">
+              </div>
+              <div class="item-name">{{ item.name }}</div>
+              <div class="item-controls">
+                <button type="button" (click)="decreaseItemQuantity(item)">-</button>
+                <span class="item-quantity">{{ getItemQuantity(item) }}</span>
+                <button type="button" (click)="increaseItemQuantity(item)">+</button>
+              </div>
+              <div class="item-volume">{{ item.volume }} m3</div>
+            </div>
+          </div>
+          
+          <div class="calculator-summary">
+            <div class="total-volume">
+              <div>{{ getTotalVolume() }} m3</div>
+            </div>
+            <button type="button" class="btn btn-outline-primary" (click)="resetCalculator()">Vider le camion</button>
+          </div>
+          
+          <div class="calculator-actions">
+            <button type="button" class="btn btn-primary" (click)="validateVolume()">Valider mon volume</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+  <!-- <div class="row">
+    <div class="d-flex justify-content-center">
+      <div class="card">
+        <div class="card-body">
+          <aw-wizard [navBarLayout]="'large-empty-symbols'">
+            <aw-wizard-step>
+              <ng-template awWizardStepSymbol>
+                <i class="fas fa-user"></i>
+              </ng-template>
+              <div class="row">
+                <div class="col-12">
+                  <div class="row mb-3">
+                    <label class="col-md-3 col-form-label">Email</label>
+                    <div class="col-md-9">
+                      <input class="form-control" name="email" type="text" placeholder="Enter email">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-md-3 col-form-label">Username</label>
+                    <div class="col-md-9">
+                      <input class="form-control" name="username" type="text" placeholder="Enter Username">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-md-3 col-form-label">Password</label>
+                    <div class="col-md-9">
+                      <input class="form-control" name="password" type="password" placeholder="Enter Password">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ul class="list-inline wizard mb-0">
+                <li class="next list-inline-item float-end"><button class="btn btn-primary" awNextStep>Next</button>
+                </li>
+              </ul>
+            </aw-wizard-step>
+
+            <aw-wizard-step>
+              <ng-template awWizardStepSymbol>
+                <i class="fas fa-user-circle"></i>
+              </ng-template>
+              <div class="row">
+                <div class="col-12">
+                  <div class="row mb-3">
+                    <label class="col-md-3 col-form-label">First name</label>
+                    <div class="col-md-9">
+                      <input class="form-control" name="email" type="text" placeholder="Enter email">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-md-3 col-form-label">Last name</label>
+                    <div class="col-md-9">
+                      <input class="form-control" name="username" type="text" placeholder="Enter Username">
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-md-3 col-form-label">Password</label>
+                    <div class="col-md-9">
+                      <input class="form-control" name="password" type="password" placeholder="Enter Password">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ul class="list-inline wizard mb-0">
+                <li class="previous list-inline-item"><button class="btn btn-primary" awPreviousStep>Previous</button>
+                </li>
+                <li class="next list-inline-item float-end"><button class="btn btn-primary" awNextStep>Next</button>
+                </li>
+              </ul>
+            </aw-wizard-step>
+
+            <aw-wizard-step>
+              <ng-template awWizardStepSymbol>
+                <i class="fas fa-check-circle"></i>
+              </ng-template>
+              <div class="row justify-content-center">
+                <div class="col-lg-6">
+                  <div class="text-center">
+                    <div class="mb-4">
+                      <i class="mdi mdi-check-circle-outline text-success display-4"></i>
+                    </div>
+                    <div>
+                      <h5>Confirm Detail</h5>
+                      <p class="text-muted">If several languages coalesce, the grammar of the resulting</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ul class="list-inline wizard mb-0">
+                <li class="previous list-inline-item"><button class="btn btn-primary" awPreviousStep>Previous</button>
+                </li>
+              </ul>
+            </aw-wizard-step>
+          </aw-wizard>
+        </div>
+      </div>
+    </div>
+    
+  </div> -->
+
+
+  <div>
+    <willo-footer-shared></willo-footer-shared>
+  </div>

@@ -1,0 +1,69 @@
+<!--  Open xl modal-->
+  
+<div class="row">
+  <div class="col-xl-6">
+      <div class="live-preview">
+          <!-- <ngb-accordion #acc="ngbAccordion" activeIds="static-1" [closeOthers]="true">
+              <ngb-panel  *ngFor="let group of availableGroupAuthorities$ | async" id="static-{{group.group}}">
+                  <ng-template ngbPanelTitle class="accordion-header border-0 bg-transparent">
+                      <div class="col" >
+                          <button (click)="addGroupAuthority(group)" type="button" class="btn btn-soft-success btn-sm shadow-none">
+                              <i class="ri-checkbox-circle-fill align-middle me-1"></i>
+                          </button>
+                          <span class="ms-3">{{group.group}}</span>
+                      </div>
+                  </ng-template>
+                  <ng-template ngbPanelContent>
+                      <div *ngFor="let item of group.items">
+                          <div class="col">
+                              <button (click)="addItem(item)" type="button" class="btn btn-light-success ms-auto btn-sm">
+                                  <i class=" ri-checkbox-circle-fill align-middle me-1"></i>
+                              </button>
+                              <span class="ms-3">{{item.authorisationName}}</span>
+                          </div>
+                      </div>
+                  </ng-template>
+              </ngb-panel>
+          </ngb-accordion> -->
+      </div>
+  </div>
+
+  <div class="col-xl-6">
+      <div class="live-preview">
+          <!-- <ngb-accordion #acc="ngbAccordion" activeIds="static-1" [closeOthers]="true">
+              <ngb-panel  *ngFor="let group of grantedGroupAuthorities$ | async" id="static-{{group.group}}">
+                  <ng-template ngbPanelTitle class="accordion-header border-0 bg-transparent">
+                      <div class="col" >
+                          <button (click)="deleteGroupAuthority(group)" type="button" class="btn btn-soft-danger btn-sm ms-2 shadow-none">
+                              <i class="ri-delete-bin-6-fill"></i>
+                          </button>
+                          <span class="ms-3">{{group.group}}</span>
+                      </div>
+                  </ng-template>
+                  <ng-template ngbPanelContent>
+                      <div *ngFor="let item of group.items">
+                          <div class="col">
+                              <button (click)="deleteItem(item)" type="button" class="btn btn-soft-danger btn-sm ms-2 shadow-none">
+                                  <i class="ri-delete-bin-6-fill"></i>
+                              </button>
+                              <span class="ms-3">{{item.authorisationName}}</span>
+                          </div>
+                      </div>
+                  </ng-template>
+              </ngb-panel>
+          </ngb-accordion> -->
+      </div>
+  </div>
+  <div class="mt-2">
+      <button (click)="saveAuthority()" class="btn btn-load  btn-outline-success">
+        <div class="d-flex">
+            Enregistrer
+            <span *ngIf="isLoading" class="d-flex align-items-center ms-2">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+            </span>
+        </div>
+      </button>
+  </div>
+</div>
+
+

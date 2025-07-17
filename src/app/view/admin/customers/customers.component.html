@@ -1,0 +1,190 @@
+
+<ng-container *ngIf="(customerState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+      <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid">
+    
+        <!-- <app-page-title title="Customers" [breadcrumbItems]="breadCrumbItems"></app-page-title> -->
+      
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="row mb-2">
+                  <div class="col-sm-4">
+                    <div class="search-box me-2 mb-2 d-inline-block">
+                      <div class="position-relative">
+                        <input type="text" class="form-control" placeholder="Search..." [(ngModel)]="term" [(ngModel)]="service.searchTerm"/>
+                        <i class="bx bx-search-alt search-icon"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-8">
+                    <div class="text-sm-end">
+                      <button type="button" class="btn btn-success btn-rounded mb-2 mr-2" (click)="openModal(content)">
+                        <i class="mdi mdi-plus me-1"></i> New Customers
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table align-middle table-nowrap">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>userCode</th>
+                        <th>user names</th>
+                        <th>state</th>
+                        <th>userEmail</th>
+                        <th>userPhoneNumber</th>
+                        <th>creationDate</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let customer of (customerState$|async)?.users" id="c_{{customer.userCode}}">
+                        <td>
+                          <div class="form-check font-size-16">
+                            <input id="customCheck" type="checkbox" class="form-check-input" />
+                            <label class="form-check-label" for="customCheck">&nbsp;</label>
+                          </div>
+                        </td>
+                        <td>{{customer.userCode}}</td>
+                        <td>
+                          <p class="mb-1">{{customer.userFirstName}} {{customer.userLastName}}</p>
+                        </td>
+      
+                        <td>
+                          <p class="mb-0">{{customer.state}}</p>
+                          
+                        </td>
+                        <td>
+                          <span class="badge bg-success font-size-12">
+                            {{customer.userEmail}}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge bg-success font-size-12">
+                            {{customer.userPhoneNumber}}
+                          </span>
+                        </td>
+                        <td>
+                          
+                          {{customer.creationDate | date: 'dd MMM, YYYY'}}
+                        </td>
+                        <td>
+                          <div class="dropdown" dropdown placement="bottom-right">
+                            <a href="javascript: void(0);" class="dropdown-toggle card-drop" data-toggle="dropdown"
+                              dropdownToggle aria-expanded="false">
+                              <i class="mdi mdi-dots-horizontal font-size-18"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" *dropdownMenu>
+                              <li><a href="javascript: void(0);" class="dropdown-item" (click)="editDataGet(customer.userCode, content)"><i
+                                    class="fas fa-pencil-alt text-success me-1"></i>
+                                  Edit</a></li>
+                              <li><a href="javascript: void(0);" class="dropdown-item" (click)="delete(customer.userCode)"><i
+                                    class="fas fa-trash-alt text-danger me-1"></i>
+                                  Delete</a></li>
+                            </ul>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- pagination -->
+                <ul class="pagination pagination-rounded justify-content-end mb-2">
+                  <pagination
+                    [totalItems]="(total | async)!" [(ngModel)]="service.page">
+                  </pagination>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Standard Modal -->
+      <ng-template #content role="document" let-modal>
+        <div class="modal-header">
+          <h5 class="modal-title mt-0">Ajouter Client</h5>
+          <button type="button" class="btn-close" aria-hidden="true" (click)="modalRef?.hide()"></button>
+        </div>
+        <div class="modal-body">
+         <form (ngSubmit)="saveCustomer()" [formGroup]="formData">
+          <div class="row">
+            <div class="col-12">
+              <!-- <input type="hidden" name="id" value="" formControlName="ids"/> -->
+              <div class="mb-3">
+                <label class="control-label">userFirstName</label>
+                <input class="form-control" placeholder="Enter userFirstName" type="text" name="title" autocomplete="off" formControlName="userFirstName"
+                    [ngClass]="{'is-invalid': submitted && form.userFirstName.errors}" />
+                  <div *ngIf="submitted && form.userFirstName.errors" class="invalid-feedback">
+                    <span *ngIf="form.userFirstName.errors.required">userFirstName is required.</span>
+                  </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="control-label">userLastName</label>
+                <input class="form-control" placeholder="Enter userLastName" type="text" name="title" autocomplete="off" formControlName="userLastName"
+                    [ngClass]="{'is-invalid': submitted && form.userLastName.errors}" />
+                  <div *ngIf="submitted && form.userLastName.errors" class="invalid-feedback">
+                    <span *ngIf="form.userLastName.errors.required">userLastName is required.</span>
+                  </div>
+              </div>
+
+
+              <div class="mb-3">
+                <label class="control-label">userEmail</label>
+                <input class="form-control" placeholder="Enter userEmail" type="text" name="userEmail" autocomplete="off" formControlName="userEmail"
+                    [ngClass]="{'is-invalid': submitted && form.userEmail.errors}" />
+                    <div *ngIf="submitted && form.userEmail.errors" class="invalid-feedback">
+                      <span *ngIf="form.userEmail.errors.required">Email is required.</span>
+                      <span *ngIf="form.userEmail.errors.pattern">This value should be a valid userEmail.</span>
+                    </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="control-label">country</label>
+                <input class="form-control" placeholder="Enter country" type="text" name="country" autocomplete="off" formControlName="country"
+                    [ngClass]="{'is-invalid': submitted && form.country.errors}" />
+                    <div *ngIf="submitted && form.country.errors" class="invalid-feedback">
+                      <span *ngIf="form.country.errors.required">Email is required.</span>
+                      <span *ngIf="form.country.errors.pattern">This value should be a valid country.</span>
+                    </div>
+              </div>
+
+
+
+              <div class="mb-3">
+                <label class="control-label">userPhoneNumber</label>
+                <input class="form-control" placeholder="Enter userPhoneNumber" type="text" name="userPhoneNumber" autocomplete="off" formControlName="userPhoneNumber"
+                    [ngClass]="{'is-invalid': submitted && form.userPhoneNumber.errors}" />
+                  <div *ngIf="submitted && form.userPhoneNumber.errors" class="invalid-feedback">
+                    <span *ngIf="form.userPhoneNumber.errors.required">userPhoneNumber is required.</span>
+                  </div>
+              </div>
+             
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-danger" (submit)="cancelForm()" id="btn-cancel-event">
+              Cancel
+            </button>
+            <!-- <button type="submit" class="btn btn-success ms-2" id="btn-save-event">
+              Save
+            </button> -->
+
+            <button type="button" class="btn btn-success btn-load btn-center ms-2"  type="submit">
+              <span *ngIf="!submitted || (customerState$|async)?.dataState !== dataStateEnum.LOADING ">Save</span>
+              <span *ngIf="submitted && (customerState$|async)?.dataState == dataStateEnum.LOADING" class="d-flex align-items-center justify-content-center">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+              </span>
+            </button>
+          </div>
+         </form>
+        </div>
+      </ng-template>
+  </ng-container>

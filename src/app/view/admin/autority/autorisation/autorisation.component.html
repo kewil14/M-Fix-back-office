@@ -1,0 +1,100 @@
+<!-- <loto-navbar-dashboard title="{{'ADMIN.SIDER.AUTHORIZATION.LIST.FUNCTION' | translate}}" [breadcrumbItems]="breadCrumbItems"></loto-navbar-dashboard> -->
+<ng-container *ngIf="(roleState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+      <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="row justify-content-center text-center">
+      <!-- <loto-message-alert
+        [messages$]="messages$" *ngIf="isShow == true">
+      </loto-message-alert> -->
+    </div>
+    <div class="row">
+        <div [ngClass]="{'col-lg-12': !isEdit, 'col-lg-8': isEdit}">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        
+                        <div class="table-responsive">
+                          <table class="table table-bordered align-middle nowrap">
+                              <thead>
+                                  <tr>
+                                      <th scope="col">No</th>
+                                      <th scope="col">authorisation Name</th>
+                                      <th scope="col">Group Name</th>
+                                      <th scope="col">Action</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <tr *ngFor="let data of (roleState$|async)?.ruleItems; let index = index">
+                                      <th scope="row">{{data.authorisationKey}}</th>
+                                      <td>{{data?.authorisationName}}</td>
+                                      <td>{{data?.authorisationGroup?.groupName}}</td>
+                                      
+                                      <!-- <td><span class="badge" [ngClass]="{ 'bg-success': data.status === 'Active', 'bg-info': data.status === 'New', 'bg-danger': data.status === 'Close'}">{{data.status}}</span></td> -->
+                                      <td>
+                                          <!-- <ul class="list-unstyled hstack gap-1 mb-0">
+                                              <li data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+                                                  <a routerLink="/jobs/details" class="btn btn-sm btn-soft-primary"><i class="mdi mdi-eye-outline"></i></a>
+                                              </li>
+                                              <li data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+                                                  <a href="javascript:void(0);" class="btn btn-sm btn-soft-info" ><i class="mdi mdi-pencil-outline"></i></a>
+                                              </li>
+                                              <li data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                  <a href="javascript:void(0);" data-bs-toggle="modal" class="btn btn-sm btn-soft-danger" ><i class="mdi mdi-delete-outline"></i></a>
+                                              </li>
+                                          </ul> -->
+                                          <div class="edit">
+                                            <button type="button" class="btn btn-sm btn-soft-success" (click)="seeAuthority(data)"  placement="top" ><i class="mdi mdi-eye-outline"></i></button> 
+                                          </div>
+                                      </td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                        <ng-template #noDataRoleItem>
+                          <table class="table table-bordered align-middle nowrap">
+                            <thead>
+                                <tr>
+                                    <th scope="col">No</th>
+                                    <th scope="col">authorisation Name</th>
+                                    <th scope="col">Group Name</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr >
+                                    <th scope="row">No data available</th>
+                                </tr>
+                            </tbody>
+                        </table>
+                        </ng-template>
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- formulaire edit --> 
+        <div class="col-lg-4" *ngIf="isEdit">
+          <div class="card">
+            <div class="card-header border-secondary d-flex">
+              <div class="p-2 bd-highlight">
+                <h4>Autorisation</h4>
+              </div>
+              <div class="ms-auto p-2 bd-highlight">
+                <button type="button" class="btn-close" aria-label="Close" (click)="close()"> </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <loto-update-authority
+                [authority$]="authority$"
+                [loading$]="loading$"
+                (onCansel)="cancelEdit($event)"
+              ></loto-update-authority>
+            </div>
+          </div>
+        </div>
+        
+    </div>
+  </ng-container>
+</ng-container>

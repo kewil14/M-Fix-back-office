@@ -1,0 +1,23 @@
+export enum ListRoles {
+	ROLE_TYPE_ADMIN = 'admin',
+	ROLE_TYPE_USER = 'user',
+	
+ 	ROLE_ADMIN = 'ROLE_ADMIN',
+	ROLE_SUPER_USER = 'ROLE_SUPER_USER',
+	ROLE_USER = 'ROLE_USER',
+
+	ROL_ADMIN = 'ROL_00000000',
+	ROL_USER = 'ROL_00000006',
+};
+
+
+export enum UserTypeEnum {
+	SUPER_ADMIN = 'SUPER_ADMIN',
+	CUSTOMER = 'CUSTOMER',
+};
+
+
+export enum CountryEnum {
+	FRANCE = 'FRANCE',
+};
+

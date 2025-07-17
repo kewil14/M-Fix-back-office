@@ -1,0 +1,37 @@
+.loader{
+  position: relative;
+  top: 0;
+  left: 0;
+  /* width: 100vw; */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  /* align-content: center; */
+  justify-content: center;
+  /* background: rgb(205, 202, 202); */
+  transition: opacity 0.2s, visibility 0.2s;
+}
+/* .loader--hidden{
+  opacity: 0;
+  visibility: collapse;
+} */
+
+.loader::after{
+  content:"";
+  width: 75px;
+  height: 75px;
+  border: 15px solid rgb(205, 202, 202);
+  border-top-color: rgb(3, 3, 3);
+  border-radius: 50%;
+  animation: loading 0.75s ease infinite;
+}
+
+@keyframes loading {
+  from{
+    transform: rotate(0turn)
+  }
+  to{
+    transform: rotate(1turn)
+  }
+}
+

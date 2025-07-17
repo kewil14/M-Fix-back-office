@@ -1,0 +1,155 @@
+<!-- header -->
+<div class="container mt-5">
+  <div class="card shadow-lg p-4">
+    <h2 class="mb-4 text-primary text-center">Obtenez une estimation gratuite et personnalisée</h2>
+
+    <form [formGroup]="quotationForm" (ngSubmit)="onSubmit()">
+      <div class="row g-3 align-items-center">
+        <!-- Date de départ -->
+        <div class="col-md-3 mb-3">
+          <label for="from_date" class="form-label fw-semibold">
+            <i class="bi bi-calendar-check me-2 text-danger"></i> Date de départ
+          </label>
+          <input type="date" id="from_date" class="form-control border-danger" formControlName="from_date">
+        </div>
+        
+        <!-- Date d'arrivée -->
+        <div class="col-md-3 mb-3">
+          <label for="to_date" class="form-label fw-semibold">
+            <i class="bi bi-calendar-event me-2 text-info"></i> Date d'arrivée
+          </label>
+          <input type="date" id="to_date" class="form-control border-info" formControlName="to_date">
+        </div>
+
+        <!-- Adresse de départ -->
+        <div class="col-md-3 mb-3">
+          <label for="address_start" class="form-label fw-semibold">
+            <i class="bi bi-geo-alt me-2 text-primary"></i> Adresse de départ
+          </label>
+          <div class="position-relative">
+            <input type="text" 
+                   id="address_start" 
+                   #addressStartInput
+                   class="form-control border-primary"
+                   formControlName="address_start" 
+                   placeholder="Où habitez-vous?"
+                   (focus)="onAddressInputFocus('start')"
+                   (blur)="onAddressInputBlur('start')"
+                   autocomplete="off">
+            
+            <!-- Bouton pour effacer -->
+            <button *ngIf="quotationForm.get('address_start')?.value" 
+                    type="button" 
+                    class="btn btn-sm btn-outline-secondary clear-btn"
+                    (click)="clearStartAddress()">
+              ×
+            </button>
+
+            <!-- Indicateur de chargement -->
+            <div *ngIf="isLoadingStart" class="position-absolute end-0 top-50 translate-middle-y pe-3">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+            </div>
+            
+            <!-- Dropdown de suggestions -->
+            <div class="address-suggestions-wrapper" *ngIf="showSuggestionsStart && addressSuggestionsStart.length">
+              <ul class="list-group shadow address-suggestions">
+                <li class="list-group-item list-group-item-action suggestion-item" 
+                    *ngFor="let address of addressSuggestionsStart"
+                    (click)="selectAddress('address_start', address)">
+                  <strong>{{ address.label }}</strong>
+                  <small class="text-muted d-block">{{ address.context }}</small>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Champs ville et code postal pour départ -->
+          <div class="row mt-2">
+            <div class="col-6">
+              <input type="text" 
+                     class="form-control form-control-sm" 
+                     formControlName="start_city" 
+                     placeholder="Ville">
+            </div>
+            <div class="col-6">
+              <input type="text" 
+                     class="form-control form-control-sm" 
+                     formControlName="start_zipcode" 
+                     placeholder="Code postal">
+            </div>
+          </div>
+        </div>
+
+        <!-- Adresse d'arrivée -->
+        <div class="col-md-3 mb-3">
+          <label for="address_end" class="form-label fw-semibold">
+            <i class="bi bi-map me-2 text-success"></i> Adresse d'arrivée
+          </label>
+          <div class="position-relative">
+            <input type="text" 
+                   id="address_end" 
+                   #addressEndInput
+                   class="form-control border-success"
+                   formControlName="address_end" 
+                   placeholder="Où déménagez-vous?"
+                   (focus)="onAddressInputFocus('end')"
+                   (blur)="onAddressInputBlur('end')"
+                   autocomplete="off">
+            
+            <!-- Bouton pour effacer -->
+            <button *ngIf="quotationForm.get('address_end')?.value" 
+                    type="button" 
+                    class="btn btn-sm btn-outline-secondary clear-btn"
+                    (click)="clearEndAddress()">
+              ×
+            </button>
+
+            <!-- Indicateur de chargement -->
+            <div *ngIf="isLoadingEnd" class="position-absolute end-0 top-50 translate-middle-y pe-3">
+              <div class="spinner-border spinner-border-sm text-success" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+            </div>
+            
+            <!-- Dropdown de suggestions -->
+            <div class="address-suggestions-wrapper" *ngIf="showSuggestionsEnd && addressSuggestionsEnd.length">
+              <ul class="list-group shadow address-suggestions">
+                <li class="list-group-item list-group-item-action suggestion-item" 
+                    *ngFor="let address of addressSuggestionsEnd"
+                    (click)="selectAddress('address_end', address)">
+                  <strong>{{ address.label }}</strong>
+                  <small class="text-muted d-block">{{ address.context }}</small>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Champs ville et code postal pour arrivée -->
+          <div class="row mt-2">
+            <div class="col-6">
+              <input type="text" 
+                     class="form-control form-control-sm" 
+                     formControlName="end_city" 
+                     placeholder="Ville">
+            </div>
+            <div class="col-6">
+              <input type="text" 
+                     class="form-control form-control-sm" 
+                     formControlName="end_zipcode" 
+                     placeholder="Code postal">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton d'envoi -->
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-primary btn-lg px-5">
+          <i class="bi bi-send me-2"></i> Envoyer ma demande
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

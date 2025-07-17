@@ -1,0 +1,57 @@
+{
+  "MESSAGES": {
+    "HOME": {
+      "TITRE":"game manager studio",
+      "MAINTAIN":" under maintain",
+      "WELCOME": "please login for acces to your account",
+      "BUTTON":"Login",
+      "REGISTER":"register",
+      "LOGOUT": "Lock out",
+      "MESSAGE":"discover the passion to play and create your own betting space on",
+      "PLACE":"Place a bet",
+      "GET":"get",
+      "ALERT": "Are you sure you have +18 ?",
+      "ADMIN_CREATE": "successfull creation of admin account"
+    },
+    "TOPBAR":{
+      "WELCOME":"welcome"
+    },
+    "AUTH": {
+      "WELCOME": "Welcome to the login page",
+      "CONSIGNE": "Register and enjoy your Loto studio account !",
+      "FORM":{
+        "USERNAME": "Username",
+        "FORGOT":"Forgot your password ?",
+        "PASSWORD": "Password",
+        "REMEMBER":"remember",
+        "SIGN":"Sign in",
+        "SIGNUP": "Sign Up",
+        "LOAD":"Loading....",
+        "WITH":"Sign with"
+      }
+    },
+    "ERRORS": {
+      "LOAD": "An unknown error occurred while processing your request, try later",
+      "REQUIRED": "field is required",
+      "SIZE-NIM": "min size required",
+      "SIZE-MAX": "max size required",
+      "EMAIL-NOT-VALIDE": "not valid email address",
+      "USERNAME-NOT-VALIDE": "username not valid",
+      "PASSWORD-NOT-VALIDE": "password not valid",
+      "REMEMBER-NOT-VALIDE": "remember not valid",
+      "SIGN-NOT-VALIDE": "sign not valid",
+      "LOAD-NOT-VALIDE": "load not valid",
+      "MIN": "valeur minimale requise",
+      "MAX": "valeur maximale requise",
+      "SELECT-ROLE": "select a role",
+      "SELECT": "select",
+      "NO":"no data available",
+      "MAX_MULTIPLIER_MEGA": "the multiplier cannot be greater than 1"
+    },
+    "SUCCESS_ACTION": {
+      "GAME_CREATE": "game created successfull",
+      "ADMIN_CREATE": "administrator created successfull"
+
+    }
+  }
+}

@@ -1,0 +1,123 @@
+<ng-container *ngIf="(avisState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+      <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid">
+    
+      <!-- <app-page-title title="Customers" [breadcrumbItems]="breadCrumbItems"></app-page-title> -->
+    
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body">
+              <div class="row mb-2">
+                <div class="col-sm-4">
+                  <div class="search-box me-2 mb-2 d-inline-block">
+                    <div class="position-relative">
+                      <input type="text" class="form-control" placeholder="Search..." [(ngModel)]="term" [(ngModel)]="service.searchTerm"/>
+                      <i class="bx bx-search-alt search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+              <div class="table-responsive">
+                <table class="table align-middle table-nowrap">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Username</th>
+                      <th>Phone / Email</th>
+                      <th>Rating</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let avi of (avisState$|async)?.avis" id="c_{{avi.id}}">
+                      <td>
+                        <div class="form-check font-size-16">
+                          <input id="customCheck" type="checkbox" class="form-check-input" />
+                          <label class="form-check-label" for="customCheck">&nbsp;</label>
+                        </div>
+                      </td>
+                      <td>{{avi.user.userFirstName}} {{avi.user.userLastName}}</td>
+                      <td>
+                        <p class="mb-1">{{avi?.user?.userPhoneNumber}}</p>
+                        <p class="mb-0">{{avi?.user?.userEmail}}</p>
+                      </td>
+                      <!-- ici je crois ceci correspond a l'adresse -->
+                      <!-- <td>{{avi.user.}}</td> -->
+                      <td>
+                        <span class="badge bg-success font-size-12">
+                          <i class="mdi mdi-star me-1"></i>
+                          {{avi.note}}
+                        </span>
+                      </td>
+                      <!-- ici nous mettrons la date de l avis -->
+                      <!-- <td>{{avi. | date: 'dd MMM, YYYY'}}</td>  -->
+                      <td>
+                          <span class="badge  font-size-12"
+                          [ngClass]="{
+                            'bg-success': avi.state === avisStateEnum.APPROUVE,
+                            'bg-danger': avi.state === avisStateEnum.REJETE,
+                            'bg-warning': avi.state === avisStateEnum.EN_COURS
+                          }"
+                          >
+                            {{avi.state}}
+                          </span>
+                      </td>
+                      <td>
+                        <div class="dropdown" dropdown placement="bottom-right" *ngIf="avi.state === avisStateEnum.EN_COURS">
+                          <a href="javascript: void(0);" class="dropdown-item" (click)="onAvisModal(avi,content)"><i
+                            class="fas fa-check text-willo me-1"></i>
+                            validation
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- pagination -->
+              <ul class="pagination pagination-rounded justify-content-end mb-2">
+                <pagination
+                  [totalItems]="(total | async)!" [(ngModel)]="service.page">
+                </pagination>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Standard Modal to change the state of devis -->
+    <ng-template #content role="document" let-modal>
+      <div class="modal-header">
+        <h5 class="modal-title mt-0">Changer le status</h5>
+        <button type="button" class="btn-close" aria-hidden="true" (click)="modalRef?.hide()"></button>
+      </div>
+      <div class="modal-body">
+       <!-- modal pour changement de status de l'avis -->
+        <div class="mb-3">
+          <label for="avisState" class="form-label fw-bold">Status</label>
+          <select id="avisState" class="form-select" [(ngModel)]="selectedAvisState"  >
+          <option    [ngValue]="null" disabled selected>Select</option>
+            <option  [ngValue]="avisStateEnum.APPROUVE">{{ avisStateEnum.APPROUVE.toLocaleLowerCase() }}</option>
+            <option  [ngValue]="avisStateEnum.REJETE">{{ avisStateEnum.REJETE.toLocaleLowerCase() }}</option>
+          </select>
+        </div>
+        <div class="text-center">
+          <button type="button" class="btn btn-primary btn-load btn-center btn-lg w-100" [disabled]="!selectedAvisState" (click)="updateAvisState()">
+            Changer le status
+            <span *ngIf="!isSubmitted"> </span>
+            <span *ngIf="isSubmitted" class="d-flex align-items-center justify-content-center">
+              <span class="spinner-border flex-shrink-0" role="status"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </ng-container>
+</ng-container>

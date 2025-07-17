@@ -1,0 +1,54 @@
+<nav class="navbar navbar-expand-lg bg-primary" id="navbar">
+    <div class="container">
+        <a class="navbar-logo" routerLink="/">
+            <img src="assets/images/logob.png" alt="" height="60" class="logo logo-dark">
+            <img src="assets/images/logod.png" alt="" height="60" class="logo logo-light">
+        </a>
+
+        <!-- <button type="button" class="btn btn-sm px-3 font-size-16 d-lg-none header-item"
+            data-toggle="collapse" data-target="#topnav-menu-content" (click)="toggleMenu()">
+            <i class="fa fa-fw fa-bars"></i>
+        </button> -->
+
+        <div class="collapse navbar-collapse" id="topnav-menu-content">
+          
+
+            <!-- <div class="my-2 ms-lg-2" *ngIf="!(profileState$|async)?.user">
+                <a routerLink="/auth" class="btn btn-outline-willo">Se connecter</a>
+            </div> -->
+
+            <!-- <div *ngIf="(profileState$|async)?.user">
+                <div class="my-2 ms-lg-2" *ngIf="(profileState$|async)?.user?.roles![0].roleCode == listRoles.ROL_USER">
+                    <a routerLink="/users" class="btn btn-success">Historique</a>
+                    <div class="dropdown d-inline-block" dropdown>
+                        <button type="button" class="btn header-item" dropdownToggle id="page-header-user-dropdown">
+                            <img class="rounded-circle header-profile-user" src="assets/images/logo.png" alt="Header Avatar">
+                            <span class="d-none d-xl-inline-block ms-1">Willo</span>
+                            <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
+                        </button>
+        
+                          <div class="dropdown-menu dropdown-menu-end" *dropdownMenu>
+                            <a class="dropdown-item" routerLink="/contacts/profile"><i class="bx bx-user font-size-16 align-middle me-1"></i>
+                              profile
+                            </a>
+                            
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="javascript: void(0);" (click)="logout()"><i
+                                class="bx bx-power-off font-size-16 align-middle me-1 text-danger"></i>
+                                deconnexon
+                            </a>
+                          </div>
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- <span *ngIf="(profileState$|async)?.dataState==dataStateEnum.LOADING" class="d-flex align-items-center btn btn-danger">
+                <span class="spinner-border flex-shrink-0" role="status"></span>
+            </span>
+
+            <div class="my-2 ms-lg-2" *ngIf="(profileState$|async)?.user.roles[0].roleCode == listRoles.ROL_ADMIN">
+                <a routerLink="/admin" class="btn btn-success">Tableau de bord</a>
+            </div> -->
+        </div>
+    </div>
+</nav>

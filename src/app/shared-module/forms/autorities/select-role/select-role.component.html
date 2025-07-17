@@ -1,0 +1,20 @@
+<form [formGroup]="roleForm" (ngSubmit)="selectRole()">
+    <div class="mb-3">
+        <label for="idRole" class="form-label">{{'FORMS.SELECT-ROLE'|translate | titlecase}}</label>
+        <ng-select
+          placeholder="{{'FORMS.SELECT-ROLE' | translate | titlecase }}"
+          formControlName="idRole"
+          [ngClass]="{'is-invalid': isSelectRoleSubmitted && role['idRole'].errors}"
+          >
+          <ng-option *ngFor="let role of roles" [value]="role.roleCode">{{role.roleName}}</ng-option>
+        </ng-select>
+        <div *ngIf="isSelectRoleSubmitted && role['idRole'].errors" class="invalid-feedback">
+            <div *ngIf="role['idRole'].errors!['required']">{{'MESSAGES.ERRORS.REQUIRED' | translate | titlecase }}</div>
+            <div *ngIf="role['idRole'].errors!['min']"> {{'MESSAGES.ERRORS.MIN' | translate | titlecase }} </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end mt-2">
+        <button class="btn btn-sm btn-primary" type="submit">{{'FORMS.SELECT' | translate | titlecase}}</button>
+    </div>
+</form>
+  

@@ -1,0 +1,54 @@
+<div class="row">
+    <div class="mb-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <button type="button" class="btn btn-soft-danger shadow-none"
+                    [routerLink]="['/admin/autorisation/role']"><i
+                        class="ri-arrow-go-back-fill align-middle me-1"></i>Retour</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">Role</div>
+            <div class="card-body">
+                <loto-add-role
+                    [loading$]="loadingRole$"
+                    [role$]="role$"
+                    (onRole)="createRoleAction($event)"
+                ></loto-add-role>
+            </div>
+        </div>
+    </div>
+ <!--    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1">Authorities</h4>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-soft-warning btn-sm shadow-none" (click)="openXlModal(addAuthority)">
+                        {{'ACTIONS.ADD'|translate}}
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <loto-show-list-authorities
+                    [authorities$]="currentAuthorities$"
+                ></loto-show-list-authorities>
+            </div>
+        </div>
+    </div> -->
+</div>
+
+<ng-template #addAuthority let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" id="mySmallModalLabel">Small modal</h5>
+        <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')" aria-hidden="true"></button>
+    </div>
+    <div class="modal-body text-center">
+        <loto-manage-authority
+            [roleGrantedAuthorities$]="roleGrantedAuthorities$"
+            (onListAuthority)="onListAuthority($event)"
+        ></loto-manage-authority>
+    </div>
+
+</ng-template>

@@ -1,0 +1,10 @@
+{
+    "i18n-ally.localesPaths": [
+        "src/assets/i18n"
+    ],
+<<<<<<< HEAD
+    "liveServer.settings.port": 5501
+=======
+    "i18n-ally.keystyle": "nested"
+>>>>>>> 1a08c3e385c4d771edb2e174dc0a6b00df39b001
+}
