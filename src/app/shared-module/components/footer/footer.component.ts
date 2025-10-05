@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { APP_ENUMS } from 'src/app/core/config/app.enums.config';
 
 @Component({
-  selector: 'willo-footer',
+  selector: 'mfix-footer',
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.css']
 })

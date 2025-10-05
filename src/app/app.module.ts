@@ -3,8 +3,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 
-import { environment } from '../environments/environment';
-
 import { TabsModule } from 'ngx-bootstrap/tabs';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { AccordionModule } from 'ngx-bootstrap/accordion';
@@ -20,12 +18,12 @@ import { SharedModule } from './cyptolanding/shared/shared.module';
 import { LayoutsModule } from './layouts/layouts.module';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { CyptolandingComponent } from './cyptolanding/cyptolanding.component';
+// import { CyptolandingComponent } from './cyptolanding/cyptolanding.component';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { ToastrModule } from 'ngx-toastr';
-import { HomeComponent } from './view/home/home/home.component';
+// import { HomeComponent } from './view/home/home/home.component';
 import { LoginComponent } from './view/authentification/login/login.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AlertModule } from 'ngx-bootstrap/alert';
@@ -37,11 +35,11 @@ import { CoreModule } from './core/core.module';
 import { RegisterComponent } from './view/authentification/register/register.component';
 import { AdminRegisterComponent } from './view/authentification/admin-register/admin-register.component';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
-import { DemandeDevisComponent } from './view/demande-devis/demande-devis.component';
-import { ContacterNousComponent } from './view/contacter-nous/contacter-nous.component';
-import { CgvComponent } from './view/cgv/cgv.component';
-import { ProtectionDonneesComponent } from './view/protection-donnees/protection-donnees.component';
-import { MentionLegaleComponent } from './view/mention-legale/mention-legale.component';
+// import { DemandeDevisComponent } from './view/demande-devis/demande-devis.component';
+// import { ContacterNousComponent } from './view/contacter-nous/contacter-nous.component';
+// import { CgvComponent } from './view/cgv/cgv.component';
+// import { ProtectionDonneesComponent } from './view/protection-donnees/protection-donnees.component';
+// import { MentionLegaleComponent } from './view/mention-legale/mention-legale.component';
 import { ArchwizardModule } from 'angular-archwizard';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import { MatInputModule } from '@angular/material/input';
@@ -62,17 +60,17 @@ export function createTranslateLoader(http: HttpClient): any {
 @NgModule({
   declarations: [
     AppComponent,
-    CyptolandingComponent,
-    HomeComponent,
+    // CyptolandingComponent,
+    // HomeComponent,
     LoginComponent,
     RegisterComponent,
     AdminRegisterComponent,
-    DemandeDevisComponent,
-    ContacterNousComponent,
+    // DemandeDevisComponent,
+    // ContacterNousComponent,
 
-    CgvComponent,
-    ProtectionDonneesComponent,
-    MentionLegaleComponent,
+    // CgvComponent,
+    // ProtectionDonneesComponent,
+    // MentionLegaleComponent,
   ],
   imports: [
     BrowserModule,

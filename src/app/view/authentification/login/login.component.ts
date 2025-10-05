@@ -1,13 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 
 import { AuthenticationService } from '../../../core/services/auth.service';
 import { AuthfakeauthenticationService } from '../../../core/services/authfake.service';
 
 import { ActivatedRoute, Router } from '@angular/router';
-// import { first } from 'rxjs/operators';
 
-// import { environment } from '../../../../environments/environment';
 import { APP_COLORS, APP_ENUMS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
@@ -19,7 +17,6 @@ import { setState } from 'src/app/core/shared/stores/system-init/system-init.act
 import { AuthentificationState } from 'src/app/core/shared/stores/authentification/authentification.state';
 import { selectauthentificationState } from 'src/app/core/core.state';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { setUserProfile } from 'src/app/core/shared/stores/profile/profile.actions';
 
 @Component({
   selector: 'app-login',
@@ -31,7 +28,6 @@ import { setUserProfile } from 'src/app/core/shared/stores/profile/profile.actio
  * Login component
  */
 export class LoginComponent implements OnInit {
-
   loginForm: FormGroup;
   submitted = false;
   error = '';
@@ -145,8 +141,6 @@ export class LoginComponent implements OnInit {
     )
   }
 
-
-
   /**
    * Form submit
    */
@@ -162,6 +156,7 @@ export class LoginComponent implements OnInit {
 
     }
   }
+
   /**
    * Password Hide/Show
    */

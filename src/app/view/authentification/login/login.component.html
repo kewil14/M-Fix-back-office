@@ -7,7 +7,7 @@
     <div class="row justify-content-center">
       <div class="col-md-8 col-lg-6 col-xl-5">
         <div class="card overflow-hidden">
-          <div class="bg-soft bg-secondary">
+          <div class="bg-soft bg-primary">
             <div class="row">
               <div class="col-7">
                 <div class="text-primary p-4">
@@ -57,7 +57,7 @@
 
                     <button class="btn btn-light ms-0" type="button" id="password-addon"><i
                         class="mdi mdi-eye-outline" [ngClass]="{'mdi-eye-off-outline': !fieldTextType, 'mdi-eye-outline': fieldTextType
-                                            }" (click)="toggleFieldTextType()" ></i></button>
+                        }" (click)="toggleFieldTextType()" ></i></button>
                     <div *ngIf="submitted && f.password.errors" class="invalid-feedback">
                       <span *ngIf="f.password.errors.required">Password is required</span>
                     </div>
@@ -72,7 +72,6 @@
               </div>
 
                 <div class="mt-3 d-grid">
-                  <!-- <button class="btn btn-success" type="submit">Log In</button> -->
                   <button type="button" class="btn btn-success btn-load btn-center"  type="submit">
                     <span *ngIf="!submitted || (authentificationState$|async)?.dataState !== dataStateEnum.LOADING ">{{'MESSAGES.AUTH.FORM.SIGN' | translate}}</span>
                     <span *ngIf="submitted && (authentificationState$|async)?.dataState == dataStateEnum.LOADING" class="d-flex align-items-center justify-content-center">
@@ -80,7 +79,7 @@
                     </span>
                   </button>
                 </div>
-                <div class="mt-4 text-center">
+                <!-- <div class="mt-4 text-center">
                   <h5 class="font-size-14 mb-3">Sign in with</h5>
 
                   <ul class="list-inline">
@@ -90,7 +89,8 @@
                       </a>
                     </li>
                   </ul>
-                </div>
+                </div> -->
+                
                 <div class="mt-4 text-center">
                   <a routerLink="/account/reset-password" class="text-muted"><i class="mdi mdi-lock mr-1"></i> Forgot
                     your
@@ -107,7 +107,7 @@
             </a>
           </p>
 
-          <willo-footer></willo-footer>
+          <mfix-footer></mfix-footer>
 
         </div>
 

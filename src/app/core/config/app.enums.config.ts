@@ -1,8 +1,8 @@
 
 export const APP_ENUMS ={
-  PREFIX_TOKEN: 'WILLO-TOKEN',
+  PREFIX_TOKEN: 'MFIX-TOKEN',
   PREFIX_LOCAL_LANG: 'lang',
-  PREFIX_USER: 'willo-user',
+  PREFIX_USER: 'mfix-user',
 
   
 
@@ -13,7 +13,7 @@ export const APP_ENUMS ={
 
   // company name
   COMPANY_NAME: 'solution company',
-  CLIENT_COMPANY_NAME: 'willo demenagement',
+  CLIENT_COMPANY_NAME: 'mfix electronics',
 }
 
 export const APP_COLORS = {
