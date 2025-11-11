@@ -7,7 +7,6 @@ import { CustomersComponent } from './customers/customers.component';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalModule } from 'ngx-bootstrap/modal';
-import { GrilleComponent } from './grille/grille.component';
 import { UIModule } from 'src/app/shared/ui/ui.module';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
@@ -26,7 +25,6 @@ import { TranslateModule } from '@ngx-translate/core';
   declarations: [
     DashboardComponent,
     CustomersComponent,
-    GrilleComponent,
   ],
   imports: [
     CommonModule,

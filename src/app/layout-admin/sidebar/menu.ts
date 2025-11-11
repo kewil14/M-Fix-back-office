@@ -26,7 +26,7 @@ export const MENU: MenuItem[] = [
 
     {
         id: 9,
-        label: 'Devis',
+        label: '',
         isTitle: true
     },
     {
@@ -35,32 +35,7 @@ export const MENU: MenuItem[] = [
         icon: 'bx-envelope',
         link: '/admin/devis/demande',
     },
-    {
-        id: 11,
-        label: 'Devis',
-        icon: 'bx-file',
-        link: '/admin/devis',
-    },
-    {
-        id: 91,
-        label: 'Grille tarifaire',
-        icon: 'bx-file',
-        link: '/admin/grille',
-    },
-
-    {
-        id: 12,
-        label: 'Avis',
-        isTitle: true
-    },
-    {
-        id: 13,
-        label: 'Avis',
-        icon: 'bx-star',
-        link: '/admin/avis',
-    },
-
-
+    
     {
         id: 66,
         label: 'users',
@@ -79,16 +54,41 @@ export const MENU: MenuItem[] = [
             },
             {
                 id: 69,
-                label: 'Role',
+                label: 'Employe',
                 link: '/admin/autorisation/role',
                 parentId: 67
             },
             {
                 id: 70,
-                label: 'Autorisation',
+                label: 'Administrateurs',
                 link: '/admin/autorisation',
                 parentId: 67
             },
+        ]
+    },
+
+    {
+        id: 76,
+        label: 'Permissions',
+        isTitle: true
+    },
+    {
+        id: 77,
+        label: 'Permissions',
+        icon: 'bx-user-circle',
+        subItems: [
+            {
+                id: 78,
+                label: 'Role',
+                link: '',
+                parentId: 67
+            },
+            {
+                id: 79,
+                label: 'Autorisation',
+                link: '',
+                parentId: 67
+            }
         ]
     },
     
