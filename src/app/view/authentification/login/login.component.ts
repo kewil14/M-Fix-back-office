@@ -83,7 +83,7 @@ export class LoginComponent implements OnInit {
 
   initLoginForm(): void {
     this.loginForm = this.formBuilder.group({
-      login: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],
     });
   }
@@ -102,31 +102,31 @@ export class LoginComponent implements OnInit {
 
       this.actionService.pipe(ofType(connexionOk)).subscribe(
         ({typeUser}) => {
-          // this.localStorageService.setCurrentTokenValueFin(typeUser?.token || '');
+          console.log('Connexion réussie, utilisateur:', typeUser);
           this.messages$.next(
             {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'connexion reussi' , dismissible: false}
           );
-          // this.username$.next({position: 'top-end', icon: APP_COLORS.SUCCESS, title: typeUser?.userEmail,timer: 1500});
-          // this.isShow= true;
 
-          let role = typeUser?.roles?.find(value => value)?.roleCode;
+          // Récupération du rôle - accéder au premier rôle du tableau
+          let role = typeUser?.roles?.[0]?.roleCode;
+          console.log('Rôle détecté:', role);
 
-         // let fonction = typeUser?.fonction?.find(value => value)?.roleCode;
-          // setTimeout(() => {
-            // this.isLoading = true;
-            setTimeout(() =>{
-              if (role == ListRoles.ROL_USER) {
-                // this.storeService.dispatch(setUserProfile({user: typeUser}));
-                
-                this.router.navigateByUrl("/");
-                
-              }
-              else if( role == ListRoles.ROL_ADMIN) this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_ADMIN);
-              else{
-                console.log('role non reconnu');
-              }
-
-            }, 3000);
+          // Redirection immédiate ou avec un court délai pour afficher le message
+          setTimeout(() => {
+            if (role == ListRoles.ROL_USER) {
+              console.log('Redirection vers page utilisateur');
+              this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_USER || "/");
+            }
+            else if (role == ListRoles.ROL_ADMIN) {
+              console.log('Redirection vers page admin');
+              this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_ADMIN);
+            }
+            else {
+              console.log('Rôle non reconnu:', role, 'Roles disponibles:', typeUser?.roles);
+              // Redirection par défaut vers le dashboard admin si le rôle n'est pas reconnu
+              this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_ADMIN);
+            }
+          }, 1000);
         }
       ),
 

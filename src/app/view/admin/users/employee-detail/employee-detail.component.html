@@ -1,0 +1,139 @@
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header border-bottom bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4 class="card-title mb-0">
+            <i class="ri-user-line me-2 text-primary"></i>Détails de l'Employé
+          </h4>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light" (click)="onBack()">
+              <i class="ri-arrow-left-line me-1"></i>Retour
+            </button>
+            <button type="button" class="btn btn-warning" (click)="onEdit()" *ngIf="employee">
+              <i class="ri-edit-line me-1"></i>Modifier
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="employee">
+        <!-- Informations principales -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+              <div class="employee-icon me-3">
+                <i class="ri-user-line"></i>
+              </div>
+              <div>
+                <h3 class="mb-1">{{ employee.firstName }} {{ employee.lastName }}</h3>
+                <div class="d-flex gap-2 align-items-center">
+                  <span class="badge bg-primary">{{ employee.type || 'EMPLOYEE' }}</span>
+                  <span class="badge" [ngClass]="employee.isActive ? 'bg-success' : 'bg-danger'">
+                    {{ employee.isActive ? 'Actif' : 'Inactif' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 text-end">
+            <div class="employee-stats">
+              <div class="stat-item">
+                <div class="stat-value">{{ employee.roles?.length || 0 }}</div>
+                <div class="stat-label">Rôles</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations de contact -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-mail-line me-2"></i>Email
+              </label>
+              <div class="info-value">{{ employee.email }}</div>
+              <div class="mt-1">
+                <span class="badge" [ngClass]="employee.isEmailVerified ? 'bg-success' : 'bg-warning'">
+                  {{ employee.isEmailVerified ? 'Vérifié' : 'Non vérifié' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-phone-line me-2"></i>Téléphone
+              </label>
+              <div class="info-value">{{ employee.phoneNumber || 'N/A' }}</div>
+              <div class="mt-1" *ngIf="employee.phoneNumber">
+                <span class="badge" [ngClass]="employee.isPhoneVerified ? 'bg-success' : 'bg-warning'">
+                  {{ employee.isPhoneVerified ? 'Vérifié' : 'Non vérifié' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations supplémentaires -->
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-user-name me-2"></i>Nom d'utilisateur
+              </label>
+              <div class="info-value">{{ employee.username || 'N/A' }}</div>
+            </div>
+          </div>
+          <div class="col-md-4" *ngIf="employee.birthDate">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-calendar-line me-2"></i>Date de naissance
+              </label>
+              <div class="info-value">{{ employee.birthDate | date: 'dd/MM/yyyy' }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-time-line me-2"></i>Dernière connexion
+              </label>
+              <div class="info-value">{{ employee.lastLoginAt ? (employee.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : 'Jamais' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rôles -->
+        <div class="row mt-4" *ngIf="employee.roles && employee.roles.length > 0">
+          <div class="col-12">
+            <div class="card border shadow-sm">
+              <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h5 class="mb-0">
+                    <i class="ri-shield-check-line me-2"></i>Rôles assignés
+                  </h5>
+                  <span class="badge bg-light text-dark">{{ employee.roles.length }} rôle(s)</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                  <div *ngFor="let role of employee.roles" class="role-badge">
+                    <i class="ri-shield-user-line me-1"></i>
+                    <span>{{ role.name || role.code }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body text-center" *ngIf="!employee">
+        <div class="text-muted py-5">
+          <i class="ri-error-warning-line" style="font-size: 48px;"></i>
+          <p class="mt-2 mb-0">Employé non trouvé</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

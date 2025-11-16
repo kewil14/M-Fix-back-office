@@ -1,0 +1,188 @@
+<div class="modal-header">
+  <h5 class="modal-title mt-0">Créer Employé</h5>
+  <button type="button" class="btn-close" aria-hidden="true" (click)="bsModalRef?.hide()"></button>
+</div>
+<div class="modal-body">
+  <loto-message-alert [messages$]="messages$"></loto-message-alert>
+  
+  <form (ngSubmit)="onSubmit()" [formGroup]="employeeForm">
+    <div class="row">
+      <div class="col-12">
+        <h6 class="mb-3">Informations de base</h6>
+        
+        <div class="mb-3">
+          <label class="control-label">Type d'employé <span class="text-danger">*</span></label>
+          <select class="form-control" formControlName="userType"
+                  [ngClass]="{'is-invalid': submitted && f.userType.errors}">
+            <option *ngFor="let type of employeeTypes" [value]="type.value">{{type.label}}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Email <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="employee@techrepair.fr" type="email" 
+                 formControlName="email"
+                 [ngClass]="{'is-invalid': submitted && f.email.errors}" />
+          <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
+            <span *ngIf="f.email.errors.required">Email requis</span>
+            <span *ngIf="f.email.errors.email">Email invalide</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Prénom <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Lucas" type="text" 
+                 formControlName="firstName"
+                 [ngClass]="{'is-invalid': submitted && f.firstName.errors}" />
+          <div *ngIf="submitted && f.firstName.errors" class="invalid-feedback">
+            <span *ngIf="f.firstName.errors.required">Prénom requis</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Nom <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Bernard" type="text" 
+                 formControlName="lastName"
+                 [ngClass]="{'is-invalid': submitted && f.lastName.errors}" />
+          <div *ngIf="submitted && f.lastName.errors" class="invalid-feedback">
+            <span *ngIf="f.lastName.errors.required">Nom requis</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Workspace ID <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="WS1730456000000" type="text" 
+                 formControlName="workspaceId"
+                 [ngClass]="{'is-invalid': submitted && f.workspaceId.errors}" />
+          <div *ngIf="submitted && f.workspaceId.errors" class="invalid-feedback">
+            <span *ngIf="f.workspaceId.errors.required">Workspace ID requis</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Shop ID</label>
+          <input class="form-control" placeholder="SHOP1730456100000" type="text" 
+                 formControlName="shopId" />
+        </div>
+
+        <hr class="my-4" *ngIf="currentUserType">
+        <h6 class="mb-3" *ngIf="currentUserType">Champs spécifiques</h6>
+
+        <!-- Champs pour EMPLOYEE -->
+        <div *ngIf="currentUserType === 'EMPLOYEE'">
+          <div class="mb-3">
+            <label class="control-label">Code Employé <span class="text-danger">*</span></label>
+            <input class="form-control" placeholder="EMP001" type="text" 
+                   formControlName="employeeCode"
+                   [ngClass]="{'is-invalid': submitted && f.employeeCode.errors}" />
+            <div *ngIf="submitted && f.employeeCode.errors" class="invalid-feedback">
+              <span *ngIf="f.employeeCode.errors.required">Code employé requis</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="control-label">Département</label>
+            <input class="form-control" placeholder="Ventes" type="text" 
+                   formControlName="department" />
+          </div>
+        </div>
+
+        <!-- Champs pour SHOP_MANAGER -->
+        <div *ngIf="currentUserType === 'SHOP_MANAGER'">
+          <div class="mb-3">
+            <label class="control-label">Niveau Manager <span class="text-danger">*</span></label>
+            <select class="form-control" formControlName="managerLevel"
+                    [ngClass]="{'is-invalid': submitted && f.managerLevel.errors}">
+              <option value="">Sélectionner...</option>
+              <option *ngFor="let level of managerLevels" [value]="level">{{level}}</option>
+            </select>
+            <div *ngIf="submitted && f.managerLevel.errors" class="invalid-feedback">
+              <span *ngIf="f.managerLevel.errors.required">Niveau manager requis</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Champs pour TECHNICIAN -->
+        <div *ngIf="currentUserType === 'TECHNICIAN'">
+          <div class="mb-3">
+            <label class="control-label">Spécialisation <span class="text-danger">*</span></label>
+            <input class="form-control" placeholder="Smartphones" type="text" 
+                   formControlName="specialization"
+                   [ngClass]="{'is-invalid': submitted && f.specialization.errors}" />
+            <div *ngIf="submitted && f.specialization.errors" class="invalid-feedback">
+              <span *ngIf="f.specialization.errors.required">Spécialisation requise</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="control-label">Certifications</label>
+            <input class="form-control" placeholder="Apple Certified, Samsung Certified" type="text" 
+                   formControlName="certifications" />
+          </div>
+
+          <div class="mb-3">
+            <label class="control-label">Niveau de compétence (1-5)</label>
+            <input class="form-control" type="number" min="1" max="5" 
+                   formControlName="skillLevel"
+                   [ngClass]="{'is-invalid': submitted && f.skillLevel.errors}" />
+            <div *ngIf="submitted && f.skillLevel.errors" class="invalid-feedback">
+              <span *ngIf="f.skillLevel.errors.min || f.skillLevel.errors.max">Niveau entre 1 et 5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Champs pour DELIVERER -->
+        <div *ngIf="currentUserType === 'DELIVERER'">
+          <div class="mb-3">
+            <label class="control-label">Type de véhicule <span class="text-danger">*</span></label>
+            <select class="form-control" formControlName="vehicleType"
+                    [ngClass]="{'is-invalid': submitted && f.vehicleType.errors}">
+              <option value="">Sélectionner...</option>
+              <option *ngFor="let vehicle of vehicleTypes" [value]="vehicle">{{vehicle}}</option>
+            </select>
+            <div *ngIf="submitted && f.vehicleType.errors" class="invalid-feedback">
+              <span *ngIf="f.vehicleType.errors.required">Type de véhicule requis</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="control-label">Numéro de permis <span class="text-danger">*</span></label>
+            <input class="form-control" placeholder="AB-123-CD" type="text" 
+                   formControlName="licenseNumber"
+                   [ngClass]="{'is-invalid': submitted && f.licenseNumber.errors}" />
+            <div *ngIf="submitted && f.licenseNumber.errors" class="invalid-feedback">
+              <span *ngIf="f.licenseNumber.errors.required">Numéro de permis requis</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="control-label">Zones de livraison (JSON)</label>
+            <textarea class="form-control" placeholder='["Lyon Centre", "Lyon 2", "Lyon 3"]' 
+                      formControlName="deliveryZones" rows="3"></textarea>
+            <small class="form-text text-muted">Format JSON: ["Zone1", "Zone2"]</small>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+          <small>ℹ️ Un email d'invitation avec un mot de passe temporaire sera envoyé à l'employé. Le token est valide 7 jours.</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-end">
+      <button type="button" class="btn btn-danger" (click)="closeModal()">
+        Annuler
+      </button>
+      <button type="submit" class="btn btn-success btn-load btn-center ms-2">
+        <span *ngIf="!submitted || (authentificationState$|async)?.dataState !== dataStateEnum.LOADING">
+          Créer Employé
+        </span>
+        <span *ngIf="submitted && (authentificationState$|async)?.dataState == dataStateEnum.LOADING" 
+              class="d-flex align-items-center justify-content-center">
+          <span class="spinner-border flex-shrink-0" role="status"></span>
+        </span>
+      </button>
+    </div>
+  </form>
+</div>
+

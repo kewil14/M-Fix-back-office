@@ -1,0 +1,221 @@
+<ng-container *ngIf="(adminState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+    <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header border-bottom">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h4 class="card-title mb-0">Modifier l'Administrateur</h4>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" (click)="onCancel()">
+                      <i class="mdi mdi-close me-1"></i> Annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <form [formGroup]="adminForm" (ngSubmit)="onSubmit()">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Email <span class="text-danger">*</span></label>
+                      <input 
+                        type="email" 
+                        class="form-control" 
+                        formControlName="email"
+                        [class.is-invalid]="submitted && f['email'].errors">
+                      <div class="invalid-feedback" *ngIf="submitted && f['email'].errors">
+                        <span *ngIf="f['email'].errors?.['required']">L'email est requis</span>
+                        <span *ngIf="f['email'].errors?.['email']">L'email n'est pas valide</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Téléphone</label>
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        formControlName="phoneNumber"
+                        placeholder="+33 6 12 34 56 78">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        formControlName="firstName"
+                        [class.is-invalid]="submitted && f['firstName'].errors">
+                      <div class="invalid-feedback" *ngIf="submitted && f['firstName'].errors">
+                        Le prénom est requis
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Nom <span class="text-danger">*</span></label>
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        formControlName="lastName"
+                        [class.is-invalid]="submitted && f['lastName'].errors">
+                      <div class="invalid-feedback" *ngIf="submitted && f['lastName'].errors">
+                        Le nom est requis
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Date de naissance</label>
+                      <input 
+                        type="date" 
+                        class="form-control" 
+                        formControlName="birthDate">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Avatar</label>
+                      <div class="avatar-upload-compact">
+                        <div class="d-flex align-items-center gap-3">
+                          <!-- Preview de l'avatar -->
+                          <div class="avatar-preview-small" *ngIf="avatarPreview">
+                            <img [src]="avatarPreview" alt="Avatar" class="avatar-img-small">
+                            <button type="button" class="btn btn-sm btn-danger avatar-remove-btn-small" (click)="removeAvatar()" title="Supprimer">
+                              <i class="mdi mdi-close"></i>
+                            </button>
+                          </div>
+                          <div class="avatar-placeholder-small" *ngIf="!avatarPreview">
+                            <i class="mdi mdi-account-circle" style="font-size: 60px; color: #dee2e6;"></i>
+                          </div>
+                          
+                          <!-- Zone de drag & drop compacte -->
+                          <div class="flex-grow-1">
+                            <div class="dropzone-compact" 
+                                 (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                                 (dragenter)="$event.preventDefault(); $event.stopPropagation()"
+                                 (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                                 (drop)="$event.preventDefault(); $event.stopPropagation(); onFileDropped($event.dataTransfer.files)">
+                              <div *ngIf="!isUploadingAvatar" class="d-flex align-items-center gap-2">
+                                <label class="btn btn-sm btn-outline-primary mb-0">
+                                  <i class="mdi mdi-upload me-1"></i>
+                                  <span *ngIf="!avatarPreview">Choisir une image</span>
+                                  <span *ngIf="avatarPreview">Remplacer</span>
+                                  <input type="file" 
+                                         accept="image/*" 
+                                         style="display: none;"
+                                         (change)="onFileSelected($event)">
+                                </label>
+                                <span class="text-muted small" *ngIf="!avatarPreview">ou glissez-déposez ici</span>
+                                <span class="text-success small" *ngIf="avatarPreview && !isUploadingAvatar">
+                                  <i class="mdi mdi-check-circle me-1"></i>Uploadé
+                                </span>
+                              </div>
+                              <div *ngIf="isUploadingAvatar" class="d-flex align-items-center gap-2">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                  <span class="visually-hidden">Upload...</span>
+                                </div>
+                                <span class="text-muted small">Upload en cours...</span>
+                              </div>
+                            </div>
+                            <small class="text-muted">JPG, PNG, GIF (max 5MB)</small>
+                          </div>
+                        </div>
+                        <input type="hidden" formControlName="avatar">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Langue préférée</label>
+                      <select class="form-select" formControlName="preferredLanguage">
+                        <option value="">Sélectionner une langue</option>
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Fuseau horaire</label>
+                      <ng-select 
+                        [items]="timezones" 
+                        bindLabel="label" 
+                        bindValue="value" 
+                        formControlName="timezone"
+                        placeholder="Sélectionner un fuseau horaire..."
+                        [clearable]="true"
+                        [searchable]="true">
+                      </ng-select>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="mb-3">
+                      <label class="form-label">Rôles</label>
+                      <ng-select 
+                        [items]="(roleState$|async)?.rules || []" 
+                        [multiple]="true" 
+                        bindLabel="name" 
+                        bindValue="id" 
+                        formControlName="roleIds"
+                        placeholder="Sélectionner les rôles..."
+                        [clearable]="true"
+                        [searchable]="true"
+                        [closeOnSelect]="false"
+                        [loading]="(roleState$|async)?.dataState === dataStateEnum.LOADING">
+                        <ng-template ng-label-tmp let-item="item">
+                          <span class="badge bg-primary me-1">{{item.name || item.roleName}}</span>
+                        </ng-template>
+                      </ng-select>
+                      <small class="form-text text-muted">
+                        <i class="ri-information-line me-1"></i>
+                        Sélectionnez les rôles à assigner à cet administrateur.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-end gap-2">
+                      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+                        Annuler
+                      </button>
+                      <button 
+                        type="submit" 
+                        class="btn btn-primary"
+                        [disabled]="submitted && state.dataState === dataStateEnum.LOADING">
+                        <span *ngIf="!submitted || state.dataState !== dataStateEnum.LOADING">
+                          <i class="mdi mdi-content-save me-1"></i> Enregistrer
+                        </span>
+                        <span *ngIf="submitted && state.dataState === dataStateEnum.LOADING" class="d-flex align-items-center">
+                          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                          Enregistrement...
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngSwitchDefault>
+    <loto-message-alert [messages]="messages$ | async"></loto-message-alert>
+  </ng-container>
+</ng-container>
+

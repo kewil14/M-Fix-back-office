@@ -1,0 +1,142 @@
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header border-bottom bg-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4 class="card-title mb-0">
+            <i class="ri-shield-user-line me-2 text-primary"></i>Détails du Rôle
+          </h4>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light" (click)="onBack()">
+              <i class="ri-arrow-left-line me-1"></i>Retour
+            </button>
+            <button type="button" class="btn btn-warning" (click)="onEdit()" *ngIf="role">
+              <i class="ri-edit-line me-1"></i>Modifier
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="role">
+        <!-- Informations principales -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+              <div class="role-icon me-3">
+                <i class="ri-shield-user-line"></i>
+              </div>
+              <div>
+                <h3 class="mb-1">{{ role.name || role.roleName || 'N/A' }}</h3>
+                <span class="badge bg-primary fs-6">{{ role.code || role.roleCode || 'N/A' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 text-end">
+            <div class="role-stats">
+              <div class="stat-item">
+                <div class="stat-value">{{ (role.permissions?.length || role.authorisations?.length || 0) }}</div>
+                <div class="stat-label">Permissions</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-file-text-line me-2"></i>Description
+              </label>
+              <div class="info-value">{{ role.description || role.roleDescription || 'Aucune description' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métadonnées -->
+        <div class="row">
+          <div class="col-md-4">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-shield-star-line me-2"></i>Type de rôle
+              </label>
+              <div>
+                <span class="badge" [ngClass]="role.isSystemRole ? 'bg-danger' : 'bg-success'">
+                  <i [class]="role.isSystemRole ? 'ri-lock-line me-1' : 'ri-user-settings-line me-1'"></i>
+                  {{ role.isSystemRole ? 'Rôle système' : 'Rôle personnalisé' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4" *ngIf="role.priority !== undefined">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-sort-asc me-2"></i>Priorité
+              </label>
+              <div class="info-value">{{ role.priority }}</div>
+            </div>
+          </div>
+          <div class="col-md-4" *ngIf="role.workspaceId">
+            <div class="info-card">
+              <label class="info-label">
+                <i class="ri-building-line me-2"></i>Workspace ID
+              </label>
+              <div class="info-value text-truncate">{{ role.workspaceId }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card border shadow-sm">
+              <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                  <h5 class="mb-0">
+                    <i class="ri-shield-check-line me-2"></i>Permissions associées
+                  </h5>
+                  <span class="badge bg-light text-dark">{{ getTotalPermissions(availableGroupAuthorities$ | async) }} permission(s)</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div *ngIf="availableGroupAuthorities$ | async as groups; else noPermissions">
+                  <div *ngFor="let group of groups" class="permission-group mb-4">
+                    <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                      <div class="group-icon me-2">
+                        <i class="ri-folder-3-fill"></i>
+                      </div>
+                      <h6 class="mb-0 fw-semibold text-primary">{{ group.group || 'Autres' }}</h6>
+                      <span class="badge bg-primary-subtle text-primary ms-2">{{ group.items?.length || 0 }}</span>
+                    </div>
+                    <div class="permissions-list">
+                      <div class="d-flex flex-wrap gap-2">
+                        <div *ngFor="let item of group.items" class="permission-badge">
+                          <i class="ri-checkbox-circle-fill me-1"></i>
+                          <span>{{ item.authorisationName }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <ng-template #noPermissions>
+                  <div class="text-center text-muted py-5">
+                    <div class="empty-state-icon mb-3">
+                      <i class="ri-shield-line"></i>
+                    </div>
+                    <h6 class="mb-2">Aucune permission associée</h6>
+                    <p class="text-muted mb-0">Ce rôle n'a pas encore de permissions assignées</p>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body text-center" *ngIf="!role">
+        <div class="text-muted py-5">
+          <i class="ri-error-warning-line" style="font-size: 48px;"></i>
+          <p class="mt-2 mb-0">Rôle non trouvé</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

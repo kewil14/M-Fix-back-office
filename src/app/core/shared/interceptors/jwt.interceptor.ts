@@ -11,10 +11,9 @@ import { LocalStorageService } from '../services/local-storage.service';
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
     private excludedUrls: string[] = [
+        '/api/auth/login',
         '/api/authentication/login',
         '/api/initialisation/check-system-state',
-        '/api/authorisations/all',
-        '/api/roles/findAll',
         '/api/authentication/createAccount',
         // '/api/users/',
         // '/api/'

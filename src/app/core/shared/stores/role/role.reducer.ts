@@ -2,7 +2,7 @@ import { RoleState } from "./role.state";
 import { setRole, deleteRole, addRole, loadRole, erreurRoles,
     setRoleItem, deleteRoleItem, addRoleItem, loadRoleItem,
     findAllRoleItem, findAllRoleItemByType, findRoleByUser,
-    updateRoleItem, findAllRoles, findRoleByIdRef, findRoleByType,
+    updateRoleItem, findRoleByIdRef, findRoleByType,
     findRoleById, createRoleAdmin, updateRole, getRoleItemByGroup, loadRoleByGroup, findAllRoleItemSaas,
     findAllRolesSaasAdmin
 } from './role.actions';
@@ -35,11 +35,12 @@ const reducer = createReducer(initState,
     //     return {...state, items: list, roleItem: roleItem, dataState: DataStateEnum.SUCCESS, messages: ''}
     //   }),
 
-    // on(deleteRole, (state, {role}) => {
-    //   let roles = [...state.rules];
-    //   let list: Array<RoleFin> = roles.filter((item) => item.roleCode != role.roleCode);
-    //   return {...state, rules: list, rule: role, dataState: DataStateEnum.SUCCESS, messages: ''}
-    // }),
+    on(deleteRole, (state, {role}) => {
+      let roles = [...state.rules];
+      const roleId = (role as any).id || role.roleCode;
+      let list = roles.filter((item) => ((item as any).id || item.roleCode) !== roleId);
+      return {...state, rules: list, rule: role, dataState: DataStateEnum.SUCCESS, messages: ''}
+    }),
 
     // on(deleteRoleItem, (state, {roleItem}) => {
     //     let roles = [...state.items];
@@ -68,7 +69,7 @@ const reducer = createReducer(initState,
     on(erreurRoles, (state, {messages}) => ({...state, dataState: DataStateEnum.ERROR, messages: messages})),
 
     on( findAllRoleItem, findAllRoleItemByType, findRoleByUser,
-    updateRoleItem, findAllRoles, findRoleByIdRef, findRoleByType, getRoleItemByGroup,
+    updateRoleItem, findRoleByIdRef, findRoleByType, getRoleItemByGroup,
     findRoleById, createRoleAdmin, updateRole, findAllRoleItemSaas,
     findAllRolesSaasAdmin, 
     state => ({ ...state, dataState: DataStateEnum.LOADING, messages: '' }))

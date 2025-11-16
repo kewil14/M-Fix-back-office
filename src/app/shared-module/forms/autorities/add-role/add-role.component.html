@@ -1,57 +1,137 @@
-    <form (ngSubmit)="createRole()" [formGroup]="roleForm"> 
-
-    <div class="row ">
-       
-      <div class="col-lg-12">
-          <div class="mb-3">
-              <label for="name" class="form-label">Nom</label>
-              <input type="text" class="form-control" id="name"
-                  formControlName="name"
-                  [ngClass]="{'is-invalid': isRoleSubmitted && role['name'].errors}" placeholder="Nom">
-              <div *ngIf="isRoleSubmitted && role['name'].errors" class="invalid-feedback">
-                  <div *ngIf="role['name'].errors!['required']">{{'MESSAGES.ERRORS.REQUIRED' | translate | titlecase }}</div>
-                  <div *ngIf="role['name'].errors!['minlength']"> {{'MESSAGES.ERRORS.SIZE-NIM' | translate | titlecase }} </div>
-                  <div *ngIf="role['name'].errors!['maxlength']"> {{'MESSAGES.ERRORS.SIZE-MAX' | translate | titlecase }} </div>
-              </div>
-          </div>
-      </div>
-  
-      <div class="col-lg-12">
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea rows="5" type="text" class="form-control" id="description"
-                formControlName="description"
-                [ngClass]="{'is-invalid': isRoleSubmitted && role['description'].errors}" placeholder="Description" ></textarea>
-            <div *ngIf="isRoleSubmitted && role['description'].errors" class="invalid-feedback">
-                <div *ngIf="role['description'].errors!['required']">{{'MESSAGES.ERRORS.REQUIRED' | translate | titlecase }}</div>
-                <div *ngIf="role['description'].errors!['minlength']"> {{'MESSAGES.ERRORS.SIZE-NIM' | translate | titlecase }} </div>
-                <div *ngIf="role['description'].errors!['maxlength']"> {{'MESSAGES.ERRORS.SIZE-MAX' | translate | titlecase }} </div>
-            </div>
-        </div>
-    </div>
-    </div>
+<form (ngSubmit)="updateRole()" [formGroup]="roleForm">
+  <div class="row">
     <div class="col-lg-12">
-        <div class="col-lg-12 col-md-6">
-            <div class="mb-3">
-              
-                    <label for="choices-multiple-groups" class="form-label">Aurhorisations</label>
-                <ng-select [items]="(autorisationState$|async).ruleItems" [multiple]="true" bindLabel="authorisationName" bindValue="authorisationKey" formControlName="authorisationKeys"
-                   >
-                    <ng-template ng-optgroup-tmp let-item="item">
-                        {{item.authorisationName}}
-                    </ng-template>
-                </ng-select>
-            </div>
-           
+      <div class="card border">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Informations du rôle</h5>
         </div>
-    
-    </div>
-     
-    <div class="text-end mt-2">
-          <div class="hstack justify-content-end gap-2">
-              <button type="button" class="btn btn-ghost-danger"(click)="cancel()"><i
-                      class="ri-close-line align-bottom"></i> Annuler </button>
-              <button type="submit" class="btn" [ngClass]="{'btn-success': operattion == operationEnum.CREATE, 'btn-warning': operattion == operationEnum.UPDATE}">{{operattion == operationEnum.CREATE ?  ("Enregistrer") : ("modifier")}}</button>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="name" class="form-label">
+                  Nom du rôle <span class="text-danger">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="name"
+                  formControlName="name"
+                  [ngClass]="{'is-invalid': isRoleSubmitted && role['name'].errors}"
+                  placeholder="Ex: Administrateur"
+                  (blur)="onNameBlur()">
+                <div *ngIf="isRoleSubmitted && role['name'].errors" class="invalid-feedback">
+                  <div *ngIf="role['name'].errors!['required']">Le nom est requis</div>
+                  <div *ngIf="role['name'].errors!['minlength']">Le nom doit contenir au moins 4 caractères</div>
+                  <div *ngIf="role['name'].errors!['maxlength']">Le nom ne doit pas dépasser 20 caractères</div>
+                </div>
+                <small class="form-text text-muted">Le nom doit être unique et descriptif. Le code sera généré automatiquement à partir du nom.</small>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="code" class="form-label">
+                  Code du rôle <span class="text-muted">(auto-généré)</span>
+                </label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="code"
+                  formControlName="code"
+                  placeholder="Généré automatiquement à partir du nom"
+                  (blur)="onCodeBlur()"
+                  style="text-transform: uppercase;"
+                  readonly>
+                <small class="form-text text-muted">
+                  <i class="ri-information-line me-1"></i>
+                  Le code est généré automatiquement à partir du nom du rôle en majuscules avec underscores.
+                </small>
+              </div>
+            </div>
           </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="mb-3">
+                <label for="description" class="form-label">
+                  Description <span class="text-danger">*</span>
+                </label>
+                <textarea 
+                  rows="4" 
+                  class="form-control" 
+                  id="description"
+                  formControlName="description"
+                  [ngClass]="{'is-invalid': isRoleSubmitted && role['description'].errors}"
+                  placeholder="Décrivez le rôle et ses responsabilités..."></textarea>
+                <div *ngIf="isRoleSubmitted && role['description'].errors" class="invalid-feedback">
+                  <div *ngIf="role['description'].errors!['required']">La description est requise</div>
+                  <div *ngIf="role['description'].errors!['minlength']">La description doit contenir au moins 4 caractères</div>
+                  <div *ngIf="role['description'].errors!['maxlength']">La description ne doit pas dépasser 200 caractères</div>
+                </div>
+                <small class="form-text text-muted">Décrivez clairement les responsabilités et les permissions de ce rôle</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </form>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-lg-12">
+      <div class="card border">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Permissions</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+              <label for="authorisationKeys" class="form-label">
+                Sélectionner les permissions <span class="text-muted">(optionnel)</span>
+              </label>
+              <ng-select 
+                [items]="(autorisationState$|async)?.ruleItems || []" 
+                [multiple]="true" 
+                bindLabel="authorisationName" 
+                bindValue="authorisationKey" 
+                formControlName="authorisationKeys"
+                placeholder="Sélectionner les permissions..."
+                [clearable]="true"
+                [searchable]="true"
+                [closeOnSelect]="false"
+                [loading]="(autorisationState$|async)?.dataState === dataStateEnum.LOADING">
+                <ng-template ng-optgroup-tmp let-item="item">
+                  {{item.authorisationName}}
+                </ng-template>
+                <ng-template ng-label-tmp let-item="item">
+                  <span class="badge bg-primary me-1">{{item.authorisationName}}</span>
+                </ng-template>
+              </ng-select>
+              <small class="form-text text-muted">
+                <i class="ri-information-line me-1"></i>
+                Sélectionnez les permissions que ce rôle doit avoir. Vous pourrez les modifier plus tard.
+              </small>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-light" (click)="cancel()">
+          <i class="ri-close-line align-bottom me-1"></i>Annuler
+        </button>
+        <button 
+          type="submit" 
+          class="btn" 
+          [ngClass]="{'btn-success': operattion == operationEnum.CREATE, 'btn-warning': operattion == operationEnum.UPDATE}"
+          [disabled]="loading$.value">
+          <i class="ri-save-line align-bottom me-1"></i>
+          {{operattion == operationEnum.CREATE ? 'Enregistrer' : 'Modifier'}}
+        </button>
+      </div>
+    </div>
+  </div>
+</form>

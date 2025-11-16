@@ -18,8 +18,9 @@ export class LocalStorageService {
 
   constructor(
   ) {
-    // this.currentTokenSubject = new BehaviorSubject<AuthentificationDto>(JSON.parse(localStorage.getItem(APP_ENUMS.PREFIX_TOKEN) || '{}'));
-    this.currentTokenFinSubject = new BehaviorSubject<string | undefined>('');
+    // Initialiser le token depuis localStorage au démarrage
+    const storedToken = localStorage.getItem(APP_ENUMS.PREFIX_TOKEN) || '';
+    this.currentTokenFinSubject = new BehaviorSubject<string | undefined>(storedToken || undefined);
     this.currentUserSubject = new BehaviorSubject<User | undefined>({});
     
     this.currentToken = this.currentTokenFinSubject.asObservable();
@@ -39,14 +40,25 @@ export class LocalStorageService {
   }
 
   public get currentTokenValueFin(): string | undefined {
-    this.currentTokenFinSubject.next( localStorage?.getItem(APP_ENUMS.PREFIX_TOKEN)|| '');
-    console.log('est ce que tu get le token ?', this.currentTokenFinSubject.value)
+    // Récupérer le token depuis localStorage et mettre à jour le BehaviorSubject si nécessaire
+    const storedToken = localStorage.getItem(APP_ENUMS.PREFIX_TOKEN);
+    if (storedToken !== this.currentTokenFinSubject.value) {
+      this.currentTokenFinSubject.next(storedToken || undefined);
+    }
     return this.currentTokenFinSubject.value;
   }
 
   public setCurrentTokenValueFin(token: string): void {
     localStorage.setItem(APP_ENUMS.PREFIX_TOKEN , token);
     this.currentTokenFinSubject.next(token);
+  }
+
+  public setRefreshToken(refreshToken: string): void {
+    localStorage.setItem(APP_ENUMS.PREFIX_REFRESH_TOKEN, refreshToken);
+  }
+
+  public getRefreshToken(): string | null {
+    return localStorage.getItem(APP_ENUMS.PREFIX_REFRESH_TOKEN);
   }
 
   public setCurrentUser(user: User){
@@ -149,7 +161,10 @@ export class LocalStorageService {
 
   logout(): void {
     localStorage.removeItem(APP_ENUMS.PREFIX_TOKEN);
+    localStorage.removeItem(APP_ENUMS.PREFIX_REFRESH_TOKEN);
     localStorage.removeItem(APP_ENUMS.PREFIX_USER);
+    this.currentTokenFinSubject.next(undefined);
+    this.currentUserSubject.next(undefined);
   }
 
   dbOptions(): any {

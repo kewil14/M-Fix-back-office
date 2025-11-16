@@ -8,6 +8,11 @@ import { CookieService } from 'ngx-cookie-service';
 import { LanguageService } from '../../core/services/language.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'src/app/core/shared/services/local-storage.service';
+import { Store } from '@ngrx/store';
+import { logout } from 'src/app/core/shared/stores/authentification/authentification.actions';
+import { Actions, ofType } from '@ngrx/effects';
+import { logoutOk } from 'src/app/core/shared/stores/authentification/authentification.actions';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-topbar',
@@ -35,6 +40,8 @@ export class TopbarComponent implements OnInit {
     public translate: TranslateService,
     public _cookiesService: CookieService,
     private localStorageService: LocalStorageService,
+    private storeService: Store,
+    private actionService: Actions,
   ) {
   }
 
@@ -91,15 +98,8 @@ export class TopbarComponent implements OnInit {
    * Logout the user
    */
   logout() {
-    
-    // if (environment.defaultauth === 'firebase') {
-    //   this.authService.logout();
-    // } else {
-    //   this.authFackservice.logout();
-    // }
-    // this.router.navigate(['/account/login']);
-
-    this.localStorageService.logout();
+    // Dispatch l'action logout qui va appeler l'API, nettoyer le localStorage et rediriger
+    this.storeService.dispatch(logout());
   }
 
   /**

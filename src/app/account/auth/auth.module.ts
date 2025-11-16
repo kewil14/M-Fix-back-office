@@ -25,6 +25,9 @@ import { PasswordresetComponent } from './passwordreset/passwordreset.component'
     UIModule,
     AuthRoutingModule,
     CarouselModule
+  ],
+  exports: [
+    Login2Component
   ]
 })
 export class AuthModule { }

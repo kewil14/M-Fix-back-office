@@ -1,6 +1,7 @@
 
 export const APP_ENUMS ={
   PREFIX_TOKEN: 'MFIX-TOKEN',
+  PREFIX_REFRESH_TOKEN: 'MFIX-REFRESH-TOKEN',
   PREFIX_LOCAL_LANG: 'lang',
   PREFIX_USER: 'mfix-user',
 

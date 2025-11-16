@@ -4,17 +4,107 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { CustomersComponent } from './customers/customers.component';
 import { LoadCustomerGuard } from 'src/app/core/shared/guards/load-customers.guard';
 import { LoadGrilleGuard } from 'src/app/core/shared/guards/load-grille.guard';
+import { LoadDemandeGuard } from 'src/app/core/shared/guards/load-demande.guard';
+import { PermissionGuard } from 'src/app/core/shared/guards/permission.guard';
+import { DemandeComponent } from './devis/demande/demande.component';
+import { UsersManagementComponent } from './users/users-management/users-management.component';
+import { SuperAdminComponent } from './users/superadmin/superadmin.component';
+import { AdminsComponent } from './users/admins/admins.component';
+import { WorkspacesComponent } from './users/workspaces/workspaces.component';
+import { EmployeesComponent } from './users/employees/employees.component';
+import { EmployeeDetailComponent } from './users/employee-detail/employee-detail.component';
+import { AdminDetailComponent } from './users/admin-detail/admin-detail.component';
+import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
 
 const routes: Routes = [
-  {path: '', component: DashboardComponent},
+  {
+    path: '', 
+    component: DashboardComponent,
+    canActivate: [PermissionGuard]
+  },
   {
     path: 'customers',
     component: CustomersComponent,
-    canActivate: [LoadCustomerGuard]
+    canActivate: [PermissionGuard, LoadCustomerGuard],
+    data: { permissions: ['customers:read'] }
   },
   {
     path: 'autorisation',
     loadChildren: ()=> import('./autority/autority.module').then(m => m.AutorityModule)
+  },
+  {
+    path: 'devis',
+    children: [
+      {
+        path: 'demande',
+        component: DemandeComponent,
+        canActivate: [PermissionGuard, LoadDemandeGuard]
+      }
+    ]
+  },
+  {
+    path: 'users',
+    component: UsersManagementComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['users:manage'] }
+  },
+  {
+    path: 'superadmin',
+    component: SuperAdminComponent,
+    canActivate: [PermissionGuard],
+    data: { roles: ['SUPERADMIN'] }
+  },
+  {
+    path: 'admins',
+    children: [
+      {
+        path: '',
+        component: AdminsComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['admins:read'] }
+      },
+      {
+        path: 'detail/:id',
+        component: AdminDetailComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['admins:read'] }
+      },
+      {
+        path: 'edit/:id',
+        component: AdminEditComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['admins:update'] }
+      }
+    ]
+  },
+  {
+    path: 'workspaces',
+    component: WorkspacesComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['workspaces:read'] }
+  },
+  {
+    path: 'employees',
+    children: [
+      {
+        path: '',
+        component: EmployeesComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['employees:read'] }
+      },
+      {
+        path: 'detail/:id',
+        component: EmployeeDetailComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['employees:read'] }
+      },
+      {
+        path: 'edit/:id',
+        component: EmployeeDetailComponent, // TODO: Créer un composant d'édition
+        canActivate: [PermissionGuard],
+        data: { permissions: ['employees:update'] }
+      }
+    ]
   },
 ];
 

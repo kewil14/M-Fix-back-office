@@ -22,6 +22,18 @@ const routes: Routes = [
     {
         path: 'faqs',
         component: FaqsComponent
+    },
+    {
+        path: '404',
+        loadChildren: () => import('../../extrapages/extrapages.module').then(m => m.ExtrapagesModule)
+    },
+    {
+        path: '403',
+        loadChildren: () => import('../../extrapages/extrapages.module').then(m => m.ExtrapagesModule)
+    },
+    {
+        path: '500',
+        loadChildren: () => import('../../extrapages/extrapages.module').then(m => m.ExtrapagesModule)
     }
 ];
 

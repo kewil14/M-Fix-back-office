@@ -3,6 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 
 import { MaintenanceComponent } from './maintenance/maintenance.component';
 import { Page404Component } from './page404/page404.component';
+import { Page403Component } from './page403/page403.component';
 import { Page500Component } from './page500/page500.component';
 import { LockscreenComponent } from './lockscreen/lockscreen.component';
 import { Login2Component } from '../account/auth/login2/login2.component';
@@ -16,13 +17,10 @@ import { Steptwoverification2Component } from './steptwoverification2/steptwover
 import { ComingsoonComponent } from './comingsoon/comingsoon.component';
 
 const routes: Routes = [
+    // Routes pour les pages d'erreur - doivent être en premier pour être prioritaires
     {
-        path: 'maintenance',
-        component: MaintenanceComponent
-    },
-    {
-        path: 'coming-soon',
-        component: ComingsoonComponent
+        path: '403',
+        component: Page403Component
     },
     {
         path: '404',
@@ -31,6 +29,19 @@ const routes: Routes = [
     {
         path: '500',
         component: Page500Component
+    },
+    // Route vide par défaut - charge Page403Component si accès direct au module
+    {
+        path: '',
+        component: Page403Component
+    },
+    {
+        path: 'maintenance',
+        component: MaintenanceComponent
+    },
+    {
+        path: 'coming-soon',
+        component: ComingsoonComponent
     },
     {
         path: 'login-2',

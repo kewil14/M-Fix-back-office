@@ -1,0 +1,97 @@
+<div class="modal-header">
+  <h5 class="modal-title mt-0">Créer Workspace + WorkspaceAdmin</h5>
+  <button type="button" class="btn-close" aria-hidden="true" (click)="bsModalRef?.hide()"></button>
+</div>
+<div class="modal-body">
+  <loto-message-alert [messages$]="messages$"></loto-message-alert>
+  
+  <form (ngSubmit)="onSubmit()" [formGroup]="workspaceAdminForm">
+    <h6 class="mb-3">Informations du Workspace</h6>
+    <div class="row">
+      <div class="col-12">
+        <div class="mb-3">
+          <label class="control-label">Nom du Workspace <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="TechRepair Lyon" type="text" 
+                 formControlName="workspaceName"
+                 [ngClass]="{'is-invalid': submitted && f.workspaceName.errors}" />
+          <div *ngIf="submitted && f.workspaceName.errors" class="invalid-feedback">
+            <span *ngIf="f.workspaceName.errors.required">Nom requis</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Type <span class="text-danger">*</span></label>
+          <select class="form-control" formControlName="workspaceType"
+                  [ngClass]="{'is-invalid': submitted && f.workspaceType.errors}">
+            <option *ngFor="let type of workspaceTypes" [value]="type">{{type}}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Plan d'abonnement <span class="text-danger">*</span></label>
+          <select class="form-control" formControlName="subscriptionPlan"
+                  [ngClass]="{'is-invalid': submitted && f.subscriptionPlan.errors}">
+            <option *ngFor="let plan of subscriptionPlans" [value]="plan">{{plan}}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-4">
+    <h6 class="mb-3">Informations du WorkspaceAdmin</h6>
+    <div class="row">
+      <div class="col-12">
+        <div class="mb-3">
+          <label class="control-label">Email <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="admin.lyon@techrepair.fr" type="email" 
+                 formControlName="adminEmail"
+                 [ngClass]="{'is-invalid': submitted && f.adminEmail.errors}" />
+          <div *ngIf="submitted && f.adminEmail.errors" class="invalid-feedback">
+            <span *ngIf="f.adminEmail.errors.required">Email requis</span>
+            <span *ngIf="f.adminEmail.errors.email">Email invalide</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Prénom <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Pierre" type="text" 
+                 formControlName="adminFirstName"
+                 [ngClass]="{'is-invalid': submitted && f.adminFirstName.errors}" />
+          <div *ngIf="submitted && f.adminFirstName.errors" class="invalid-feedback">
+            <span *ngIf="f.adminFirstName.errors.required">Prénom requis</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">Nom <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Dubois" type="text" 
+                 formControlName="adminLastName"
+                 [ngClass]="{'is-invalid': submitted && f.adminLastName.errors}" />
+          <div *ngIf="submitted && f.adminLastName.errors" class="invalid-feedback">
+            <span *ngIf="f.adminLastName.errors.required">Nom requis</span>
+          </div>
+        </div>
+
+        <div class="alert alert-warning">
+          <small>⚠️ En cas d'erreur, le workspace sera automatiquement supprimé (rollback).</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-end">
+      <button type="button" class="btn btn-danger" (click)="closeModal()">
+        Annuler
+      </button>
+      <button type="submit" class="btn btn-success btn-load btn-center ms-2">
+        <span *ngIf="!submitted || (authentificationState$|async)?.dataState !== dataStateEnum.LOADING">
+          Créer Workspace + Admin
+        </span>
+        <span *ngIf="submitted && (authentificationState$|async)?.dataState == dataStateEnum.LOADING" 
+              class="d-flex align-items-center justify-content-center">
+          <span class="spinner-border flex-shrink-0" role="status"></span>
+        </span>
+      </button>
+    </div>
+  </form>
+</div>
+

@@ -21,6 +21,8 @@ import { GrilleEffects } from './shared/stores/grille/grille.effects';
 import { AvisEffects } from './shared/stores/avis/avis.effects';
 import { DevisEffects } from './shared/stores/devis/devis.effects';
 import { DemandeEffects } from './shared/stores/demande/demande.effects';
+import { EmployeeEffects } from './shared/stores/employee/employee.effects';
+import { AdminEffects } from './shared/stores/admin/admin.effects';
 
 
 export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
@@ -43,13 +45,14 @@ export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
       AuthenticationEffects, ProfileEffects, 
       SystemInitEffects, RolesEffects, UserEffects, 
       GrilleEffects, AvisEffects, DevisEffects,
-      DemandeEffects,
+      DemandeEffects, EmployeeEffects, AdminEffects,
     ]),
     StoreDevtoolsModule.instrument(),
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: LangInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
+    // ErrorInterceptor doit être le dernier pour intercepter toutes les erreurs
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
     HttpClient
   ],

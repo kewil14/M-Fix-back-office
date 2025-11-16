@@ -1,0 +1,134 @@
+<ng-container *ngIf="(adminState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+    <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid" *ngIf="admin">
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header border-bottom">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h4 class="card-title mb-0">Détails de l'Administrateur</h4>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" (click)="onBack()">
+                      <i class="mdi mdi-arrow-left me-1"></i> Retour
+                    </button>
+                    <button type="button" class="btn btn-warning" (click)="onEdit()">
+                      <i class="mdi mdi-pencil me-1"></i> Modifier
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">ID</label>
+                    <p class="form-control-plaintext">{{ admin.id || 'N/A' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Email</label>
+                    <p class="form-control-plaintext">{{ admin.email || 'N/A' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Prénom</label>
+                    <p class="form-control-plaintext">{{ admin.firstName || 'N/A' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Nom</label>
+                    <p class="form-control-plaintext">{{ admin.lastName || 'N/A' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Nom d'utilisateur</label>
+                    <p class="form-control-plaintext">{{ admin.username || 'N/A' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Téléphone</label>
+                    <p class="form-control-plaintext">{{ admin.phoneNumber || 'N/A' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Statut</label>
+                    <p>
+                      <span class="badge" [ngClass]="admin.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ admin.isActive ? 'Actif' : 'Inactif' }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Date de création</label>
+                    <p class="form-control-plaintext">{{ admin.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6" *ngIf="admin.lastLoginAt">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Dernière connexion</label>
+                    <p class="form-control-plaintext">{{ admin.lastLoginAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6" *ngIf="admin.birthDate">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Date de naissance</label>
+                    <p class="form-control-plaintext">{{ admin.birthDate | date: 'dd/MM/yyyy' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6" *ngIf="admin.preferredLanguage">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Langue préférée</label>
+                    <p class="form-control-plaintext">{{ admin.preferredLanguage }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6" *ngIf="admin.timezone">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Fuseau horaire</label>
+                    <p class="form-control-plaintext">{{ admin.timezone }}</p>
+                  </div>
+                </div>
+                <div class="col-12" *ngIf="admin.roles && admin.roles.length > 0">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Rôles</label>
+                    <div class="d-flex flex-wrap gap-2">
+                      <span class="badge bg-primary" *ngFor="let role of admin.roles">
+                        {{ role.name }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngSwitchDefault>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-danger">
+            Erreur lors du chargement des données
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>
+

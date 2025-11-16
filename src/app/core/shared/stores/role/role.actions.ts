@@ -2,6 +2,9 @@ import { createAction, props } from "@ngrx/store";
 import { RoleResponseDto } from "../../dtos/role-response-dto";
 import { AutorisationResponseDto } from "../../dtos/autorisation-response-dto";
 import { GroupItemsFinDto } from "../../dtos/group-items-fin-dto.modal";
+import { AssignRoleRequestDto } from "../../dtos/assign-role-request-dto";
+import { UpdateRolePermissionsDto } from "../../dtos/update-role-permissions-dto";
+import { CreateRoleRequestDto } from "../../dtos/create-role-request-dto";
 
 //actions for manage local data
 export const erreurRoles = createAction('[RoleResponseDto] authentification/role/erreurs', props<{messages: string}>());
@@ -36,8 +39,7 @@ export const findRoleByUser = createAction('[RoleResponseDto] authentification/r
 export const updateRoleItem = createAction('[RoleResponseDto] authentification/role/updateRoleItem', props<{item: AutorisationResponseDto}>());
 
 //tous les role de l'appli
-// export const findAllRoles = createAction('[RoleResponseDto] authentification/role/findAllRoles');
-export const findAllRoles = createAction('[RoleResponseDto] authentification/role/findAllRoles');
+export const findAvailableRoles = createAction('[RoleResponseDto] authentification/role/findAvailableRoles', props<{workspaceId?: string, shopId?: string}>());
 export const findAllRolesSaasAdmin = createAction('[RoleResponseDto] authentification/role/findAllRolesSaasAdmin');
 //tous les role de l'appli par id ref
 export const findRoleByIdRef = createAction('[RoleResponseDto] authentification/role/findRoleByIdRef', props<{idRef: any}>());
@@ -56,3 +58,10 @@ export const createRoleSaasAdmin = createAction('[RoleResponseDto] authentificat
 export const updateRole = createAction('[RoleResponseDto] authentification/role/updateRole', props<{role: RoleResponseDto}>());
 
 export const getRoleItemByGroup = createAction('[RoleResponseDto] authentification/role/getRoleItemByGroup');
+
+// Nouvelles actions pour les nouveaux endpoints
+export const getAvailablePermissions = createAction('[RoleResponseDto] authentification/role/getAvailablePermissions');
+export const assignRoleToUser = createAction('[RoleResponseDto] authentification/role/assignRoleToUser', props<{assignRequest: AssignRoleRequestDto}>());
+export const revokeRoleFromUser = createAction('[RoleResponseDto] authentification/role/revokeRoleFromUser', props<{targetUserId: string, roleId: string, workspaceId?: string}>());
+export const updateRolePermissionsAction = createAction('[RoleResponseDto] authentification/role/updateRolePermissions', props<{roleId: string, permissions: UpdateRolePermissionsDto}>());
+export const createRoleNew = createAction('[RoleResponseDto] authentification/role/createRoleNew', props<{role: CreateRoleRequestDto}>());

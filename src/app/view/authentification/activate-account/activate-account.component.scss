@@ -1,0 +1,22 @@
+.bg-overlay-personilize {
+  background: linear-gradient(
+    135deg, 
+    rgba(255, 255, 255, 0.85) 0%, 
+    rgba(248, 249, 250, 0.8) 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
+
+.account-pages {
+  min-height: 150vh;
+  
+  &.bg-with-image {
+    // background-image: url('../../../../assets/images/bg-for white place.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+}
+

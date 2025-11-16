@@ -5,11 +5,12 @@ import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, Observable, Subscription} from 'rxjs';
-import { AuthorisationKeyEnum, OperationEnum } from 'src/app/core/config/data.state.enum';
+import { AuthorisationKeyEnum, OperationEnum, DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectRoleState } from 'src/app/core/core.state';
 import { CreateRoleDto } from 'src/app/core/shared/dtos/create-role-dto';
 import { RoleFin } from 'src/app/core/shared/models/users/role-fin.modal';
-import { addRole, createRoleAdmin, erreurRoles } from 'src/app/core/shared/stores/role/role.actions';
+import { addRole, createRoleAdmin, erreurRoles, createRoleNew } from 'src/app/core/shared/stores/role/role.actions';
+import { CreateRoleRequestDto } from 'src/app/core/shared/dtos/create-role-request-dto';
 import { RoleState } from 'src/app/core/shared/stores/role/role.state';
 
 
@@ -31,6 +32,7 @@ export class AddRoleComponent implements OnInit {
   isRoleSubmitted: boolean = false;
   operattion: string = OperationEnum.CREATE;
   currentRole: RoleFin = {};
+  selectedPermissionIds: string[] = [];
 
   autorisationState$: Observable<RoleState>;
 
@@ -39,6 +41,7 @@ export class AddRoleComponent implements OnInit {
 
   // currentCategory: Category = {};
   operationEnum: typeof OperationEnum = OperationEnum;
+  dataStateEnum: typeof DataStateEnum = DataStateEnum;
    AuthorisationKeyEnumArray = [
     { name: 'ADD_DOCUMENT_TO_USER', value: 'ADD_DOCUMENT_TO_USER' },
     { name: 'BLOCK_USER', value: 'BLOCK_USER' },
@@ -132,23 +135,21 @@ Groups:typeof AuthorisationKeyEnum  = AuthorisationKeyEnum
   actionRole(){
         this.subscriptions.push(
           this.actionService.pipe(ofType(addRole)).subscribe((state) => {
-            this.toastr.success('Role crée avec succès !');
+            this.toastr.success('Rôle créé avec succès !');
             setTimeout(() => {
-              // je rediriges vers la iste complete des roles
+              // je redirige vers la liste complète des rôles
               this.router.navigate(['/admin/autorisation/role']);
-            }, 4000)
-    
+            }, 2000)
           }),
-  
+          
+          this.actionService.pipe(ofType(createRoleNew)).subscribe(() => {
+            // L'effet gère déjà la redirection, mais on peut ajouter un toast ici si nécessaire
+          }),
   
           this.actionService.pipe(ofType(erreurRoles)).subscribe(({messages}) => {
-  
             // envoyer une popup d'erreur   
-            this.toastr.error(messages);
-            
-  
+            this.toastr.error(messages || 'Une erreur est survenue lors de la création du rôle');
           }),
-            
       )
     }
   getAuthorisationKeys(): string[] {
@@ -156,24 +157,65 @@ Groups:typeof AuthorisationKeyEnum  = AuthorisationKeyEnum
   }
 
   createRole(){
-    console.log(this.roleForm.value.authorisationKeys);
     if(this.roleForm.invalid) {
       return;
     }
-    let form: CreateRoleDto = {
-      roleName: this.roleForm.value.name,
-      authorisationsCode:this.roleForm.value.authorisationKeys,
-      roleDescription: this.roleForm.value.description
-
+    
+    // Générer le code à partir du nom du rôle si non fourni, sinon formater le code saisi
+    let code = this.roleForm.value.code;
+    if (!code || code.trim() === '') {
+      // Générer le code à partir du nom du rôle
+      code = this.generateRoleCodeFromName(this.roleForm.value.name);
+    } else {
+      // Formater le code saisi pour respecter le format requis (MAJUSCULES_AVEC_UNDERSCORES)
+      code = this.formatCodeToUpperCase(code);
     }
-    this.storeService.dispatch(createRoleAdmin({role: form}));
-    this.router.navigateByUrl('/saas/autorisations/role');
+    
+    // Mapper les authorisationKeys vers permissionIds
+    const permissionIds = this.roleForm.value.authorisationKeys || [];
+    
+    const form: CreateRoleRequestDto = {
+      name: this.roleForm.value.name,
+      code: code,
+      description: this.roleForm.value.description || '',
+      permissionIds: permissionIds,
+      workspaceId: undefined, // Optionnel, peut être ajouté plus tard
+      permissionConstraints: undefined // Optionnel
+    };
+    
+    this.storeService.dispatch(createRoleNew({role: form}));
+  }
+
+  generateRoleCodeFromName(roleName: string): string {
+    // Générer un code à partir du nom du rôle en majuscules avec underscores
+    if (!roleName) return '';
+    
+    return roleName
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, '_') // Remplacer les espaces par des underscores
+      .replace(/[^A-Z0-9_]/g, '') // Supprimer les caractères spéciaux (garder seulement lettres, chiffres et underscores)
+      .replace(/_+/g, '_') // Remplacer les underscores multiples par un seul
+      .replace(/^_+|_+$/g, ''); // Supprimer les underscores en début et fin
+  }
+
+  formatCodeToUpperCase(code: string): string {
+    // Convertir le code en majuscules et remplacer les espaces/tirets par des underscores
+    if (!code) return '';
+    return code
+      .toUpperCase()
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_')
+      .replace(/[^A-Z0-9_]/g, '') // Supprimer les caractères non autorisés
+      .replace(/_+/g, '_') // Remplacer les underscores multiples par un seul
+      .replace(/^_+|_+$/g, ''); // Supprimer les underscores en début et fin
   }
   get role() { return this.roleForm.controls; }
 
   initCreateRole(): void {
     this.roleForm = this.fb.group({
       name: [null, Validators.compose([Validators.required, Validators.minLength(4), Validators.maxLength(20)])],
+      code: [null],
       description: [null, Validators.compose([Validators.required, Validators.minLength(4), Validators.maxLength(200)])],
       authorisationKeys: [null,],
     });
@@ -195,21 +237,21 @@ Groups:typeof AuthorisationKeyEnum  = AuthorisationKeyEnum
   }
 
   updateRole(): void {
+    this.isRoleSubmitted = true;
+    if(this.roleForm.invalid) {
+      return;
+    }
+    
+    // Si c'est une création, utiliser le nouveau endpoint
+    if(this.operattion === OperationEnum.CREATE) {
+      this.createRole();
+      return;
+    }
+    
+    // Pour la mise à jour, utiliser l'ancien système pour l'instant
     if(this.role$){
-
-      this.isRoleSubmitted = true;
-      if(this.roleForm.invalid) {
-        return;
-      }
       this.loading$.next(true);
       this.onRole.emit({role: this.roleForm.value, operation: this.operattion});
-    }else{
-    //   this.isRoleSubmitted = true;
-    // if(this.roleForm.invalid) {
-    //   return;
-    // }
-    // this.loading$.next(true);
-    // this.onCategory.emit({category: this.roleForm.value, operation: this.operattion});
     }
   }
   updateCategory(): void {
@@ -226,6 +268,28 @@ Groups:typeof AuthorisationKeyEnum  = AuthorisationKeyEnum
       this.initCreateRole();
     } else {
       this.editRole(this.currentRole);
+    }
+  }
+
+  onNameBlur(): void {
+    // Générer automatiquement le code à partir du nom quand l'utilisateur quitte le champ nom
+    const nameControl = this.roleForm.get('name');
+    const codeControl = this.roleForm.get('code');
+    
+    if (nameControl && codeControl && nameControl.value) {
+      const generatedCode = this.generateRoleCodeFromName(nameControl.value);
+      if (generatedCode) {
+        codeControl.setValue(generatedCode, { emitEvent: false });
+      }
+    }
+  }
+
+  onCodeBlur(): void {
+    // Formater le code quand l'utilisateur quitte le champ (si modifié manuellement)
+    const codeControl = this.roleForm.get('code');
+    if (codeControl && codeControl.value) {
+      const formattedCode = this.formatCodeToUpperCase(codeControl.value);
+      codeControl.setValue(formattedCode, { emitEvent: false });
     }
   }
 }

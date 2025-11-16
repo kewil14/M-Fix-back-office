@@ -1,0 +1,134 @@
+<div class="modal-header">
+  <h5 class="modal-title mt-0">Créer Admin</h5>
+  <button type="button" class="btn-close" aria-hidden="true" (click)="bsModalRef?.hide()"></button>
+</div>
+<div class="modal-body">
+  <loto-message-alert [messages$]="messages$"></loto-message-alert>
+  
+  <form (ngSubmit)="onSubmit()" [formGroup]="adminForm">
+    <div class="row">
+      <!-- Section Avatar compacte -->
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="control-label">Avatar</label>
+          <div class="avatar-upload-compact">
+            <div class="d-flex align-items-center gap-3">
+              <!-- Preview de l'avatar -->
+              <div class="avatar-preview-small" *ngIf="avatarPreview">
+                <img [src]="avatarPreview" alt="Avatar" class="avatar-img-small">
+                <button type="button" class="btn btn-sm btn-danger avatar-remove-btn-small" (click)="removeAvatar()" title="Supprimer">
+                  <i class="mdi mdi-close"></i>
+                </button>
+              </div>
+              <div class="avatar-placeholder-small" *ngIf="!avatarPreview">
+                <i class="mdi mdi-account-circle" style="font-size: 60px; color: #dee2e6;"></i>
+              </div>
+              
+              <!-- Zone de drag & drop compacte -->
+              <div class="flex-grow-1">
+                <div class="dropzone-compact" 
+                     (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                     (dragenter)="$event.preventDefault(); $event.stopPropagation()"
+                     (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                     (drop)="$event.preventDefault(); $event.stopPropagation(); onFileDropped($event.dataTransfer.files)">
+                  <div *ngIf="!isUploadingAvatar" class="d-flex align-items-center gap-2">
+                    <label class="btn btn-sm btn-outline-primary mb-0">
+                      <i class="mdi mdi-upload me-1"></i>
+                      <span *ngIf="!avatarPreview">Choisir une image</span>
+                      <span *ngIf="avatarPreview">Remplacer</span>
+                      <input type="file" 
+                             accept="image/*" 
+                             style="display: none;"
+                             (change)="onFileSelected($event)">
+                    </label>
+                    <span class="text-muted small" *ngIf="!avatarPreview">ou glissez-déposez ici</span>
+                    <span class="text-success small" *ngIf="avatarPreview && !isUploadingAvatar">
+                      <i class="mdi mdi-check-circle me-1"></i>Uploadé
+                    </span>
+                  </div>
+                  <div *ngIf="isUploadingAvatar" class="d-flex align-items-center gap-2">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                      <span class="visually-hidden">Upload...</span>
+                    </div>
+                    <span class="text-muted small">Upload en cours...</span>
+                  </div>
+                </div>
+                <small class="text-muted">JPG, PNG, GIF (max 5MB)</small>
+              </div>
+            </div>
+            <input type="hidden" formControlName="avatar">
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="control-label">Email <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="admin@mfix.com" type="email" 
+                 formControlName="email"
+                 [ngClass]="{'is-invalid': submitted && f.email.errors}" />
+          <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
+            <span *ngIf="f.email.errors.required">Email est requis</span>
+            <span *ngIf="f.email.errors.email">Email invalide</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="control-label">Prénom <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Marie" type="text" 
+                 formControlName="firstName"
+                 [ngClass]="{'is-invalid': submitted && f.firstName.errors}" />
+          <div *ngIf="submitted && f.firstName.errors" class="invalid-feedback">
+            <span *ngIf="f.firstName.errors.required">Prénom requis</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="control-label">Nom <span class="text-danger">*</span></label>
+          <input class="form-control" placeholder="Martin" type="text" 
+                 formControlName="lastName"
+                 [ngClass]="{'is-invalid': submitted && f.lastName.errors}" />
+          <div *ngIf="submitted && f.lastName.errors" class="invalid-feedback">
+            <span *ngIf="f.lastName.errors.required">Nom requis</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" formControlName="isSuperAdmin" id="isSuperAdmin">
+            <label class="form-check-label" for="isSuperAdmin">
+              Créer comme SuperAdmin
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="alert alert-info">
+          <small>ℹ️ Un email d'invitation avec un mot de passe temporaire sera envoyé à l'admin. Le token est valide 7 jours.</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-end">
+      <button type="button" class="btn btn-danger" (click)="closeModal()">
+        Annuler
+      </button>
+      <button type="submit" class="btn btn-success btn-load btn-center ms-2">
+        <span *ngIf="!submitted || (authentificationState$|async)?.dataState !== dataStateEnum.LOADING">
+          Créer Admin
+        </span>
+        <span *ngIf="submitted && (authentificationState$|async)?.dataState == dataStateEnum.LOADING" 
+              class="d-flex align-items-center justify-content-center">
+          <span class="spinner-border flex-shrink-0" role="status"></span>
+        </span>
+      </button>
+    </div>
+  </form>
+</div>

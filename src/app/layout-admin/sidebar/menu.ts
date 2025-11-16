@@ -48,20 +48,32 @@ export const MENU: MenuItem[] = [
         subItems: [
             {
                 id: 68,
-                label: 'Clients',
-                link: '/admin/customers',
+                label: 'Users',
+                link: '/admin/users',
                 parentId: 67
             },
             {
-                id: 69,
-                label: 'Employe',
-                link: '/admin/autorisation/role',
+                id: 71,
+                label: 'Super Admin',
+                link: '/admin/superadmin',
                 parentId: 67
             },
             {
                 id: 70,
                 label: 'Administrateurs',
-                link: '/admin/autorisation',
+                link: '/admin/admins',
+                parentId: 67
+            },
+            {
+                id: 72,
+                label: 'Workspace',
+                link: '/admin/workspaces',
+                parentId: 67
+            },
+            {
+                id: 69,
+                label: 'Employe',
+                link: '/admin/employees',
                 parentId: 67
             },
         ]
@@ -75,19 +87,19 @@ export const MENU: MenuItem[] = [
     {
         id: 77,
         label: 'Permissions',
-        icon: 'bx-user-circle',
+        icon: 'bx-shield-quarter',
         subItems: [
             {
                 id: 78,
                 label: 'Role',
-                link: '',
-                parentId: 67
+                link: '/admin/autorisation/role',
+                parentId: 77
             },
             {
                 id: 79,
                 label: 'Autorisation',
-                link: '',
-                parentId: 67
+                link: '/admin/autorisation',
+                parentId: 77
             }
         ]
     },

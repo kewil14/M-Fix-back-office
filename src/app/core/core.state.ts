@@ -17,6 +17,10 @@ import { DemandeState } from './shared/stores/demande/demande.state';
 import { demandeReducer } from './shared/stores/demande/demande.reducer';
 import { AddressState } from './shared/stores/address/address.state';
 import { adressReducer } from './shared/stores/address/address.reducer';
+import { EmployeeState } from './shared/stores/employee/employee.state';
+import { employeeReducer } from './shared/stores/employee/employee.reducer';
+import { AdminState } from './shared/stores/admin/admin.state';
+import { adminReducer } from './shared/stores/admin/admin.reducer';
 
 export interface AppState {
     authentificationState: AuthentificationState,
@@ -27,7 +31,9 @@ export interface AppState {
     avisState: AvisState,
     devisState: DevisState,
     demandeState: DemandeState,
-    addressState: AddressState
+    addressState: AddressState,
+    employeeState: EmployeeState,
+    adminState: AdminState
 }
 
 export const selectauthentificationState = createFeatureSelector<AuthentificationState>('authentificationState');
@@ -39,6 +45,8 @@ export const selectAvisState = createFeatureSelector<AvisState>('avisState');
 export const selectDevisState = createFeatureSelector<DevisState>('devisState');
 export const selectDemandeState = createFeatureSelector<DemandeState>('demandeState');
 export const selectAddressState = createFeatureSelector<AddressState>('addressState');
+export const selectEmployeeState = createFeatureSelector<EmployeeState>('employeeState');
+export const selectAdminState = createFeatureSelector<AdminState>('adminState');
 
 
 export const reducers: ActionReducerMap<AppState> = {
@@ -51,6 +59,8 @@ export const reducers: ActionReducerMap<AppState> = {
     devisState: devisReducer,
     demandeState: demandeReducer,
     addressState: adressReducer,
+    employeeState: employeeReducer,
+    adminState: adminReducer
 }
 
 

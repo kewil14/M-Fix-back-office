@@ -1,0 +1,26 @@
+<div class="modal-header border-0 pb-0">
+  <button type="button" class="btn-close" (click)="decline()" aria-label="Close"></button>
+</div>
+<div class="modal-body text-center p-4">
+  <div class="mb-4">
+    <div class="avatar-md mx-auto mb-4">
+      <div class="avatar-title bg-light text-danger display-4 rounded-circle">
+        <i class="mdi mdi-delete-alert"></i>
+      </div>
+    </div>
+    <h4 class="mb-2">{{ title }}</h4>
+    <p class="text-muted mb-4" *ngIf="!itemName">{{ message }}</p>
+    <p class="text-muted mb-4" *ngIf="itemName">
+      Êtes-vous sûr de vouloir supprimer <strong>"{{ itemName }}"</strong> ? Cette action est irréversible.
+    </p>
+  </div>
+  <div class="d-flex gap-2 justify-content-center">
+    <button type="button" class="btn btn-light" (click)="decline()">
+      <i class="mdi mdi-close me-1"></i>{{ cancelBtnText }}
+    </button>
+    <button type="button" [class]="'btn ' + confirmBtnClass" (click)="confirm()">
+      <i class="mdi mdi-delete me-1"></i>{{ confirmBtnText }}
+    </button>
+  </div>
+</div>
+

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,7 +9,7 @@ import { DataStateEnum, OperationEnum } from 'src/app/core/config/data.state.enu
 import { selectRoleState } from 'src/app/core/core.state';
 import { AutorisationResponseDto } from 'src/app/core/shared/dtos/autorisation-response-dto';
 import { LocalStorageService } from 'src/app/core/shared/services/local-storage.service';
-import { erreurRoles, setRoleItem } from 'src/app/core/shared/stores/role/role.actions';
+import { erreurRoles, setRoleItem, findAllRoleItem } from 'src/app/core/shared/stores/role/role.actions';
 import { RoleState } from 'src/app/core/shared/stores/role/role.state';
 
 @Component({
@@ -33,20 +34,97 @@ export class AutorisationComponent implements OnInit, OnDestroy {
   messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>
     ({type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false});
 
+  // Filtres et pagination
+  searchTerm: string = '';
+  filteredPermissions: AutorisationResponseDto[] = [];
+  allPermissions: AutorisationResponseDto[] = [];
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
+  totalPages: number = 0;
+
 
   constructor(
     private storeService: Store,
     private localStorageService: LocalStorageService,
     private actionService: Actions,
     private translateService: TranslateService,
+    private router: Router,
   ) { }
 
   ngOnInit(): void {
     this.getTitlePath();
     this.roleState$ = this.storeService.select(selectRoleState).pipe();
     this.dtOptions = this.localStorageService.dbOptions();
-    // this.loadAuthorities();
+    // Charger les autorisations au démarrage
+    this.storeService.dispatch(findAllRoleItem());
     this.actionAuthority();
+    this.subscribeToPermissions();
+  }
+
+  subscribeToPermissions(): void {
+    this.subscriptions.push(
+      this.roleState$.subscribe(state => {
+        if (state.dataState === DataStateEnum.SUCCESS && state.ruleItems) {
+          this.allPermissions = state.ruleItems;
+          this.applyFilters();
+        }
+      })
+    );
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.allPermissions];
+    
+    // Filtre par recherche
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(perm => 
+        (perm.authorisationName || '').toLowerCase().includes(term) ||
+        (perm.authorisationKey || '').toLowerCase().includes(term) ||
+        (perm.authorisationGroup?.groupName || '').toLowerCase().includes(term) ||
+        (perm.authorisationDescription || '').toLowerCase().includes(term)
+      );
+    }
+    
+    this.filteredPermissions = filtered;
+    this.totalPages = Math.ceil(this.filteredPermissions.length / this.itemsPerPage);
+    this.currentPage = 1;
+  }
+
+  onSearchChange(): void {
+    this.applyFilters();
+  }
+
+  get paginatedPermissions(): AutorisationResponseDto[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.filteredPermissions.slice(start, end);
+  }
+
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxPages = Math.min(5, this.totalPages);
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxPages - 1);
+    
+    if (endPage - startPage < maxPages - 1) {
+      startPage = Math.max(1, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  get Math() {
+    return Math;
   }
 
   ngOnDestroy(): void {
@@ -90,11 +168,11 @@ export class AutorisationComponent implements OnInit, OnDestroy {
   }
 
   
-//  you need to remove it
-  seeAuthority(autority: AutorisationResponseDto) {
-    this.authority$.next({authority: autority, operation: OperationEnum.UPDATE});
-    this.loading$.next(false);
-    this.isEdit = true;
+  seeAuthority(autority: AutorisationResponseDto): void {
+    // Rediriger vers la page de détail
+    if (autority.authorisationKey) {
+      this.router.navigate(['/admin/autorisation/permission/detail', autority.authorisationKey]);
+    }
   }
 
   close(): void {

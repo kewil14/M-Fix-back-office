@@ -4,6 +4,19 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { AdminRoutingModule } from './admin-routing.module';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { CustomersComponent } from './customers/customers.component';
+import { DemandeComponent } from './devis/demande/demande.component';
+import { CreateSuperAdminComponent } from './users/create-superadmin/create-superadmin.component';
+import { CreateAdminComponent } from './users/create-admin/create-admin.component';
+import { CreateWorkspaceAdminComponent } from './users/create-workspace-admin/create-workspace-admin.component';
+import { CreateEmployeeComponent } from './users/create-employee/create-employee.component';
+import { UsersManagementComponent } from './users/users-management/users-management.component';
+import { SuperAdminComponent } from './users/superadmin/superadmin.component';
+import { AdminsComponent } from './users/admins/admins.component';
+import { WorkspacesComponent } from './users/workspaces/workspaces.component';
+import { EmployeesComponent } from './users/employees/employees.component';
+import { EmployeeDetailComponent } from './users/employee-detail/employee-detail.component';
+import { AdminDetailComponent } from './users/admin-detail/admin-detail.component';
+import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalModule } from 'ngx-bootstrap/modal';
@@ -25,6 +38,19 @@ import { TranslateModule } from '@ngx-translate/core';
   declarations: [
     DashboardComponent,
     CustomersComponent,
+    DemandeComponent,
+    CreateSuperAdminComponent,
+    CreateAdminComponent,
+    CreateWorkspaceAdminComponent,
+    CreateEmployeeComponent,
+    UsersManagementComponent,
+    SuperAdminComponent,
+    AdminsComponent,
+    WorkspacesComponent,
+    EmployeesComponent,
+    EmployeeDetailComponent,
+    AdminDetailComponent,
+    AdminEditComponent,
   ],
   imports: [
     CommonModule,

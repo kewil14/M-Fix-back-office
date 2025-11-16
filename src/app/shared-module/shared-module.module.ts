@@ -15,6 +15,8 @@ import { UpdateAuthorityComponent } from './forms/autorities/update-authority/up
 import { AddRoleComponent } from './forms/autorities/add-role/add-role.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ManageAuthorityComponent } from './forms/autorities/manage-authority/manage-authority.component';
+import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
+import { ModalModule } from 'ngx-bootstrap/modal';
 
 @NgModule({
   declarations: [
@@ -27,9 +29,9 @@ import { ManageAuthorityComponent } from './forms/autorities/manage-authority/ma
     FooterSharedComponent,
     MaintenanceComponent,
     UpdateAuthorityComponent,
-
     AddRoleComponent,
     ManageAuthorityComponent,
+    DeleteConfirmModalComponent,
   ],
   imports: [
     CommonModule,
@@ -39,6 +41,7 @@ import { ManageAuthorityComponent } from './forms/autorities/manage-authority/ma
     TranslateModule,
     NgSelectModule,
     ScrollToModule.forRoot(),
+    ModalModule.forRoot(),
   ],
   exports: [
     FooterComponent,
@@ -52,6 +55,7 @@ import { ManageAuthorityComponent } from './forms/autorities/manage-authority/ma
     UpdateAuthorityComponent,
     AddRoleComponent,
     ManageAuthorityComponent,
+    DeleteConfirmModalComponent,
   ]
 })
 export class SharedModuleModule { }

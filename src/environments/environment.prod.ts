@@ -4,7 +4,7 @@ let ipAdress = '217.77.8.234'
 export const environment = {
   production: true,
 
-  baseUrlBackend: `http://${ipAdress}:8070/api`,
+  baseUrlBackend: `http://${ipAdress}:8000/auth-service/api`,
 
 
   

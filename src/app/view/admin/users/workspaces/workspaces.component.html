@@ -1,0 +1,154 @@
+<ng-container *ngIf="(userState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+      <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header border-bottom">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h4 class="card-title mb-0">Gestion des Workspaces</h4>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-success" (click)="openCreateModal()">
+                      <i class="mdi mdi-plus me-1"></i> Nouveau Workspace
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Filtres -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="search-box">
+                    <div class="position-relative">
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        placeholder="Rechercher par nom, email..." 
+                        [(ngModel)]="searchTerm"
+                        (ngModelChange)="onSearchChange()">
+                      <i class="ri-search-line search-icon"></i>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 text-end">
+                  <div class="d-flex align-items-center justify-content-end gap-2">
+                    <label class="mb-0">Afficher:</label>
+                    <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (ngModelChange)="changePageSize(pageSize)">
+                      <option [value]="5">5</option>
+                      <option [value]="10">10</option>
+                      <option [value]="20">20</option>
+                      <option [value]="50">50</option>
+                    </select>
+                    <span class="text-muted">éléments</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col" style="width: 60px;">#</th>
+                      <th scope="col">Code</th>
+                      <th scope="col">Nom complet</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Téléphone</th>
+                      <th scope="col" class="text-center">Statut</th>
+                      <th scope="col">Date de création</th>
+                      <th scope="col" class="text-center" style="width: 150px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let user of state.users; let index = index">
+                      <th scope="row">{{ (currentPage * pageSize) + index + 1 }}</th>
+                      <td>{{ user.userCode || 'N/A' }}</td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-sm me-2">
+                            <div class="avatar-title bg-info-subtle text-info rounded-circle">
+                              {{ (user.userFirstName?.[0] || '') + (user.userLastName?.[0] || '') }}
+                            </div>
+                          </div>
+                          <div>
+                            <strong>{{ user.userFirstName }} {{ user.userLastName }}</strong>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{{ user.userEmail }}</td>
+                      <td>{{ user.userPhoneNumber || 'N/A' }}</td>
+                      <td class="text-center">
+                        <span class="badge" [ngClass]="user.isActive !== false ? 'bg-success' : 'bg-danger'">
+                          {{ user.isActive !== false ? 'Actif' : 'Inactif' }}
+                        </span>
+                      </td>
+                      <td>{{ user.creationDate | date: 'dd/MM/yyyy' }}</td>
+                      <td>
+                        <div class="d-flex justify-content-center gap-1">
+                          <button 
+                            class="btn btn-sm btn-danger btn-icon" 
+                            (click)="onDelete(user)"
+                            title="Supprimer">
+                            <i class="mdi mdi-delete-outline"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="state.users.length === 0">
+                      <td colspan="8" class="text-center py-4">
+                        <div class="text-muted">
+                          <i class="ri-inbox-line" style="font-size: 48px;"></i>
+                          <p class="mt-2 mb-0">Aucun workspace trouvé</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <div class="row align-items-center mt-3" *ngIf="state.users.length > 0">
+                <div class="col-md-6">
+                  <div class="text-muted">
+                    Affichage de <strong>{{ (currentPage * pageSize) + 1 }}</strong> à 
+                    <strong>{{ Math.min((currentPage + 1) * pageSize, state.users.length) }}</strong> 
+                    sur <strong>{{ state.users.length }}</strong> résultats
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm justify-content-end mb-0">
+                      <li class="page-item" [class.disabled]="currentPage === 0">
+                        <a class="page-link" href="javascript:void(0);" (click)="changePage(currentPage - 1)">
+                          <i class="mdi mdi-chevron-left"></i>
+                        </a>
+                      </li>
+                      <li class="page-item" *ngFor="let page of getPageNumbers(state)" [class.active]="page === currentPage">
+                        <a class="page-link" href="javascript:void(0);" (click)="changePage(page)">{{ page + 1 }}</a>
+                      </li>
+                      <li class="page-item" [class.disabled]="currentPage >= Math.ceil(state.users.length / pageSize) - 1">
+                        <a class="page-link" href="javascript:void(0);" (click)="changePage(currentPage + 1)">
+                          <i class="mdi mdi-chevron-right"></i>
+                        </a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngSwitchDefault>
+    <loto-message-alert [messages]="messages$ | async"></loto-message-alert>
+  </ng-container>
+</ng-container>
