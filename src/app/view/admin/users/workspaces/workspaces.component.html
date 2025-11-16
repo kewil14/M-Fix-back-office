@@ -97,7 +97,7 @@
                           {{ workspaceAdmin.isActive ? 'Actif' : 'Inactif' }}
                         </span>
                       </td>
-                      <td>{{ workspaceAdmin.createdAt | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ workspaceAdmin.createdAt ? (workspaceAdmin.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
                       <td>
                         <div class="d-flex justify-content-center gap-1">
                           <button 

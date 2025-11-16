@@ -6,7 +6,7 @@ import { Store } from '@ngrx/store';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { selectAdminState, selectRoleState } from 'src/app/core/core.state';
+import { selectAdminState, selectRoleState, selectWorkspaceAdminState } from 'src/app/core/core.state';
 import { UpdateAdminDto } from 'src/app/core/shared/dtos/update-admin-dto';
 import {
   findAdminById,
@@ -19,6 +19,9 @@ import { findAvailableRoles } from 'src/app/core/shared/stores/role/role.actions
 import { RoleState } from 'src/app/core/shared/stores/role/role.state';
 import { getTimezones } from 'src/app/core/shared/utils/timezone.util';
 import { AvatarUploadService } from 'src/app/core/shared/services/avatar-upload.service';
+import { findWorkspaceAdminById, updateWorkspaceAdmin, setWorkspaceAdmin, erreurWorkspaceAdmins } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.actions';
+import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
+import { UpdateWorkspaceAdminDto } from 'src/app/core/shared/dtos/update-workspace-admin-dto';
 
 @Component({
   selector: 'app-admin-edit',
@@ -30,6 +33,7 @@ export class AdminEditComponent implements OnInit, OnDestroy {
   submitted = false;
   adminId: string | null = null;
   adminState$!: Observable<AdminState>;
+  workspaceAdminState$!: Observable<WorkspaceAdminState>;
   roleState$!: Observable<RoleState>;
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
   subscriptions: Subscription[] = [];
@@ -40,6 +44,7 @@ export class AdminEditComponent implements OnInit, OnDestroy {
   avatarPreview: string | null = null;
   avatarFile: File | null = null;
   isUploadingAvatar: boolean = false;
+  isWorkspaceAdmin: boolean = false;
 
   messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
@@ -55,18 +60,45 @@ export class AdminEditComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.breadCrumbItems = [
-      { label: 'Admin' },
-      { label: 'Administrateurs', routerLink: '/admin/admins' },
-      { label: 'Modifier', active: true }
-    ];
+    const url = this.router.url;
+    this.isWorkspaceAdmin = url.includes('/workspaces/');
+    
+    if (this.isWorkspaceAdmin) {
+      this.breadCrumbItems = [
+        { label: 'Admin' },
+        { label: 'Workspaces', routerLink: '/admin/workspaces' },
+        { label: 'Modifier', active: true }
+      ];
+      this.workspaceAdminState$ = this.storeService.select(selectWorkspaceAdminState).pipe();
+      this.subscriptions.push(
+        this.workspaceAdminState$.subscribe(state => {
+          if (state.dataState === DataStateEnum.SUCCESS && state.workspaceAdmin && !this.formPopulated) {
+            this.populateForm(state.workspaceAdmin);
+            this.formPopulated = true;
+          }
+        })
+      );
+    } else {
+      this.breadCrumbItems = [
+        { label: 'Admin' },
+        { label: 'Administrateurs', routerLink: '/admin/admins' },
+        { label: 'Modifier', active: true }
+      ];
+      this.adminState$ = this.storeService.select(selectAdminState).pipe();
+      this.subscriptions.push(
+        this.adminState$.subscribe(state => {
+          if (state.dataState === DataStateEnum.SUCCESS && state.admin && !this.formPopulated) {
+            this.populateForm(state.admin);
+            this.formPopulated = true;
+          }
+        })
+      );
+    }
 
-    this.adminState$ = this.storeService.select(selectAdminState).pipe();
     this.roleState$ = this.storeService.select(selectRoleState).pipe();
     this.initForm();
     this.actionAdmin();
     
-    // Charger les rôles disponibles
     this.storeService.dispatch(findAvailableRoles({}));
 
     this.route.paramMap.subscribe(params => {
@@ -75,16 +107,6 @@ export class AdminEditComponent implements OnInit, OnDestroy {
         this.loadAdmin();
       }
     });
-
-    // Écouter les changements d'état pour remplir le formulaire
-    this.subscriptions.push(
-      this.adminState$.subscribe(state => {
-        if (state.dataState === DataStateEnum.SUCCESS && state.admin && !this.formPopulated) {
-          this.populateForm(state.admin);
-          this.formPopulated = true;
-        }
-      })
-    );
   }
 
   ngOnDestroy(): void {
@@ -118,7 +140,6 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       roleIds: admin.roles ? admin.roles.map((r: any) => r.id) : []
     });
     
-    // Afficher le preview de l'avatar existant
     if (admin.avatar) {
       this.avatarPreview = admin.avatar;
     }
@@ -126,30 +147,54 @@ export class AdminEditComponent implements OnInit, OnDestroy {
 
   loadAdmin(): void {
     if (this.adminId) {
-      this.storeService.dispatch(findAdminById({ adminId: this.adminId }));
+      if (this.isWorkspaceAdmin) {
+        this.storeService.dispatch(findWorkspaceAdminById({ workspaceAdminId: this.adminId }));
+      } else {
+        this.storeService.dispatch(findAdminById({ adminId: this.adminId }));
+      }
     }
   }
 
   actionAdmin(): void {
-    this.subscriptions.push(
-      this.actionService.pipe(ofType(erreurAdmins)).subscribe(({messages}) => {
-        this.messages$.next(
-          {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: messages, dismissible: false}
-        );
-      }),
-      this.actionService.pipe(ofType(setAdmin)).subscribe(() => {
-        // Ne rediriger que si c'est une mise à jour (après soumission), pas lors du chargement initial
-        if (this.isUpdating) {
+    if (this.isWorkspaceAdmin) {
+      this.subscriptions.push(
+        this.actionService.pipe(ofType(erreurWorkspaceAdmins)).subscribe(({messages}) => {
           this.messages$.next(
-            {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Administrateur mis à jour avec succès!', dismissible: false}
+            {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: messages, dismissible: false}
           );
-          setTimeout(() => {
-            this.router.navigate(['/admin/admins']);
-          }, 1500);
-          this.isUpdating = false; // Réinitialiser le flag
-        }
-      })
-    );
+        }),
+        this.actionService.pipe(ofType(setWorkspaceAdmin)).subscribe(() => {
+          if (this.isUpdating) {
+            this.messages$.next(
+              {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Workspace admin mis à jour avec succès!', dismissible: false}
+            );
+            setTimeout(() => {
+              this.router.navigate(['/admin/workspaces']);
+            }, 1500);
+            this.isUpdating = false;
+          }
+        })
+      );
+    } else {
+      this.subscriptions.push(
+        this.actionService.pipe(ofType(erreurAdmins)).subscribe(({messages}) => {
+          this.messages$.next(
+            {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: messages, dismissible: false}
+          );
+        }),
+        this.actionService.pipe(ofType(setAdmin)).subscribe(() => {
+          if (this.isUpdating) {
+            this.messages$.next(
+              {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Administrateur mis à jour avec succès!', dismissible: false}
+            );
+            setTimeout(() => {
+              this.router.navigate(['/admin/admins']);
+            }, 1500);
+            this.isUpdating = false;
+          }
+        })
+      );
+    }
   }
 
   get f() { return this.adminForm.controls; }
@@ -165,22 +210,35 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Marquer qu'on est en train de mettre à jour
     this.isUpdating = true;
 
-    const updateAdminDto: UpdateAdminDto = {
-      email: this.adminForm.value.email,
-      firstName: this.adminForm.value.firstName,
-      lastName: this.adminForm.value.lastName,
-      phoneNumber: this.adminForm.value.phoneNumber || undefined,
-      avatar: this.adminForm.value.avatar || undefined,
-      birthDate: this.adminForm.value.birthDate ? new Date(this.adminForm.value.birthDate).toISOString() : undefined,
-      preferredLanguage: this.adminForm.value.preferredLanguage || undefined,
-      timezone: this.adminForm.value.timezone || undefined,
-      roleIds: this.adminForm.value.roleIds || []
-    };
-
-    this.storeService.dispatch(updateAdmin({ adminId: this.adminId, updateAdminDto }));
+    if (this.isWorkspaceAdmin) {
+      const updateWorkspaceAdminDto: UpdateWorkspaceAdminDto = {
+        email: this.adminForm.value.email,
+        firstName: this.adminForm.value.firstName,
+        lastName: this.adminForm.value.lastName,
+        phoneNumber: this.adminForm.value.phoneNumber || undefined,
+        avatar: this.adminForm.value.avatar || undefined,
+        birthDate: this.adminForm.value.birthDate ? new Date(this.adminForm.value.birthDate).toISOString() : undefined,
+        preferredLanguage: this.adminForm.value.preferredLanguage || undefined,
+        timezone: this.adminForm.value.timezone || undefined,
+        roleIds: this.adminForm.value.roleIds || []
+      };
+      this.storeService.dispatch(updateWorkspaceAdmin({ workspaceAdminId: this.adminId, updateWorkspaceAdminDto }));
+    } else {
+      const updateAdminDto: UpdateAdminDto = {
+        email: this.adminForm.value.email,
+        firstName: this.adminForm.value.firstName,
+        lastName: this.adminForm.value.lastName,
+        phoneNumber: this.adminForm.value.phoneNumber || undefined,
+        avatar: this.adminForm.value.avatar || undefined,
+        birthDate: this.adminForm.value.birthDate ? new Date(this.adminForm.value.birthDate).toISOString() : undefined,
+        preferredLanguage: this.adminForm.value.preferredLanguage || undefined,
+        timezone: this.adminForm.value.timezone || undefined,
+        roleIds: this.adminForm.value.roleIds || []
+      };
+      this.storeService.dispatch(updateAdmin({ adminId: this.adminId, updateAdminDto }));
+    }
   }
 
   onFileSelected(event: any): void {
@@ -188,14 +246,12 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     if (file && file.type.startsWith('image/')) {
       this.avatarFile = file;
       
-      // Créer un preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.avatarPreview = e.target.result;
       };
       reader.readAsDataURL(file);
       
-      // Uploader le fichier
       this.uploadAvatar(file);
     }
   }

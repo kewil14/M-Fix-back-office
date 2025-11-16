@@ -1,4 +1,4 @@
-<ng-container *ngIf="(adminState$|async) as state" [ngSwitch]="state.dataState">
+<ng-container *ngIf="(isWorkspaceAdmin ? (workspaceAdminState$|async) : (adminState$|async)) as state" [ngSwitch]="state.dataState">
   <ng-container *ngSwitchCase="dataStateEnum.LOADING">
     <app-loading5></app-loading5>
   </ng-container>
@@ -10,7 +10,7 @@
             <div class="card-header border-bottom">
               <div class="row align-items-center">
                 <div class="col-md-6">
-                  <h4 class="card-title mb-0">Détails de l'Administrateur</h4>
+                  <h4 class="card-title mb-0">{{ isWorkspaceAdmin ? 'Détails du Workspace Admin' : 'Détails de l\'Administrateur' }}</h4>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">
@@ -75,7 +75,7 @@
                 <div class="col-md-6">
                   <div class="mb-3">
                     <label class="form-label fw-bold">Date de création</label>
-                    <p class="form-control-plaintext">{{ admin.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+                    <p class="form-control-plaintext">{{ admin.createdAt ? (admin.createdAt | date: 'dd/MM/yyyy HH:mm') : 'N/A' }}</p>
                   </div>
                 </div>
                 <div class="col-md-6" *ngIf="admin.lastLoginAt">

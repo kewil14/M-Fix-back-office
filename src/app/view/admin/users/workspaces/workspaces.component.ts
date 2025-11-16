@@ -37,7 +37,6 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
   );
 
-  // Filtres et pagination
   searchTerm: string = '';
   isActiveFilter: boolean | null = null;
   currentPage: number = 0;
@@ -89,7 +88,6 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
         }
       ),
       this.actionService.pipe(ofType(loadWorkspaceAdmins)).subscribe(() => {
-        // Les workspace admins sont chargés
       })
     );
   }
@@ -158,13 +156,13 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   onView(workspaceAdmin: EmployeeResponseDto): void {
     if (workspaceAdmin.id) {
-      // Rediriger vers la page de détail si nécessaire
+      this.router.navigate(['/admin/workspaces/detail', workspaceAdmin.id]);
     }
   }
 
   onEdit(workspaceAdmin: EmployeeResponseDto): void {
     if (workspaceAdmin.id) {
-      // Rediriger vers la page d'édition si nécessaire
+      this.router.navigate(['/admin/workspaces/edit', workspaceAdmin.id]);
     }
   }
 

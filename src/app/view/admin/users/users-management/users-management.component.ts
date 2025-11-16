@@ -37,7 +37,6 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
   );
 
-  // Filtres et pagination
   searchTerm: string = '';
   isActiveFilter: boolean | null = null;
   currentPage: number = 0;
@@ -79,7 +78,6 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
         }, 1000);
       }),
       this.actionService.pipe(ofType(loadAdmins)).subscribe(() => {
-        // Les utilisateurs sont chargés
       })
     );
   }
@@ -98,12 +96,10 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   }
 
   isAdminOrSuperAdmin(user: EmployeeResponseDto): boolean {
-    // Si le type est ADMIN, c'est un admin ou super_admin
     if (user.type === 'ADMIN' || user.type === 'SUPER_ADMIN') {
       return true;
     }
     
-    // Sinon, vérifier les rôles si disponibles
     if (user.roles && user.roles.length > 0) {
       return user.roles.some(role => {
         const roleName = role.name?.toLowerCase() || role.roleName?.toLowerCase() || '';

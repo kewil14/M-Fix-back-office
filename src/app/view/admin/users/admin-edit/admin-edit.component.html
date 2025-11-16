@@ -1,4 +1,4 @@
-<ng-container *ngIf="(adminState$|async) as state" [ngSwitch]="state.dataState">
+<ng-container *ngIf="(isWorkspaceAdmin ? (workspaceAdminState$|async) : (adminState$|async)) as state" [ngSwitch]="state.dataState">
   <ng-container *ngSwitchCase="dataStateEnum.LOADING">
     <app-loading5></app-loading5>
   </ng-container>
@@ -10,7 +10,7 @@
             <div class="card-header border-bottom">
               <div class="row align-items-center">
                 <div class="col-md-6">
-                  <h4 class="card-title mb-0">Modifier l'Administrateur</h4>
+                  <h4 class="card-title mb-0">{{ isWorkspaceAdmin ? 'Modifier le Workspace Admin' : 'Modifier l\'Administrateur' }}</h4>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">

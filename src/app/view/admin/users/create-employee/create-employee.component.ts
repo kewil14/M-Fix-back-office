@@ -15,6 +15,7 @@ import {
 import { createEmployeeNew, addEmployee, erreurEmployees } from 'src/app/core/shared/stores/employee/employee.actions';
 import { CreateEmployeeDto } from 'src/app/core/shared/dtos/create-employee-dto.modal';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
 
 @Component({
   selector: 'app-create-employee',
@@ -45,13 +46,16 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
 
   managerLevels = ['JUNIOR', 'MID', 'SENIOR'];
   vehicleTypes = ['MOTO', 'CAR', 'VAN', 'BIKE'];
+  workspaces: WorkspaceDto[] = [];
+  isLoadingWorkspaces: boolean = false;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
     private storeService: Store,
     private actionService: Actions,
     public modalService: BsModalService,
-    public bsModalRef: BsModalRef
+    public bsModalRef: BsModalRef,
+    private workspaceService: WorkspaceService
   ) {
     this.modalRef = bsModalRef;
   }
@@ -60,10 +64,26 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     this.authentificationState$ = this.storeService.select(selectauthentificationState).pipe();
     this.initForm();
     this.actionEmployee();
+    this.loadWorkspaces();
     
-    // Écouter les changements du type d'employé pour afficher/masquer les champs spécifiques
     this.employeeForm.get('userType')?.valueChanges.subscribe(type => {
       this.updateFormValidation(type);
+    });
+  }
+
+  loadWorkspaces(): void {
+    this.isLoadingWorkspaces = true;
+    this.workspaceService.findAllWorkspaces().subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.workspaces = response.data;
+        }
+        this.isLoadingWorkspaces = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des workspaces:', error);
+        this.isLoadingWorkspaces = false;
+      }
     });
   }
 
@@ -79,16 +99,12 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       userType: ['EMPLOYEE', [Validators.required]],
       workspaceId: ['', [Validators.required]],
       shopId: [''],
-      // Champs EMPLOYEE
       employeeCode: [''],
       department: [''],
-      // Champs SHOP_MANAGER
       managerLevel: [''],
-      // Champs TECHNICIAN
       specialization: [''],
       certifications: [''],
       skillLevel: [1, [Validators.min(1), Validators.max(5)]],
-      // Champs DELIVERER
       vehicleType: [''],
       licenseNumber: [''],
       deliveryZones: ['']
@@ -96,21 +112,17 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
   }
 
   updateFormValidation(userType: string) {
-    // Réinitialiser les validations
     const employeeCode = this.employeeForm.get('employeeCode');
     const managerLevel = this.employeeForm.get('managerLevel');
     const specialization = this.employeeForm.get('specialization');
     const vehicleType = this.employeeForm.get('vehicleType');
     const licenseNumber = this.employeeForm.get('licenseNumber');
 
-    // Retirer les validations
     employeeCode?.clearValidators();
     managerLevel?.clearValidators();
     specialization?.clearValidators();
     vehicleType?.clearValidators();
     licenseNumber?.clearValidators();
-
-    // Ajouter les validations selon le type
     if (userType === 'EMPLOYEE') {
       employeeCode?.setValidators([Validators.required]);
     } else if (userType === 'SHOP_MANAGER') {
@@ -122,7 +134,6 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       licenseNumber?.setValidators([Validators.required]);
     }
 
-    // Mettre à jour les validations
     employeeCode?.updateValueAndValidity();
     managerLevel?.updateValueAndValidity();
     specialization?.updateValueAndValidity();
@@ -130,7 +141,9 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     licenseNumber?.updateValueAndValidity();
   }
 
-  get f() { return this.employeeForm.controls; }
+  get f() {
+    return this.employeeForm.controls;
+  }
 
   get currentUserType() {
     return this.employeeForm.get('userType')?.value;
@@ -198,7 +211,6 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       roleIds: []
     };
 
-    // Ajouter les champs spécifiques selon le type
     if (formValue.userType === 'EMPLOYEE') {
       createEmployeeDto.employeeCode = formValue.employeeCode;
       createEmployeeDto.department = formValue.department;
@@ -214,8 +226,6 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       createEmployeeDto.deliveryZones = formValue.deliveryZones;
     }
 
-    console.log('Création Employee:', createEmployeeDto);
-    // Utiliser la nouvelle action pour créer un employé
     this.storeService.dispatch(createEmployeeNew({createEmployeeDto}));
   }
 

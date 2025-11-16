@@ -36,7 +36,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
   );
 
-  // Filtres et pagination
   searchTerm: string = '';
   departmentFilter: string = '';
   userTypeFilter: string = '';
@@ -89,7 +88,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         }, 1000);
       }),
       this.actionService.pipe(ofType(loadEmployees)).subscribe(() => {
-        // Les employés sont chargés
       })
     );
   }

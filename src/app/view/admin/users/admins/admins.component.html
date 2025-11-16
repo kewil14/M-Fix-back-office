@@ -97,7 +97,7 @@
                           {{ admin.isActive ? 'Actif' : 'Inactif' }}
                         </span>
                       </td>
-                      <td>{{ admin.createdAt | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ admin.createdAt ? (admin.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
                       <td>
                         <div class="d-flex justify-content-center gap-1">
                           <button 

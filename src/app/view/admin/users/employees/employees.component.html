@@ -114,7 +114,7 @@
                           {{ employee.isActive ? 'Actif' : 'Inactif' }}
                         </span>
                       </td>
-                      <td>{{ employee.createdAt | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ employee.createdAt ? (employee.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
                       <td>
                         <div class="d-flex justify-content-center gap-1">
                           <button 

@@ -97,7 +97,7 @@
                           {{ user.isActive ? 'Actif' : 'Inactif' }}
                         </span>
                       </td>
-                      <td>{{ user.createdAt | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ user.createdAt ? (user.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
                       <td>
                         <div class="d-flex justify-content-center gap-1">
                           <button 

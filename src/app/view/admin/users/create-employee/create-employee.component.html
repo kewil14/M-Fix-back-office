@@ -50,12 +50,21 @@
         </div>
 
         <div class="mb-3">
-          <label class="control-label">Workspace ID <span class="text-danger">*</span></label>
-          <input class="form-control" placeholder="WS1730456000000" type="text" 
-                 formControlName="workspaceId"
-                 [ngClass]="{'is-invalid': submitted && f.workspaceId.errors}" />
+          <label class="control-label">Workspace <span class="text-danger">*</span></label>
+          <select class="form-control" formControlName="workspaceId"
+                  [ngClass]="{'is-invalid': submitted && f.workspaceId.errors}"
+                  [disabled]="isLoadingWorkspaces">
+            <option value="">Sélectionner un workspace...</option>
+            <option *ngFor="let workspace of workspaces" [value]="workspace.id">
+              {{ workspace.name }}
+            </option>
+          </select>
+          <div *ngIf="isLoadingWorkspaces" class="text-muted small mt-1">
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            Chargement des workspaces...
+          </div>
           <div *ngIf="submitted && f.workspaceId.errors" class="invalid-feedback">
-            <span *ngIf="f.workspaceId.errors.required">Workspace ID requis</span>
+            <span *ngIf="f.workspaceId.errors.required">Workspace requis</span>
           </div>
         </div>
 

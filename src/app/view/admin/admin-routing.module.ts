@@ -72,9 +72,26 @@ const routes: Routes = [
   },
   {
     path: 'workspaces',
-    component: WorkspacesComponent,
-    canActivate: [PermissionGuard],
-    data: { permissions: ['workspaces:read'] }
+    children: [
+      {
+        path: '',
+        component: WorkspacesComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['workspaces:read'] }
+      },
+      {
+        path: 'detail/:id',
+        component: AdminDetailComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['workspaces:read'] }
+      },
+      {
+        path: 'edit/:id',
+        component: AdminEditComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['workspaces:update'] }
+      }
+    ]
   },
   {
     path: 'employees',

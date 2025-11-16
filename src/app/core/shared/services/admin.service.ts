@@ -15,11 +15,6 @@ export class AdminService {
     private http: HttpClient
   ) { }
 
-  /**
-   * Récupérer la liste paginée des administrateurs avec filtres
-   * @param filters Les filtres de recherche
-   * @returns Observable<RequestResultDto<EmployeeListResponseDto>>
-   */
   findAllAdmins(filters: AdminListRequestDto): Observable<RequestResultDto<EmployeeListResponseDto>> {
     let params = new HttpParams();
     
@@ -37,22 +32,12 @@ export class AdminService {
     ).pipe(share());
   }
 
-  /**
-   * Récupérer un administrateur par son ID
-   * @param adminId L'identifiant de l'administrateur
-   * @returns Observable<RequestResultDto<EmployeeResponseDto>>
-   */
   findAdminById(adminId: string): Observable<RequestResultDto<EmployeeResponseDto>> {
     return this.http.get<RequestResultDto<EmployeeResponseDto>>(
       API_URLS.CUSTOMERS_URL + `/auth/admins/${adminId}`
     ).pipe(share());
   }
 
-  /**
-   * Créer un nouvel administrateur
-   * @param createAdminDto Les données de l'administrateur
-   * @returns Observable<RequestResultDto<EmployeeResponseDto>>
-   */
   createAdmin(createAdminDto: CreateAdminDto): Observable<RequestResultDto<EmployeeResponseDto>> {
     return this.http.post<RequestResultDto<EmployeeResponseDto>>(
       API_URLS.CUSTOMERS_URL + `/auth/admins`,
@@ -60,12 +45,6 @@ export class AdminService {
     ).pipe(share());
   }
 
-  /**
-   * Mettre à jour un administrateur
-   * @param adminId L'identifiant de l'administrateur
-   * @param updateAdminDto Les données à mettre à jour
-   * @returns Observable<RequestResultDto<EmployeeResponseDto>>
-   */
   updateAdmin(adminId: string, updateAdminDto: UpdateAdminDto): Observable<RequestResultDto<EmployeeResponseDto>> {
     return this.http.put<RequestResultDto<EmployeeResponseDto>>(
       API_URLS.CUSTOMERS_URL + `/auth/admins/${adminId}`,
@@ -73,22 +52,12 @@ export class AdminService {
     ).pipe(share());
   }
 
-  /**
-   * Désactiver un administrateur (soft delete)
-   * @param adminId L'identifiant de l'administrateur
-   * @returns Observable<RequestResultDto<string>>
-   */
   deleteAdmin(adminId: string): Observable<RequestResultDto<string>> {
     return this.http.delete<RequestResultDto<string>>(
       API_URLS.CUSTOMERS_URL + `/auth/admins/${adminId}`
     ).pipe(share());
   }
 
-  /**
-   * Réactiver un administrateur désactivé
-   * @param adminId L'identifiant de l'administrateur
-   * @returns Observable<RequestResultDto<string>>
-   */
   reactivateAdmin(adminId: string): Observable<RequestResultDto<string>> {
     return this.http.patch<RequestResultDto<string>>(
       API_URLS.CUSTOMERS_URL + `/auth/admins/${adminId}/reactivate`,
