@@ -98,6 +98,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
     const filters: AdminListRequestDto = {
       search: this.searchTerm || undefined,
       isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
+      isSuperAdmin: false,
       page: this.currentPage,
       size: this.pageSize,
       sortBy: this.sortBy,
