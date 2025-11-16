@@ -21,6 +21,8 @@ import { EmployeeState } from './shared/stores/employee/employee.state';
 import { employeeReducer } from './shared/stores/employee/employee.reducer';
 import { AdminState } from './shared/stores/admin/admin.state';
 import { adminReducer } from './shared/stores/admin/admin.reducer';
+import { WorkspaceAdminState } from './shared/stores/workspace-admin/workspace-admin.state';
+import { WorkspaceAdminReducer } from './shared/stores/workspace-admin/workspace-admin.reducer';
 
 export interface AppState {
     authentificationState: AuthentificationState,
@@ -33,7 +35,8 @@ export interface AppState {
     demandeState: DemandeState,
     addressState: AddressState,
     employeeState: EmployeeState,
-    adminState: AdminState
+    adminState: AdminState,
+    workspaceAdminState: WorkspaceAdminState
 }
 
 export const selectauthentificationState = createFeatureSelector<AuthentificationState>('authentificationState');
@@ -47,6 +50,7 @@ export const selectDemandeState = createFeatureSelector<DemandeState>('demandeSt
 export const selectAddressState = createFeatureSelector<AddressState>('addressState');
 export const selectEmployeeState = createFeatureSelector<EmployeeState>('employeeState');
 export const selectAdminState = createFeatureSelector<AdminState>('adminState');
+export const selectWorkspaceAdminState = createFeatureSelector<WorkspaceAdminState>('workspaceAdminState');
 
 
 export const reducers: ActionReducerMap<AppState> = {
@@ -60,7 +64,8 @@ export const reducers: ActionReducerMap<AppState> = {
     demandeState: demandeReducer,
     addressState: adressReducer,
     employeeState: employeeReducer,
-    adminState: adminReducer
+    adminState: adminReducer,
+    workspaceAdminState: WorkspaceAdminReducer
 }
 
 

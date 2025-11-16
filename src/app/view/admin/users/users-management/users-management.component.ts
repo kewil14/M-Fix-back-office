@@ -3,17 +3,24 @@ import { Router } from '@angular/router';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { UserTypeEnum } from 'src/app/core/config/list-roles';
-import { selectUserState } from 'src/app/core/core.state';
-import { UserResponseDto } from 'src/app/core/shared/dtos/user-response-dto.modal';
-import { UserRequestDto } from 'src/app/core/shared/dtos/user-request-dto.modal';
+import { selectAdminState } from 'src/app/core/core.state';
+import { AdminListRequestDto } from 'src/app/core/shared/dtos/admin-list-request-dto';
+import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
-import { addUser, createUser, deleteUser, erreurUsers, findAllUsers, loadUsers, updateUser } from 'src/app/core/shared/stores/user/user.actions';
-import { UserState } from 'src/app/core/shared/stores/user/user.state';
+import {
+  findAllAdmins,
+  deleteAdmin,
+  reactivateAdmin,
+  erreurAdmins,
+  addAdmin,
+  loadAdmins
+} from 'src/app/core/shared/stores/admin/admin.actions';
+import { AdminState } from 'src/app/core/shared/stores/admin/admin.state';
+import { CreateUserComponent } from '../create-user/create-user.component';
+import { addUser } from 'src/app/core/shared/stores/user/user.actions';
 
 @Component({
   selector: 'app-users-management',
@@ -23,27 +30,23 @@ import { UserState } from 'src/app/core/shared/stores/user/user.state';
 export class UsersManagementComponent implements OnInit, OnDestroy {
   modalRef?: BsModalRef;
   breadCrumbItems!: Array<{}>;
-  userState$!: Observable<UserState>;
+  adminState$!: Observable<AdminState>;
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
   subscriptions: Subscription[] = [];
   messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
   );
 
-  // Form
-  formData!: FormGroup;
-  submitted = false;
-  isEditMode = false;
-  editingUser: UserResponseDto | null = null;
-
   // Filtres et pagination
   searchTerm: string = '';
+  isActiveFilter: boolean | null = null;
   currentPage: number = 0;
   pageSize: number = 10;
+  sortBy: string = 'createdAt';
+  sortDirection: string = 'desc';
 
   constructor(
     private modalService: BsModalService,
-    private formBuilder: FormBuilder,
     private storeService: Store,
     private actionService: Actions,
     private router: Router
@@ -54,62 +57,75 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Clients', active: true }];
-    this.userState$ = this.storeService.select(selectUserState).pipe();
-    this.initForm();
-    this.actionUser();
+    this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Utilisateurs', active: true }];
+    this.adminState$ = this.storeService.select(selectAdminState).pipe();
+    this.actionUsers();
     this.loadUsers();
   }
 
-  initForm(): void {
-    this.formData = this.formBuilder.group({
-      userFirstName: ['', [Validators.required]],
-      userLastName: ['', [Validators.required]],
-      userEmail: ['', [Validators.required, Validators.pattern('[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}$')]],
-      country: ['', [Validators.required]],
-      userPhoneNumber: ['', [Validators.required]],
-      image: ['']
-    });
-  }
-
-  get form() {
-    return this.formData.controls;
-  }
-
-  actionUser() {
+  actionUsers() {
     this.subscriptions.push(
-      this.actionService.pipe(ofType(erreurUsers)).subscribe(({messages}) => {
+      this.actionService.pipe(ofType(erreurAdmins)).subscribe(({messages}) => {
         this.messages$.next(
           {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: messages, dismissible: false}
         );
       }),
-      this.actionService.pipe(ofType(addUser)).subscribe(
-        ({user}) => {
-          this.messages$.next(
-            {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Utilisateur ajouté avec succès', dismissible: false}
-          );
-          setTimeout(() => {
-            this.closeModal();
-            this.loadUsers();
-          }, 1000);
-        }
-      ),
-      this.actionService.pipe(ofType(loadUsers)).subscribe(() => {
-        this.loadUsers();
+      this.actionService.pipe(ofType(addUser)).subscribe(() => {
+        this.messages$.next(
+          {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Utilisateur créé avec succès!', dismissible: false}
+        );
+        setTimeout(() => {
+          this.loadUsers();
+        }, 1000);
+      }),
+      this.actionService.pipe(ofType(loadAdmins)).subscribe(() => {
+        // Les utilisateurs sont chargés
       })
     );
   }
 
   loadUsers() {
-    this.storeService.dispatch(findAllUsers({
-      userType: UserTypeEnum.CUSTOMER,
+    const filters: AdminListRequestDto = {
+      search: this.searchTerm || undefined,
+      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
+      isSuperAdmin: undefined,
       page: this.currentPage,
       size: this.pageSize,
-      sort: 'creationDate,desc'
-    }));
+      sortBy: this.sortBy,
+      sortDirection: this.sortDirection
+    };
+    this.storeService.dispatch(findAllAdmins({ filters }));
+  }
+
+  isAdminOrSuperAdmin(user: EmployeeResponseDto): boolean {
+    // Si le type est ADMIN, c'est un admin ou super_admin
+    if (user.type === 'ADMIN' || user.type === 'SUPER_ADMIN') {
+      return true;
+    }
+    
+    // Sinon, vérifier les rôles si disponibles
+    if (user.roles && user.roles.length > 0) {
+      return user.roles.some(role => {
+        const roleName = role.name?.toLowerCase() || role.roleName?.toLowerCase() || '';
+        const roleCode = role.code?.toLowerCase() || role.roleCode?.toLowerCase() || '';
+        return roleName.includes('admin') || roleName.includes('super') ||
+               roleCode.includes('admin') || roleCode.includes('super');
+      });
+    }
+    
+    return false;
+  }
+
+  getFilteredUsers(users: EmployeeResponseDto[]): EmployeeResponseDto[] {
+    return users.filter(user => !this.isAdminOrSuperAdmin(user));
   }
 
   onSearchChange(): void {
+    this.currentPage = 0;
+    this.loadUsers();
+  }
+
+  onFilterChange(): void {
     this.currentPage = 0;
     this.loadUsers();
   }
@@ -125,14 +141,17 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     this.loadUsers();
   }
 
-  getPageNumbers(state: UserState): number[] {
-    if (!state || !state.users) return [];
-    const totalPages = Math.ceil(state.users.length / this.pageSize);
-    if (totalPages === 0) return [];
+  getFilteredUsersList(state: AdminState): EmployeeResponseDto[] {
+    if (!state || !state.admins) return [];
+    return this.getFilteredUsers(state.admins);
+  }
+
+  getPageNumbers(state: AdminState): number[] {
+    if (!state || state.totalPages === 0) return [];
     const pages: number[] = [];
-    const maxPages = Math.min(5, totalPages);
-    let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(totalPages - 1, startPage + maxPages - 1);
+    const maxPages = Math.min(5, state.totalPages);
+    let startPage = Math.max(0, state.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(state.totalPages - 1, startPage + maxPages - 1);
     
     if (endPage - startPage < maxPages - 1) {
       startPage = Math.max(0, endPage - maxPages + 1);
@@ -149,47 +168,31 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   }
 
   openCreateModal() {
-    this.isEditMode = false;
-    this.editingUser = null;
-    this.formData.reset();
-    this.submitted = false;
-    this.modalRef = this.modalService.show('userModal', { 
+    this.modalRef = this.modalService.show(CreateUserComponent, { 
       class: 'modal-lg',
       backdrop: true,
       ignoreBackdropClick: true
     });
   }
 
-  onEdit(user: UserResponseDto): void {
-    this.isEditMode = true;
-    this.editingUser = user;
-    this.formData.patchValue({
-      userFirstName: user.userFirstName,
-      userLastName: user.userLastName,
-      userEmail: user.userEmail,
-      country: user.userPhoneNumber?.split(' ')[0] || '',
-      userPhoneNumber: user.userPhoneNumber,
-      image: user.image
-    });
-    this.submitted = false;
-    this.modalRef = this.modalService.show('userModal', { 
-      class: 'modal-lg',
-      backdrop: true,
-      ignoreBackdropClick: true
-    });
+  onView(user: EmployeeResponseDto): void {
+    if (user.id) {
+      this.router.navigate(['/admin/admins/detail', user.id]);
+    }
   }
 
-  onView(user: UserResponseDto): void {
-    // Rediriger vers la page de détail si nécessaire
-    // this.router.navigate(['/admin/users/detail', user.userCode]);
+  onEdit(user: EmployeeResponseDto): void {
+    if (user.id) {
+      this.router.navigate(['/admin/admins/edit', user.id]);
+    }
   }
 
-  onDelete(user: UserResponseDto): void {
+  onDelete(user: EmployeeResponseDto): void {
     const initialState = {
-      title: 'Supprimer l\'utilisateur',
-      message: 'Êtes-vous sûr de vouloir supprimer cet utilisateur ?',
-      itemName: `${user.userFirstName} ${user.userLastName}`,
-      confirmBtnText: 'Supprimer',
+      title: 'Désactiver l\'utilisateur',
+      message: 'Êtes-vous sûr de vouloir désactiver cet utilisateur ?',
+      itemName: `${user.firstName} ${user.lastName}`,
+      confirmBtnText: 'Désactiver',
       cancelBtnText: 'Annuler'
     };
     
@@ -200,8 +203,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     
     if (this.modalRef.content) {
       this.modalRef.content.onConfirm.subscribe((confirmed: boolean) => {
-        if (confirmed && user.userCode) {
-          this.storeService.dispatch(deleteUser({userCode: user.userCode}));
+        if (confirmed) {
+          this.storeService.dispatch(deleteAdmin({ adminId: user.id }));
           setTimeout(() => {
             this.loadUsers();
           }, 1000);
@@ -210,52 +213,10 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  saveUser() {
-    this.submitted = true;
-    if (this.formData.invalid) {
-      return;
-    }
-
-    if (this.isEditMode && this.editingUser) {
-      // Update user
-      const userDto: UserRequestDto = {
-        userCode: this.editingUser.userCode,
-        userFirstName: this.formData.get('userFirstName')?.value,
-        userLastName: this.formData.get('userLastName')?.value,
-        userEmail: this.formData.get('userEmail')?.value,
-        country: this.formData.get('country')?.value,
-        userPhoneNumber: this.formData.get('userPhoneNumber')?.value,
-        image: this.formData.get('image')?.value || '',
-        userType: UserTypeEnum.CUSTOMER,
-      };
-      this.storeService.dispatch(updateUser({user: userDto}));
-    } else {
-      // Create user
-      const userDto: UserRequestDto = {
-        userFirstName: this.formData.get('userFirstName')?.value,
-        userLastName: this.formData.get('userLastName')?.value,
-        userEmail: this.formData.get('userEmail')?.value,
-        country: this.formData.get('country')?.value,
-        userPhoneNumber: this.formData.get('userPhoneNumber')?.value,
-        userPassword: "123@",
-        image: this.formData.get('image')?.value || '',
-        userType: UserTypeEnum.CUSTOMER,
-      };
-      this.storeService.dispatch(createUser({user: userDto}));
-    }
-  }
-
-  closeModal() {
-    if (this.modalRef) {
-      this.modalRef.hide();
-    }
-    this.formData.reset();
-    this.submitted = false;
-    this.isEditMode = false;
-    this.editingUser = null;
-  }
-
-  cancelForm() {
-    this.closeModal();
+  onReactivate(user: EmployeeResponseDto): void {
+    this.storeService.dispatch(reactivateAdmin({ adminId: user.id }));
+    setTimeout(() => {
+      this.loadUsers();
+    }, 1000);
   }
 }

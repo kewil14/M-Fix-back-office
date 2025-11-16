@@ -1,0 +1,115 @@
+<div class="modal-header">
+  <h5 class="modal-title mt-0">Créer Utilisateur</h5>
+  <button type="button" class="btn-close" aria-hidden="true" (click)="bsModalRef?.hide()"></button>
+</div>
+<div class="modal-body">
+  <loto-message-alert [messages$]="messages$"></loto-message-alert>
+  
+  <form (ngSubmit)="onSubmit()" [formGroup]="userForm">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Prénom <span class="text-danger">*</span></label>
+          <input
+            class="form-control"
+            placeholder="Entrez le prénom"
+            type="text"
+            formControlName="userFirstName"
+            [ngClass]="{'is-invalid': submitted && f.userFirstName.errors}" />
+          <div *ngIf="submitted && f.userFirstName.errors" class="invalid-feedback">
+            <span *ngIf="f.userFirstName.errors.required">Prénom requis</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Nom <span class="text-danger">*</span></label>
+          <input
+            class="form-control"
+            placeholder="Entrez le nom"
+            type="text"
+            formControlName="userLastName"
+            [ngClass]="{'is-invalid': submitted && f.userLastName.errors}" />
+          <div *ngIf="submitted && f.userLastName.errors" class="invalid-feedback">
+            <span *ngIf="f.userLastName.errors.required">Nom requis</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Email <span class="text-danger">*</span></label>
+          <input
+            class="form-control"
+            placeholder="Entrez l'email"
+            type="email"
+            formControlName="userEmail"
+            [ngClass]="{'is-invalid': submitted && f.userEmail.errors}" />
+          <div *ngIf="submitted && f.userEmail.errors" class="invalid-feedback">
+            <span *ngIf="f.userEmail.errors.required">Email requis</span>
+            <span *ngIf="f.userEmail.errors.email">Email invalide</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Téléphone <span class="text-danger">*</span></label>
+          <input
+            class="form-control"
+            placeholder="Entrez le numéro de téléphone"
+            type="tel"
+            formControlName="userPhoneNumber"
+            [ngClass]="{'is-invalid': submitted && f.userPhoneNumber.errors}" />
+          <div *ngIf="submitted && f.userPhoneNumber.errors" class="invalid-feedback">
+            <span *ngIf="f.userPhoneNumber.errors.required">Téléphone requis</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Pays <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="country"
+            [ngClass]="{'is-invalid': submitted && f.country.errors}">
+            <option [value]="CountryEnum.FRANCE">France</option>
+          </select>
+          <div *ngIf="submitted && f.country.errors" class="invalid-feedback">
+            <span *ngIf="f.country.errors.required">Pays requis</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Type d'utilisateur <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="userType"
+            [ngClass]="{'is-invalid': submitted && f.userType.errors}">
+            <option [value]="UserTypeEnum.CUSTOMER">Client</option>
+            <option [value]="UserTypeEnum.EMPLOYEE">Employé</option>
+          </select>
+          <div *ngIf="submitted && f.userType.errors" class="invalid-feedback">
+            <span *ngIf="f.userType.errors.required">Type d'utilisateur requis</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="alert alert-info">
+        <small>ℹ️ Un mot de passe temporaire sera généré pour l'utilisateur. Il devra le changer lors de sa première connexion.</small>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+  <button type="button" class="btn btn-primary" (click)="onSubmit()">Créer Utilisateur</button>
+</div>
+

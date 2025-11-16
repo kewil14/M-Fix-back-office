@@ -53,12 +53,6 @@ export const MENU: MenuItem[] = [
                 parentId: 67
             },
             {
-                id: 71,
-                label: 'Super Admin',
-                link: '/admin/superadmin',
-                parentId: 67
-            },
-            {
                 id: 70,
                 label: 'Administrateurs',
                 link: '/admin/admins',

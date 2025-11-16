@@ -74,7 +74,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let admin of state.admins; let index = index">
+                    <tr *ngFor="let admin of getFilteredAdmins(state); let index = index">
                       <th scope="row">{{ (state.currentPage * state.pageSize) + index + 1 }}</th>
                       <td>{{ admin.id || 'N/A' }}</td>
                       <td>
@@ -129,7 +129,7 @@
                         </div>
                       </td>
                     </tr>
-                    <tr *ngIf="state.admins.length === 0">
+                    <tr *ngIf="getFilteredAdmins(state).length === 0">
                       <td colspan="8" class="text-center py-4">
                         <div class="text-muted">
                           <i class="ri-inbox-line" style="font-size: 48px;"></i>

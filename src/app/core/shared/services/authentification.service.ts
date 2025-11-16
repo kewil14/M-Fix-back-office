@@ -103,7 +103,7 @@ export class AuthentificationService {
    */
   createAdmin(createAdminDto: CreateAdminDto): Observable<RequestResultDto<User>> {
     return this.http.post<RequestResultDto<User>>(
-      API_URLS.CUSTOMERS_URL + `/auth/users/admin`,
+      API_URLS.CUSTOMERS_URL + `/auth/admins`,
       createAdminDto
     ).pipe(share());
   }
@@ -115,7 +115,7 @@ export class AuthentificationService {
    */
   createWorkspaceWithAdmin(createWorkspaceWithAdminDto: CreateWorkspaceWithAdminDto): Observable<RequestResultDto<any>> {
     return this.http.post<RequestResultDto<any>>(
-      API_URLS.CUSTOMERS_URL + `/auth/users/workspace-with-admin`,
+      API_URLS.CUSTOMERS_URL + `/auth/workspace-admins/workspace`,
       createWorkspaceWithAdminDto
     ).pipe(share());
   }

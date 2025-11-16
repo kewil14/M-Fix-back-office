@@ -6,13 +6,20 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { UserTypeEnum } from 'src/app/core/config/list-roles';
-import { selectUserState } from 'src/app/core/core.state';
-import { UserResponseDto } from 'src/app/core/shared/dtos/user-response-dto.modal';
+import { selectWorkspaceAdminState } from 'src/app/core/core.state';
+import { WorkspaceAdminListRequestDto } from 'src/app/core/shared/dtos/workspace-admin-list-request-dto';
+import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
 import { createWorkspaceWithAdminOk, erreursAuthentification } from 'src/app/core/shared/stores/authentification/authentification.actions';
-import { deleteUser, erreurUsers, findAllUsers, loadUsers } from 'src/app/core/shared/stores/user/user.actions';
-import { UserState } from 'src/app/core/shared/stores/user/user.state';
+import {
+  findAllWorkspaceAdmins,
+  deleteWorkspaceAdmin,
+  reactivateWorkspaceAdmin,
+  erreurWorkspaceAdmins,
+  addWorkspaceAdmin,
+  loadWorkspaceAdmins
+} from 'src/app/core/shared/stores/workspace-admin/workspace-admin.actions';
+import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
 import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-workspace-admin.component';
 
 @Component({
@@ -23,7 +30,7 @@ import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-
 export class WorkspacesComponent implements OnInit, OnDestroy {
   modalRef?: BsModalRef;
   breadCrumbItems!: Array<{}>;
-  userState$!: Observable<UserState>;
+  workspaceAdminState$!: Observable<WorkspaceAdminState>;
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
   subscriptions: Subscription[] = [];
   messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
@@ -32,8 +39,11 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   // Filtres et pagination
   searchTerm: string = '';
+  isActiveFilter: boolean | null = null;
   currentPage: number = 0;
   pageSize: number = 10;
+  sortBy: string = 'assignedAt';
+  sortDirection: string = 'desc';
 
   constructor(
     private modalService: BsModalService,
@@ -48,17 +58,25 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Workspaces', active: true }];
-    this.userState$ = this.storeService.select(selectUserState).pipe();
+    this.workspaceAdminState$ = this.storeService.select(selectWorkspaceAdminState).pipe();
     this.actionWorkspaces();
     this.loadWorkspaces();
   }
 
   actionWorkspaces() {
     this.subscriptions.push(
-      this.actionService.pipe(ofType(erreurUsers)).subscribe(({messages}) => {
+      this.actionService.pipe(ofType(erreurWorkspaceAdmins)).subscribe(({messages}) => {
         this.messages$.next(
           {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: messages, dismissible: false}
         );
+      }),
+      this.actionService.pipe(ofType(addWorkspaceAdmin)).subscribe(() => {
+        this.messages$.next(
+          {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Workspace créé avec succès!', dismissible: false}
+        );
+        setTimeout(() => {
+          this.loadWorkspaces();
+        }, 1000);
       }),
       this.actionService.pipe(ofType(createWorkspaceWithAdminOk)).subscribe(
         ({data}) => {
@@ -70,22 +88,30 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
           }, 1000);
         }
       ),
-      this.actionService.pipe(ofType(loadUsers)).subscribe(() => {
-        this.loadWorkspaces();
+      this.actionService.pipe(ofType(loadWorkspaceAdmins)).subscribe(() => {
+        // Les workspace admins sont chargés
       })
     );
   }
 
   loadWorkspaces() {
-    this.storeService.dispatch(findAllUsers({
-      userType: UserTypeEnum.WORKSPACE_ADMIN,
+    const filters: WorkspaceAdminListRequestDto = {
+      search: this.searchTerm || undefined,
+      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
       page: this.currentPage,
       size: this.pageSize,
-      sort: 'creationDate,desc'
-    }));
+      sortBy: this.sortBy,
+      sortDirection: this.sortDirection
+    };
+    this.storeService.dispatch(findAllWorkspaceAdmins({ filters }));
   }
 
   onSearchChange(): void {
+    this.currentPage = 0;
+    this.loadWorkspaces();
+  }
+
+  onFilterChange(): void {
     this.currentPage = 0;
     this.loadWorkspaces();
   }
@@ -101,14 +127,12 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     this.loadWorkspaces();
   }
 
-  getPageNumbers(state: UserState): number[] {
-    if (!state || !state.users) return [];
-    const totalPages = Math.ceil(state.users.length / this.pageSize);
-    if (totalPages === 0) return [];
+  getPageNumbers(state: WorkspaceAdminState): number[] {
+    if (!state || state.totalPages === 0) return [];
     const pages: number[] = [];
-    const maxPages = Math.min(5, totalPages);
-    let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(totalPages - 1, startPage + maxPages - 1);
+    const maxPages = Math.min(5, state.totalPages);
+    let startPage = Math.max(0, state.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(state.totalPages - 1, startPage + maxPages - 1);
     
     if (endPage - startPage < maxPages - 1) {
       startPage = Math.max(0, endPage - maxPages + 1);
@@ -132,16 +156,24 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     });
   }
 
-  onView(user: UserResponseDto): void {
-    // Rediriger vers la page de détail si nécessaire
+  onView(workspaceAdmin: EmployeeResponseDto): void {
+    if (workspaceAdmin.id) {
+      // Rediriger vers la page de détail si nécessaire
+    }
   }
 
-  onDelete(user: UserResponseDto): void {
+  onEdit(workspaceAdmin: EmployeeResponseDto): void {
+    if (workspaceAdmin.id) {
+      // Rediriger vers la page d'édition si nécessaire
+    }
+  }
+
+  onDelete(workspaceAdmin: EmployeeResponseDto): void {
     const initialState = {
-      title: 'Supprimer le workspace',
-      message: 'Êtes-vous sûr de vouloir supprimer ce workspace ?',
-      itemName: `${user.userFirstName} ${user.userLastName}`,
-      confirmBtnText: 'Supprimer',
+      title: 'Désactiver le workspace',
+      message: 'Êtes-vous sûr de vouloir désactiver ce workspace ? Cela désactivera également tous les employés du workspace.',
+      itemName: `${workspaceAdmin.firstName} ${workspaceAdmin.lastName}`,
+      confirmBtnText: 'Désactiver',
       cancelBtnText: 'Annuler'
     };
     
@@ -152,13 +184,20 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     
     if (this.modalRef.content) {
       this.modalRef.content.onConfirm.subscribe((confirmed: boolean) => {
-        if (confirmed && user.userCode) {
-          this.storeService.dispatch(deleteUser({userCode: user.userCode}));
+        if (confirmed) {
+          this.storeService.dispatch(deleteWorkspaceAdmin({ workspaceAdminId: workspaceAdmin.id }));
           setTimeout(() => {
             this.loadWorkspaces();
           }, 1000);
         }
       });
     }
+  }
+
+  onReactivate(workspaceAdmin: EmployeeResponseDto): void {
+    this.storeService.dispatch(reactivateWorkspaceAdmin({ workspaceAdminId: workspaceAdmin.id }));
+    setTimeout(() => {
+      this.loadWorkspaces();
+    }, 1000);
   }
 }

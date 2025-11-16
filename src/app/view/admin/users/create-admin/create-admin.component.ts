@@ -65,7 +65,6 @@ export class CreateAdminComponent implements OnInit, OnDestroy {
       email: ['', [Validators.required, Validators.email]],
       firstName: ['', [Validators.required]],
       lastName: ['', [Validators.required]],
-      isSuperAdmin: [false],
       avatar: ['']
     });
   }
@@ -161,9 +160,7 @@ export class CreateAdminComponent implements OnInit, OnDestroy {
       email: this.adminForm.value.email,
       firstName: this.adminForm.value.firstName,
       lastName: this.adminForm.value.lastName,
-      isSuperAdmin: this.adminForm.value.isSuperAdmin || false,
-      roleIds: [],
-      avatar: this.adminForm.value.avatar || undefined
+      roleIds: []
     };
 
     console.log('Création Admin:', createAdminDto);

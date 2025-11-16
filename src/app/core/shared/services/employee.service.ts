@@ -23,16 +23,16 @@ export class EmployeeService {
   findAllEmployees(filters: EmployeeListRequestDto): Observable<RequestResultDto<EmployeeListResponseDto>> {
     let params = new HttpParams();
     
-    if (filters.workspaceId) params = params.set('dto.workspaceId', filters.workspaceId);
-    if (filters.shopId) params = params.set('dto.shopId', filters.shopId);
-    if (filters.userType) params = params.set('dto.userType', filters.userType);
-    if (filters.isActive !== undefined) params = params.set('dto.isActive', filters.isActive.toString());
-    if (filters.search) params = params.set('dto.search', filters.search);
-    if (filters.department) params = params.set('dto.department', filters.department);
-    if (filters.page !== undefined) params = params.set('dto.page', filters.page.toString());
-    if (filters.size !== undefined) params = params.set('dto.size', filters.size.toString());
-    if (filters.sortBy) params = params.set('dto.sortBy', filters.sortBy);
-    if (filters.sortDirection) params = params.set('dto.sortDirection', filters.sortDirection);
+    if (filters.workspaceId) params = params.set('workspaceId', filters.workspaceId);
+    if (filters.shopId) params = params.set('shopId', filters.shopId);
+    if (filters.userType) params = params.set('userType', filters.userType);
+    if (filters.isActive !== undefined) params = params.set('isActive', filters.isActive.toString());
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.department) params = params.set('department', filters.department);
+    if (filters.page !== undefined) params = params.set('page', filters.page.toString());
+    if (filters.size !== undefined) params = params.set('size', filters.size.toString());
+    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters.sortDirection) params = params.set('sortDirection', filters.sortDirection);
 
     return this.http.get<RequestResultDto<EmployeeListResponseDto>>(
       API_URLS.CUSTOMERS_URL + `/auth/users/employees`,

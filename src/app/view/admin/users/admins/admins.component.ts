@@ -98,13 +98,37 @@ export class AdminsComponent implements OnInit, OnDestroy {
     const filters: AdminListRequestDto = {
       search: this.searchTerm || undefined,
       isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
-      isSuperAdmin: false,
+      isSuperAdmin: undefined,
       page: this.currentPage,
       size: this.pageSize,
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
     this.storeService.dispatch(findAllAdmins({ filters }));
+  }
+
+  isAdminOrSuperAdmin(user: EmployeeResponseDto): boolean {
+    // Si le type est ADMIN, c'est un admin ou super_admin
+    if (user.type === 'ADMIN' || user.type === 'SUPER_ADMIN') {
+      return true;
+    }
+    
+    // Sinon, vérifier les rôles si disponibles
+    if (user.roles && user.roles.length > 0) {
+      return user.roles.some(role => {
+        const roleName = role.name?.toLowerCase() || role.roleName?.toLowerCase() || '';
+        const roleCode = role.code?.toLowerCase() || role.roleCode?.toLowerCase() || '';
+        return roleName.includes('admin') || roleName.includes('super') ||
+               roleCode.includes('admin') || roleCode.includes('super');
+      });
+    }
+    
+    return false;
+  }
+
+  getFilteredAdmins(state: AdminState): EmployeeResponseDto[] {
+    if (!state || !state.admins) return [];
+    return state.admins.filter(user => this.isAdminOrSuperAdmin(user));
   }
 
   onSearchChange(): void {

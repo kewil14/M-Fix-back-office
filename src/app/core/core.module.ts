@@ -23,6 +23,7 @@ import { DevisEffects } from './shared/stores/devis/devis.effects';
 import { DemandeEffects } from './shared/stores/demande/demande.effects';
 import { EmployeeEffects } from './shared/stores/employee/employee.effects';
 import { AdminEffects } from './shared/stores/admin/admin.effects';
+import { WorkspaceAdminEffects } from './shared/stores/workspace-admin/workspace-admin.effects';
 
 
 export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
@@ -45,7 +46,7 @@ export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
       AuthenticationEffects, ProfileEffects, 
       SystemInitEffects, RolesEffects, UserEffects, 
       GrilleEffects, AvisEffects, DevisEffects,
-      DemandeEffects, EmployeeEffects, AdminEffects,
+      DemandeEffects, EmployeeEffects, AdminEffects, WorkspaceAdminEffects,
     ]),
     StoreDevtoolsModule.instrument(),
   ],

@@ -8,7 +8,6 @@ import { LoadDemandeGuard } from 'src/app/core/shared/guards/load-demande.guard'
 import { PermissionGuard } from 'src/app/core/shared/guards/permission.guard';
 import { DemandeComponent } from './devis/demande/demande.component';
 import { UsersManagementComponent } from './users/users-management/users-management.component';
-import { SuperAdminComponent } from './users/superadmin/superadmin.component';
 import { AdminsComponent } from './users/admins/admins.component';
 import { WorkspacesComponent } from './users/workspaces/workspaces.component';
 import { EmployeesComponent } from './users/employees/employees.component';
@@ -47,12 +46,6 @@ const routes: Routes = [
     component: UsersManagementComponent,
     canActivate: [PermissionGuard],
     data: { permissions: ['users:manage'] }
-  },
-  {
-    path: 'superadmin',
-    component: SuperAdminComponent,
-    canActivate: [PermissionGuard],
-    data: { roles: ['SUPERADMIN'] }
   },
   {
     path: 'admins',
