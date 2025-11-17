@@ -10,6 +10,19 @@
             <button type="button" class="btn btn-light" (click)="onBack()">
               <i class="ri-arrow-left-line me-1"></i>Retour
             </button>
+            <button 
+              type="button" 
+              class="btn btn-info" 
+              (click)="onResendInvitation()"
+              [disabled]="isResendingInvitation || !employee?.email"
+              *ngIf="employee">
+              <i class="ri-mail-send-line me-1"></i>
+              <span *ngIf="!isResendingInvitation">Renvoyer l'invitation</span>
+              <span *ngIf="isResendingInvitation">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                Envoi...
+              </span>
+            </button>
             <button type="button" class="btn btn-warning" (click)="onEdit()" *ngIf="employee">
               <i class="ri-edit-line me-1"></i>Modifier
             </button>

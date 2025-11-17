@@ -9,6 +9,9 @@ import { CreateSuperAdminDto } from "../../dtos/create-superadmin-dto.modal";
 import { CreateAdminDto } from "../../dtos/create-admin-dto.modal";
 import { CreateWorkspaceWithAdminDto } from "../../dtos/create-workspace-admin-dto.modal";
 import { CreateEmployeeDto } from "../../dtos/create-employee-dto.modal";
+import { ResendInvitationDto } from "../../dtos/resend-invitation-dto.modal";
+import { InvitationListRequestDto } from "../../dtos/invitation-list-request-dto.modal";
+import { InvitationResponseDto, InvitationListResponseDto } from "../../dtos/invitation-response-dto.modal";
 
 export const erreursAuthentification = createAction('[Authentification] authentification/erreurs', props<{ messages: string }>());
 export const messageAuthentification = createAction('[Authentification] authentification/messageAuthentification', props<{message: string}>());
@@ -55,3 +58,16 @@ export const createEmployeeOk = createAction('[Authentification] authentificatio
 //actions pour logout
 export const logout = createAction('[Authentification] authentification/logout');
 export const logoutOk = createAction('[Authentification] authentification/logout-ok');
+
+//actions pour les invitations
+export const resendInvitation = createAction('[Authentification] authentification/resend-invitation', props<{resendInvitationDto: ResendInvitationDto}>());
+export const resendInvitationOk = createAction('[Authentification] authentification/resend-invitation-ok', props<{message: string}>());
+export const resendInvitationError = createAction('[Authentification] authentification/resend-invitation-error', props<{messages: string}>());
+
+export const getInvitations = createAction('[Authentification] authentification/get-invitations', props<{invitationListRequestDto: InvitationListRequestDto}>());
+export const getInvitationsOk = createAction('[Authentification] authentification/get-invitations-ok', props<{invitations: InvitationListResponseDto}>());
+export const getInvitationsError = createAction('[Authentification] authentification/get-invitations-error', props<{messages: string}>());
+
+export const getInvitationById = createAction('[Authentification] authentification/get-invitation-by-id', props<{invitationId: string}>());
+export const getInvitationByIdOk = createAction('[Authentification] authentification/get-invitation-by-id-ok', props<{invitation: InvitationResponseDto}>());
+export const getInvitationByIdError = createAction('[Authentification] authentification/get-invitation-by-id-error', props<{messages: string}>());

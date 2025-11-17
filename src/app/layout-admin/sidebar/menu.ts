@@ -33,7 +33,8 @@ export const MENU: MenuItem[] = [
         id: 10,
         label: 'Demande',
         icon: 'bx-envelope',
-        link: '/admin/devis/demande',
+        link: '/admin/invitations',
+        visibleForSuperAdmin: true,
     },
     
     {

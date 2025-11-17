@@ -14,6 +14,8 @@ import { EmployeesComponent } from './users/employees/employees.component';
 import { EmployeeDetailComponent } from './users/employee-detail/employee-detail.component';
 import { AdminDetailComponent } from './users/admin-detail/admin-detail.component';
 import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
+import { InvitationsComponent } from './users/invitations/invitations.component';
+import { InvitationDetailComponent } from './users/invitation-detail/invitation-detail.component';
 
 const routes: Routes = [
   {
@@ -113,6 +115,23 @@ const routes: Routes = [
         component: EmployeeDetailComponent, // TODO: Créer un composant d'édition
         canActivate: [PermissionGuard],
         data: { permissions: ['employees:update'] }
+      }
+    ]
+  },
+  {
+    path: 'invitations',
+    children: [
+      {
+        path: '',
+        component: InvitationsComponent,
+        canActivate: [PermissionGuard],
+        data: { roles: ['SUPERADMIN'] }
+      },
+      {
+        path: 'detail/:id',
+        component: InvitationDetailComponent,
+        canActivate: [PermissionGuard],
+        data: { roles: ['SUPERADMIN'] }
       }
     ]
   },

@@ -96,7 +96,8 @@ export class PermissionService {
    * Vérifie si l'utilisateur est un SuperAdmin
    */
   isSuperAdmin(): boolean {
-    return this.hasRole('SUPERADMIN');
+    const decoded = this.getDecodedToken();
+    return this.hasRole('SUPERADMIN') || decoded?.type === 'SUPER_ADMIN';
   }
 
   /**

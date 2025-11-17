@@ -90,7 +90,11 @@ export class ActivateAccountComponent implements OnInit, OnDestroy {
 
   initActivateForm(): void {
     this.activateForm = this.formBuilder.group({
-      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      newPassword: ['', [
+        Validators.required, 
+        Validators.minLength(8),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      ]],
       confirmPassword: ['', [Validators.required]]
     }, {
       validators: this.passwordMatchValidator

@@ -16,6 +16,8 @@ import { EmployeesComponent } from './users/employees/employees.component';
 import { EmployeeDetailComponent } from './users/employee-detail/employee-detail.component';
 import { AdminDetailComponent } from './users/admin-detail/admin-detail.component';
 import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
+import { InvitationsComponent } from './users/invitations/invitations.component';
+import { InvitationDetailComponent } from './users/invitation-detail/invitation-detail.component';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalModule } from 'ngx-bootstrap/modal';
@@ -49,6 +51,8 @@ import { TranslateModule } from '@ngx-translate/core';
     EmployeeDetailComponent,
     AdminDetailComponent,
     AdminEditComponent,
+    InvitationsComponent,
+    InvitationDetailComponent,
   ],
   imports: [
     CommonModule,

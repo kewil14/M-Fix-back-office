@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
 import { Observable, Subscription } from 'rxjs';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectAdminState, selectWorkspaceAdminState } from 'src/app/core/core.state';
@@ -9,6 +10,8 @@ import { findAdminById } from 'src/app/core/shared/stores/admin/admin.actions';
 import { AdminState } from 'src/app/core/shared/stores/admin/admin.state';
 import { findWorkspaceAdminById } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.actions';
 import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
+import { resendInvitation, resendInvitationOk, resendInvitationError } from 'src/app/core/shared/stores/authentification/authentification.actions';
+import { ResendInvitationDto } from 'src/app/core/shared/dtos/resend-invitation-dto.modal';
 
 @Component({
   selector: 'app-admin-detail',
@@ -25,10 +28,13 @@ export class AdminDetailComponent implements OnInit, OnDestroy {
   breadCrumbItems: Array<{}> = [];
   isWorkspaceAdmin: boolean = false;
 
+  isResendingInvitation = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private storeService: Store
+    private storeService: Store,
+    private actionService: Actions
   ) {}
 
   ngOnInit(): void {
@@ -77,6 +83,16 @@ export class AdminDetailComponent implements OnInit, OnDestroy {
         this.loadAdmin();
       }
     });
+
+    // Écouter les actions de renvoi d'invitation
+    this.subscriptions.push(
+      this.actionService.pipe(ofType(resendInvitationOk)).subscribe(() => {
+        this.isResendingInvitation = false;
+      }),
+      this.actionService.pipe(ofType(resendInvitationError)).subscribe(() => {
+        this.isResendingInvitation = false;
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -109,6 +125,19 @@ export class AdminDetailComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/admin/admins']);
     }
+  }
+
+  onResendInvitation(): void {
+    if (!this.admin?.email || this.isResendingInvitation) {
+      return;
+    }
+
+    this.isResendingInvitation = true;
+    const resendInvitationDto: ResendInvitationDto = {
+      email: this.admin.email
+    };
+
+    this.storeService.dispatch(resendInvitation({ resendInvitationDto }));
   }
 }
 

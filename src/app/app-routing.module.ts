@@ -12,6 +12,7 @@ const routes: Routes = [
   {path: '', component: LoginComponent, canActivate: [LoggedInGuard]},
   {path: 'register', component: RegisterComponent, canActivate: [LoggedInGuard]},
   {path: 'activate-account', component: ActivateAccountComponent},
+  {path: 'auth/activate', component: ActivateAccountComponent},
   {
     path: 'admin', 
     component: LayoutAdminComponent,

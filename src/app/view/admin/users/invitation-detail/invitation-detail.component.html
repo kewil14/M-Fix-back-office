@@ -1,0 +1,148 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header border-bottom">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h4 class="card-title mb-0">
+                <i class="mdi mdi-email-multiple-outline me-2"></i>Détails de l'Invitation
+              </h4>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" (click)="onBack()">
+                  <i class="mdi mdi-arrow-left me-1"></i> Retour
+                </button>
+                <button 
+                  type="button" 
+                  class="btn btn-info" 
+                  (click)="onResendInvitation()"
+                  [disabled]="isResendingInvitation || !invitation?.email || invitation?.isInvitationUsed">
+                  <i class="mdi mdi-email-send-outline me-1"></i> 
+                  <span *ngIf="!isResendingInvitation">Renvoyer l'invitation</span>
+                  <span *ngIf="isResendingInvitation">
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    Envoi...
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Messages -->
+          <loto-message-alert [messages$]="messages$"></loto-message-alert>
+
+          <!-- Loading -->
+          <div class="text-center py-5" *ngIf="isLoading">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2 text-muted">Chargement des détails de l'invitation...</p>
+          </div>
+
+          <!-- Détails de l'invitation -->
+          <div *ngIf="!isLoading && invitation" class="row">
+            <!-- Informations utilisateur -->
+            <div class="col-md-6">
+              <h5 class="mb-3">
+                <i class="mdi mdi-account-outline me-2"></i>Informations Utilisateur
+              </h5>
+              <div class="mb-3">
+                <label class="form-label fw-bold">ID Utilisateur</label>
+                <p class="form-control-plaintext">{{ invitation.userId || 'N/A' }}</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Email</label>
+                <p class="form-control-plaintext">{{ invitation.email || 'N/A' }}</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Prénom</label>
+                <p class="form-control-plaintext">{{ invitation.firstName || 'N/A' }}</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nom</label>
+                <p class="form-control-plaintext">{{ invitation.lastName || 'N/A' }}</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Téléphone</label>
+                <p class="form-control-plaintext">{{ invitation.phoneNumber || 'N/A' }}</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Type d'utilisateur</label>
+                <p>
+                  <span class="badge bg-info">{{ invitation.type || 'N/A' }}</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Informations invitation -->
+            <div class="col-md-6">
+              <h5 class="mb-3">
+                <i class="mdi mdi-email-outline me-2"></i>Informations Invitation
+              </h5>
+              <div class="mb-3">
+                <label class="form-label fw-bold">ID Invitation</label>
+                <p class="form-control-plaintext">{{ invitation.invitationId || 'N/A' }}</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Date de création</label>
+                <p class="form-control-plaintext">
+                  {{ invitation.invitationCreatedAt ? (invitation.invitationCreatedAt | date: 'dd/MM/yyyy HH:mm') : 'N/A' }}
+                </p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Date d'expiration</label>
+                <p class="form-control-plaintext">
+                  {{ invitation.invitationExpiresAt ? (invitation.invitationExpiresAt | date: 'dd/MM/yyyy HH:mm') : 'N/A' }}
+                  <span *ngIf="invitation.daysUntilExpiration !== undefined" class="text-muted ms-2">
+                    ({{ invitation.daysUntilExpiration }} jour(s) restant(s))
+                  </span>
+                </p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Statut</label>
+                <p>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(invitation.status)">
+                    {{ getStatusLabel(invitation.status) }}
+                  </span>
+                </p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">État de l'invitation</label>
+                <div class="d-flex flex-column gap-2">
+                  <span class="badge" [ngClass]="invitation.isInvitationExpired ? 'bg-danger' : 'bg-success'">
+                    <i class="mdi mdi-clock-outline me-1"></i>
+                    {{ invitation.isInvitationExpired ? 'Expirée' : 'Valide' }}
+                  </span>
+                  <span class="badge" [ngClass]="invitation.isInvitationUsed ? 'bg-info' : 'bg-warning'">
+                    <i class="mdi mdi-check-circle-outline me-1"></i>
+                    {{ invitation.isInvitationUsed ? 'Utilisée' : 'Non utilisée' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Avatar si disponible -->
+            <div class="col-12" *ngIf="invitation.avatar">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Avatar</label>
+                <div>
+                  <img [src]="invitation.avatar" alt="Avatar" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message si aucune invitation -->
+          <div *ngIf="!isLoading && !invitation" class="text-center py-5">
+            <i class="mdi mdi-information-outline text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">Aucune invitation trouvée</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

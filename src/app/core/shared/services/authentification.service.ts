@@ -15,6 +15,9 @@ import { CreateAdminDto } from '../dtos/create-admin-dto.modal';
 import { CreateWorkspaceWithAdminDto } from '../dtos/create-workspace-admin-dto.modal';
 import { CreateEmployeeDto } from '../dtos/create-employee-dto.modal';
 import { LogoutRequestDto } from '../dtos/logout-request-dto';
+import { ResendInvitationDto } from '../dtos/resend-invitation-dto.modal';
+import { InvitationListRequestDto } from '../dtos/invitation-list-request-dto.modal';
+import { InvitationResponseDto, InvitationListResponseDto } from '../dtos/invitation-response-dto.modal';
 
 @Injectable({ providedIn: 'root' })
 export class AuthentificationService {
@@ -42,15 +45,65 @@ export class AuthentificationService {
   validateActivationToken(token: string): Observable<RequestResultDto<ValidateTokenResponseDto>> {
     const params = new HttpParams().set('token', token);
     return this.http.get<RequestResultDto<ValidateTokenResponseDto>>(
-      API_URLS.CUSTOMERS_URL + `/auth/users/activate`, 
+      API_URLS.CUSTOMERS_URL + `/auth/invitations/activate`, 
       { params }
     ).pipe(share());
   }
 
   activateAccountWithToken(activateAccountDto: ActivateAccountDto): Observable<RequestResultDto<any>> {
     return this.http.post<RequestResultDto<any>>(
-      API_URLS.CUSTOMERS_URL + `/auth/users/activate`, 
+      API_URLS.CUSTOMERS_URL + `/auth/invitations/activate`, 
       activateAccountDto
+    ).pipe(share());
+  }
+
+  resendInvitation(resendInvitationDto: ResendInvitationDto): Observable<RequestResultDto<string>> {
+    return this.http.post<RequestResultDto<string>>(
+      API_URLS.CUSTOMERS_URL + `/auth/invitations/resend`,
+      resendInvitationDto
+    ).pipe(share());
+  }
+
+  getInvitations(invitationListRequestDto: InvitationListRequestDto): Observable<RequestResultDto<InvitationListResponseDto>> {
+    let params = new HttpParams();
+    
+    if (invitationListRequestDto.workspaceId) {
+      params = params.set('workspaceId', invitationListRequestDto.workspaceId);
+    }
+    if (invitationListRequestDto.shopId) {
+      params = params.set('shopId', invitationListRequestDto.shopId);
+    }
+    if (invitationListRequestDto.userType) {
+      params = params.set('userType', invitationListRequestDto.userType);
+    }
+    if (invitationListRequestDto.status) {
+      params = params.set('status', invitationListRequestDto.status);
+    }
+    if (invitationListRequestDto.search) {
+      params = params.set('search', invitationListRequestDto.search);
+    }
+    if (invitationListRequestDto.page !== undefined) {
+      params = params.set('page', invitationListRequestDto.page.toString());
+    }
+    if (invitationListRequestDto.size !== undefined) {
+      params = params.set('size', invitationListRequestDto.size.toString());
+    }
+    if (invitationListRequestDto.sortBy) {
+      params = params.set('sortBy', invitationListRequestDto.sortBy);
+    }
+    if (invitationListRequestDto.sortDirection) {
+      params = params.set('sortDirection', invitationListRequestDto.sortDirection);
+    }
+
+    return this.http.get<RequestResultDto<InvitationListResponseDto>>(
+      API_URLS.CUSTOMERS_URL + `/auth/invitations`,
+      { params }
+    ).pipe(share());
+  }
+
+  getInvitationById(invitationId: string): Observable<RequestResultDto<InvitationResponseDto>> {
+    return this.http.get<RequestResultDto<InvitationResponseDto>>(
+      API_URLS.CUSTOMERS_URL + `/auth/invitations/${invitationId}`
     ).pipe(share());
   }
 

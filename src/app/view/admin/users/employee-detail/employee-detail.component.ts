@@ -1,12 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
 import { Observable, Subscription } from 'rxjs';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectEmployeeState } from 'src/app/core/core.state';
 import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
 import { findEmployeeById } from 'src/app/core/shared/stores/employee/employee.actions';
 import { EmployeeState } from 'src/app/core/shared/stores/employee/employee.state';
+import { resendInvitation, resendInvitationOk, resendInvitationError } from 'src/app/core/shared/stores/authentification/authentification.actions';
+import { ResendInvitationDto } from 'src/app/core/shared/dtos/resend-invitation-dto.modal';
 
 @Component({
   selector: 'app-employee-detail',
@@ -20,11 +23,13 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   subscriptions: Subscription[] = [];
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
   breadCrumbItems: Array<{}> = [];
+  isResendingInvitation = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private storeService: Store
+    private storeService: Store,
+    private actionService: Actions
   ) {}
 
   ngOnInit(): void {
@@ -41,6 +46,16 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
         this.loadEmployee();
       }
     });
+
+    // Écouter les actions de renvoi d'invitation
+    this.subscriptions.push(
+      this.actionService.pipe(ofType(resendInvitationOk)).subscribe(() => {
+        this.isResendingInvitation = false;
+      }),
+      this.actionService.pipe(ofType(resendInvitationError)).subscribe(() => {
+        this.isResendingInvitation = false;
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -69,6 +84,19 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
 
   onBack(): void {
     this.router.navigate(['/admin/employees']);
+  }
+
+  onResendInvitation(): void {
+    if (!this.employee?.email || this.isResendingInvitation) {
+      return;
+    }
+
+    this.isResendingInvitation = true;
+    const resendInvitationDto: ResendInvitationDto = {
+      email: this.employee.email
+    };
+
+    this.storeService.dispatch(resendInvitation({ resendInvitationDto }));
   }
 }
 

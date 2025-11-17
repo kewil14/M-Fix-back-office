@@ -74,6 +74,12 @@
                     <div *ngIf="submitted && f.newPassword.errors" class="invalid-feedback">
                       <div *ngIf="f.newPassword.errors.required">Le mot de passe est requis</div>
                       <div *ngIf="f.newPassword.errors.minlength">Le mot de passe doit contenir au moins 8 caractères</div>
+                      <div *ngIf="f.newPassword.errors.pattern">Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial</div>
+                    </div>
+                    <div class="form-text" *ngIf="!submitted || !f.newPassword.errors">
+                      <small class="text-muted">
+                        Le mot de passe doit contenir au moins 8 caractères, incluant une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)
+                      </small>
                     </div>
                   </div>
                 </div>

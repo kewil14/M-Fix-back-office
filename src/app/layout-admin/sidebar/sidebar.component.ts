@@ -8,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { MENU } from './menu';
 import { MenuItem } from './menu.model';
 import { TranslateService } from '@ngx-translate/core';
+import { PermissionService } from '../../core/shared/services/permission.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -28,7 +29,13 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
 
   @ViewChild('sideMenu') sideMenu: ElementRef;
 
-  constructor(private eventService: EventService, private router: Router, public translate: TranslateService, private http: HttpClient) {
+  constructor(
+    private eventService: EventService, 
+    private router: Router, 
+    public translate: TranslateService, 
+    private http: HttpClient,
+    private permissionService: PermissionService
+  ) {
     router.events.forEach((event) => {
       if (event instanceof NavigationEnd) {
         this._activateMenuDropdown();
@@ -139,7 +146,55 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
    * Initialize
    */
   initialize(): void {
-    this.menuItems = MENU;
+    // Filtrer le menu selon les permissions
+    this.menuItems = this.filterMenuByPermissions(MENU);
+  }
+
+  /**
+   * Filtre le menu selon les permissions de l'utilisateur
+   */
+  private filterMenuByPermissions(menu: MenuItem[]): MenuItem[] {
+    const isSuperAdmin = this.permissionService.isSuperAdmin();
+    
+    return menu.filter(item => {
+      // Si c'est un titre ou un layout, toujours l'afficher
+      if (item.isTitle || item.isLayout) {
+        return true;
+      }
+
+      // Si le menu nécessite d'être super admin
+      if (item.visibleForSuperAdmin) {
+        return isSuperAdmin;
+      }
+
+      // Si le menu nécessite un rôle spécifique
+      if (item.requiredRole) {
+        const requiredRoles = Array.isArray(item.requiredRole) ? item.requiredRole : [item.requiredRole];
+        return this.permissionService.hasAnyRole(requiredRoles);
+      }
+
+      // Filtrer aussi les sous-items
+      if (item.subItems && item.subItems.length > 0) {
+        item.subItems = item.subItems.filter((subItem: MenuItem) => {
+          if (subItem.visibleForSuperAdmin) {
+            return isSuperAdmin;
+          }
+          if (subItem.requiredRole) {
+            const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
+            return this.permissionService.hasAnyRole(requiredRoles);
+          }
+          return true;
+        });
+        
+        // Si tous les sous-items ont été filtrés, ne pas afficher le menu parent
+        if (item.subItems.length === 0) {
+          return false;
+        }
+      }
+
+      // Par défaut, afficher le menu
+      return true;
+    });
   }
 
   /**
