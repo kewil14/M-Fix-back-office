@@ -51,25 +51,36 @@ export const MENU: MenuItem[] = [
                 id: 68,
                 label: 'Users',
                 link: '/admin/users',
-                parentId: 67
+                parentId: 67,
+                visibleForSuperAdmin: true  // Seulement pour super admin
             },
             {
                 id: 70,
                 label: 'Administrateurs',
                 link: '/admin/admins',
-                parentId: 67
+                parentId: 67,
+                visibleForSuperAdmin: true  // Seulement pour super admin
             },
             {
                 id: 72,
                 label: 'Workspace',
                 link: '/admin/workspaces',
                 parentId: 67
+                // Visible pour super admin et workspace admin
+            },
+            {
+                id: 73,
+                label: 'Shops',
+                link: '/admin/shops',
+                parentId: 67
+                // Visible pour super admin et workspace admin
             },
             {
                 id: 69,
                 label: 'Employe',
                 link: '/admin/employees',
                 parentId: 67
+                // Visible pour super admin et workspace admin
             },
         ]
     },
@@ -83,18 +94,21 @@ export const MENU: MenuItem[] = [
         id: 77,
         label: 'Permissions',
         icon: 'bx-shield-quarter',
+        visibleForSuperAdmin: true,  // Seulement pour super admin
         subItems: [
             {
                 id: 78,
                 label: 'Role',
                 link: '/admin/autorisation/role',
-                parentId: 77
+                parentId: 77,
+                visibleForSuperAdmin: true
             },
             {
                 id: 79,
                 label: 'Autorisation',
                 link: '/admin/autorisation',
-                parentId: 77
+                parentId: 77,
+                visibleForSuperAdmin: true
             }
         ]
     },

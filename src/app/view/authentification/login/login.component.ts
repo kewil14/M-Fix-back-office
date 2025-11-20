@@ -11,7 +11,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { connexion, connexionOk, erreursAuthentification } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { ListRoles } from 'src/app/core/config/list-roles';
+import { ListRoles, UserTypeEnum } from 'src/app/core/config/list-roles';
 import { APP_LINK } from 'src/app/core/config/app.url.config';
 import { setState } from 'src/app/core/shared/stores/system-init/system-init.actions';
 import { AuthentificationState } from 'src/app/core/shared/stores/authentification/authentification.state';
@@ -107,25 +107,51 @@ export class LoginComponent implements OnInit {
             {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'connexion reussi' , dismissible: false}
           );
 
-          // Récupération du rôle - accéder au premier rôle du tableau
-          let role = typeUser?.roles?.[0]?.roleCode;
+          // Récupération du type d'utilisateur et du rôle
+          const userType = (typeUser as any)?.type || (typeUser as any)?.userType;
+          const role = typeUser?.roles?.[0]?.roleCode;
+          console.log('Type utilisateur détecté:', userType);
           console.log('Rôle détecté:', role);
 
-          // Redirection immédiate ou avec un court délai pour afficher le message
+          // Redirection basée sur le type d'utilisateur ou le rôle
           setTimeout(() => {
-            if (role == ListRoles.ROL_USER) {
-              console.log('Redirection vers page utilisateur');
-              this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_USER || "/");
+            let redirectUrl = APP_LINK.LINK_DASHBOARD_ADMIN; // Par défaut
+
+            // Priorité au type d'utilisateur si disponible
+            if (userType) {
+              switch (userType) {
+                case UserTypeEnum.SUPER_ADMIN:
+                case UserTypeEnum.ADMIN:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_ADMIN;
+                  break;
+                case UserTypeEnum.WORKSPACE_ADMIN:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_WORKSPACE_ADMIN;
+                  break;
+                case UserTypeEnum.SHOP_MANAGER:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_SHOP_MANAGER;
+                  break;
+                case UserTypeEnum.EMPLOYEE:
+                case UserTypeEnum.TECHNICIAN:
+                case UserTypeEnum.DELIVERER:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_EMPLOYEE;
+                  break;
+                case UserTypeEnum.CUSTOMER:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_USER || "/";
+                  break;
+                default:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_ADMIN;
+              }
+            } else if (role) {
+              // Fallback sur le rôle si le type n'est pas disponible
+              if (role == ListRoles.ROL_USER) {
+                redirectUrl = APP_LINK.LINK_DASHBOARD_USER || "/";
+              } else if (role == ListRoles.ROL_ADMIN) {
+                redirectUrl = APP_LINK.LINK_DASHBOARD_ADMIN;
+              }
             }
-            else if (role == ListRoles.ROL_ADMIN) {
-              console.log('Redirection vers page admin');
-              this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_ADMIN);
-            }
-            else {
-              console.log('Rôle non reconnu:', role, 'Roles disponibles:', typeUser?.roles);
-              // Redirection par défaut vers le dashboard admin si le rôle n'est pas reconnu
-              this.router.navigateByUrl(APP_LINK.LINK_DASHBOARD_ADMIN);
-            }
+
+            console.log('Redirection vers:', redirectUrl);
+            this.router.navigateByUrl(redirectUrl);
           }, 1000);
         }
       ),

@@ -1,0 +1,71 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header border-bottom">
+          <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.SHOP.EDIT_TITLE' | translate }}</h4>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="shopForm" (ngSubmit)="onSubmit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.NAME' | translate }} <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" [class.is-invalid]="submitted && f.name.errors">
+                <div class="invalid-feedback" *ngIf="submitted && f.name.errors">
+                  {{ 'MESSAGES.ADMIN.SHOP.NAME_REQUIRED' | translate }}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}</label>
+                <select class="form-select" formControlName="isActive">
+                  <option [value]="true">{{ 'MESSAGES.ADMIN.SHOP.ACTIVE' | translate }}</option>
+                  <option [value]="false">{{ 'MESSAGES.ADMIN.SHOP.INACTIVE' | translate }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}</label>
+                <input type="email" class="form-control" formControlName="email" [class.is-invalid]="submitted && f.email.errors">
+                <div class="invalid-feedback" *ngIf="submitted && f.email.errors">
+                  {{ 'MESSAGES.ADMIN.SHOP.EMAIL_INVALID' | translate }}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</label>
+                <input type="text" class="form-control" formControlName="phoneNumber">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.ADDRESS' | translate }}</label>
+                <input type="text" class="form-control" formControlName="address">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.CITY' | translate }}</label>
+                <input type="text" class="form-control" formControlName="city">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.POSTAL_CODE' | translate }}</label>
+                <input type="text" class="form-control" formControlName="postalCode">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.COUNTRY' | translate }}</label>
+                <input type="text" class="form-control" formControlName="country">
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <button type="button" class="btn btn-secondary me-2" (click)="onCancel()">{{ 'MESSAGES.ADMIN.SHOP.CANCEL' | translate }}</button>
+                <button type="submit" class="btn btn-primary">{{ 'MESSAGES.ADMIN.SHOP.SAVE' | translate }}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

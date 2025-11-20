@@ -18,7 +18,8 @@ export class CreateWorkspaceAdminDto {
 export class CreateWorkspaceWithAdminDto {
     constructor(
         public workspace?: WorkspaceDto,
-        public admin?: CreateWorkspaceAdminDto
+        public admin?: CreateWorkspaceAdminDto,
+        public adminId?: string  // ID de l'admin existant à sélectionner
     ) {}
 }
 

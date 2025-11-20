@@ -23,6 +23,10 @@ import { AdminState } from './shared/stores/admin/admin.state';
 import { adminReducer } from './shared/stores/admin/admin.reducer';
 import { WorkspaceAdminState } from './shared/stores/workspace-admin/workspace-admin.state';
 import { WorkspaceAdminReducer } from './shared/stores/workspace-admin/workspace-admin.reducer';
+import { WorkspaceState } from './shared/stores/workspace/workspace.state';
+import { WorkspaceReducer } from './shared/stores/workspace/workspace.reducer';
+import { ShopState } from './shared/stores/shop/shop.state';
+import { ShopReducer } from './shared/stores/shop/shop.reducer';
 
 export interface AppState {
     authentificationState: AuthentificationState,
@@ -36,7 +40,9 @@ export interface AppState {
     addressState: AddressState,
     employeeState: EmployeeState,
     adminState: AdminState,
-    workspaceAdminState: WorkspaceAdminState
+    workspaceAdminState: WorkspaceAdminState,
+    workspaceState: WorkspaceState,
+    shopState: ShopState
 }
 
 export const selectauthentificationState = createFeatureSelector<AuthentificationState>('authentificationState');
@@ -51,6 +57,8 @@ export const selectAddressState = createFeatureSelector<AddressState>('addressSt
 export const selectEmployeeState = createFeatureSelector<EmployeeState>('employeeState');
 export const selectAdminState = createFeatureSelector<AdminState>('adminState');
 export const selectWorkspaceAdminState = createFeatureSelector<WorkspaceAdminState>('workspaceAdminState');
+export const selectWorkspaceState = createFeatureSelector<WorkspaceState>('workspaceState');
+export const selectShopState = createFeatureSelector<ShopState>('shopState');
 
 
 export const reducers: ActionReducerMap<AppState> = {
@@ -65,7 +73,9 @@ export const reducers: ActionReducerMap<AppState> = {
     addressState: adressReducer,
     employeeState: employeeReducer,
     adminState: adminReducer,
-    workspaceAdminState: WorkspaceAdminReducer
+    workspaceAdminState: WorkspaceAdminReducer,
+    workspaceState: WorkspaceReducer,
+    shopState: ShopReducer
 }
 
 

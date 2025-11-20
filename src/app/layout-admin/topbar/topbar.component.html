@@ -205,6 +205,12 @@
         </div>
       </div>
 
+      <div class="dropdown d-none d-lg-inline-block ms-1">
+        <button type="button" class="btn header-item noti-icon" (click)="toggleDarkMode()" [title]="isDarkMode ? ('MESSAGES.ADMIN.COMMON.LIGHT_MODE' | translate) : ('MESSAGES.ADMIN.COMMON.DARK_MODE' | translate)">
+          <i class="bx" [ngClass]="isDarkMode ? 'bx-sun' : 'bx-moon'"></i>
+        </button>
+      </div>
+
       <div class="dropdown d-none d-lg-inline-block ms-1" dropdown>
         <button type="button" class="btn header-item noti-icon" dropdownToggle>
           <i class="bx bx-customize"></i>

@@ -16,6 +16,9 @@ import { AdminDetailComponent } from './users/admin-detail/admin-detail.componen
 import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
 import { InvitationsComponent } from './users/invitations/invitations.component';
 import { InvitationDetailComponent } from './users/invitation-detail/invitation-detail.component';
+import { ShopsComponent } from './shops/shops.component';
+import { ShopDetailComponent } from './shops/shop-detail/shop-detail.component';
+import { ShopEditComponent } from './shops/shop-edit/shop-edit.component';
 
 const routes: Routes = [
   {
@@ -92,6 +95,29 @@ const routes: Routes = [
         component: AdminEditComponent,
         canActivate: [PermissionGuard],
         data: { permissions: ['workspaces:update'] }
+      }
+    ]
+  },
+  {
+    path: 'shops',
+    children: [
+      {
+        path: '',
+        component: ShopsComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['shops:read'] }
+      },
+      {
+        path: 'detail/:id',
+        component: ShopDetailComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['shops:read'] }
+      },
+      {
+        path: 'edit/:id',
+        component: ShopEditComponent,
+        canActivate: [PermissionGuard],
+        data: { permissions: ['shops:update'] }
       }
     ]
   },

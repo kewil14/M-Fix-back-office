@@ -155,6 +155,8 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
    */
   private filterMenuByPermissions(menu: MenuItem[]): MenuItem[] {
     const isSuperAdmin = this.permissionService.isSuperAdmin();
+    const isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
+    const userType = this.permissionService.getUserType();
     
     return menu.filter(item => {
       // Si c'est un titre ou un layout, toujours l'afficher
@@ -162,22 +164,76 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
         return true;
       }
 
+      // Super Admin voit tout
+      if (isSuperAdmin) {
+        // Filtrer les sous-items pour le super admin aussi
+        if (item.subItems && item.subItems.length > 0) {
+          item.subItems = item.subItems.filter((subItem: MenuItem) => {
+            if (subItem.visibleForSuperAdmin) {
+              return true; // Super admin voit tout
+            }
+            if (subItem.requiredRole) {
+              const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
+              return this.permissionService.hasAnyRole(requiredRoles);
+            }
+            return true;
+          });
+        }
+        return true;
+      }
+
       // Si le menu nécessite d'être super admin
       if (item.visibleForSuperAdmin) {
-        return isSuperAdmin;
+        return false; // Pas super admin, donc ne pas afficher
+      }
+
+      // Workspace Admin : voir seulement ses workspaces, employés et shops
+      if (isWorkspaceAdmin) {
+        // Dashboard toujours visible
+        if (item.link === '/admin' || (item.subItems && item.subItems.some(sub => sub.link === '/admin'))) {
+          return true;
+        }
+        
+        // Section Utilisateurs : seulement Workspaces, Employees, Shops
+        if (item.subItems && item.subItems.length > 0) {
+          item.subItems = item.subItems.filter((subItem: MenuItem) => {
+            // Workspace Admin peut voir : Workspaces, Employees, Shops
+            return subItem.link === '/admin/workspaces' || 
+                   subItem.link === '/admin/employees' || 
+                   subItem.link === '/admin/shops';
+          });
+          
+          // Si tous les sous-items ont été filtrés, ne pas afficher le menu parent
+          if (item.subItems.length === 0) {
+            return false;
+          }
+          return true;
+        }
+        
+        // Autres menus individuels : ne pas afficher pour workspace admin
+        if (item.link && item.link !== '/admin') {
+          return false;
+        }
+        
+        // Par défaut pour workspace admin, ne pas afficher
+        return false;
       }
 
       // Si le menu nécessite un rôle spécifique
       if (item.requiredRole) {
         const requiredRoles = Array.isArray(item.requiredRole) ? item.requiredRole : [item.requiredRole];
-        return this.permissionService.hasAnyRole(requiredRoles);
+        const hasRole = this.permissionService.hasAnyRole(requiredRoles);
+        
+        if (!hasRole) {
+          return false;
+        }
       }
 
       // Filtrer aussi les sous-items
       if (item.subItems && item.subItems.length > 0) {
         item.subItems = item.subItems.filter((subItem: MenuItem) => {
           if (subItem.visibleForSuperAdmin) {
-            return isSuperAdmin;
+            return false; // Pas super admin
           }
           if (subItem.requiredRole) {
             const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];

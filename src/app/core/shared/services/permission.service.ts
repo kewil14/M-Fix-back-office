@@ -109,6 +109,30 @@ export class PermissionService {
   }
 
   /**
+   * Vérifie si l'utilisateur est un Workspace Admin
+   */
+  isWorkspaceAdmin(): boolean {
+    const decoded = this.getDecodedToken();
+    return decoded?.type === 'WORKSPACE_ADMIN';
+  }
+
+  /**
+   * Retourne le type d'utilisateur
+   */
+  getUserType(): string | null {
+    const decoded = this.getDecodedToken();
+    return decoded?.type || null;
+  }
+
+  /**
+   * Récupère l'ID du workspace de l'utilisateur connecté
+   */
+  getWorkspaceId(): string | null {
+    const decoded = this.getDecodedToken();
+    return (decoded as any)?.workspaceId || null;
+  }
+
+  /**
    * Retourne toutes les permissions de l'utilisateur
    */
   getPermissions(): string[] {

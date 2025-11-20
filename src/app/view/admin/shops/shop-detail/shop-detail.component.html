@@ -1,0 +1,89 @@
+<ng-container *ngIf="(shopState$|async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+    <app-loading5></app-loading5>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid" *ngIf="shop">
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header border-bottom">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.SHOP.DETAIL_TITLE' | translate }}</h4>
+                </div>
+                <div class="col-md-6 text-end">
+                  <button type="button" class="btn btn-primary" (click)="onEdit()">
+                    <i class="mdi mdi-pencil me-1"></i> {{ 'MESSAGES.ADMIN.SHOP.EDIT' | translate }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>{{ 'MESSAGES.ADMIN.SHOP.GENERAL_INFO' | translate }}</h6>
+                  <table class="table table-borderless">
+                    <tr>
+                      <th width="40%">{{ 'MESSAGES.ADMIN.SHOP.NAME' | translate }}:</th>
+                      <td>{{ shop.name }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }}:</th>
+                      <td>{{ shop.workspaceName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.MANAGER' | translate }}:</th>
+                      <td>{{ shop.managerName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}:</th>
+                      <td>
+                        <span class="badge" [ngClass]="shop.isActive ? 'bg-success' : 'bg-danger'">
+                          {{ shop.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <h6>{{ 'MESSAGES.ADMIN.SHOP.CONTACT' | translate }}</h6>
+                  <table class="table table-borderless">
+                    <tr>
+                      <th width="40%">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}:</th>
+                      <td>{{ shop.email || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}:</th>
+                      <td>{{ shop.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.ADDRESS' | translate }}:</th>
+                      <td>{{ shop.address || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.CITY' | translate }}:</th>
+                      <td>{{ shop.city || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.POSTAL_CODE' | translate }}:</th>
+                      <td>{{ shop.postalCode || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                    <tr>
+                      <th>{{ 'MESSAGES.ADMIN.SHOP.COUNTRY' | translate }}:</th>
+                      <td>{{ shop.country || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngSwitchCase="dataStateEnum.ERROR">
+    <div class="alert alert-danger">{{ state.messages }}</div>
+  </ng-container>
+</ng-container>
+

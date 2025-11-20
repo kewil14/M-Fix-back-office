@@ -6,6 +6,7 @@ import { AuthfakeauthenticationService } from '../../core/services/authfake.serv
 import { environment } from '../../../environments/environment';
 import { CookieService } from 'ngx-cookie-service';
 import { LanguageService } from '../../core/services/language.service';
+import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'src/app/core/shared/services/local-storage.service';
 import { Store } from '@ngrx/store';
@@ -30,6 +31,8 @@ export class TopbarComponent implements OnInit {
   flagvalue: any;
   countryName: any;
   valueset: any;
+  currentTheme: ThemeMode = 'light';
+  isDarkMode: boolean = false;
 
   constructor(
     @Inject(DOCUMENT) private document: any, 
@@ -37,6 +40,7 @@ export class TopbarComponent implements OnInit {
     private authService: AuthenticationService,
     private authFackservice: AuthfakeauthenticationService,
     public languageService: LanguageService,
+    public themeService: ThemeService,
     public translate: TranslateService,
     public _cookiesService: CookieService,
     private localStorageService: LocalStorageService,
@@ -64,19 +68,36 @@ export class TopbarComponent implements OnInit {
 
     this.cookieValue = this._cookiesService.get('lang');
     const val = this.listLang.filter(x => x.lang === this.cookieValue);
-    this.countryName = val.map(element => element.text);
+    this.countryName = val.length > 0 ? val[0].text : 'English';
     if (val.length === 0) {
       if (this.flagvalue === undefined) { this.valueset = 'assets/images/flags/us.jpg'; }
     } else {
-      this.flagvalue = val.map(element => element.flag);
+      this.flagvalue = val[0].flag;
     }
+
+    // Initialiser le thème
+    this.currentTheme = this.themeService.currentTheme;
+    this.isDarkMode = this.currentTheme === 'dark';
+    this.themeService.theme$.subscribe(theme => {
+      this.currentTheme = theme;
+      this.isDarkMode = theme === 'dark';
+    });
   }
 
   setLanguage(text: string, lang: string, flag: string) {
     this.countryName = text;
     this.flagvalue = flag;
     this.cookieValue = lang;
+    // Utiliser le service de langue qui gère tout
     this.languageService.setLanguage(lang);
+    // Forcer l'utilisation de la langue dans TranslateService
+    this.translate.use(lang).subscribe(() => {
+      // Les traductions sont maintenant chargées et appliquées
+    });
+  }
+
+  toggleDarkMode(): void {
+    this.themeService.toggleTheme();
   }
 
   /**

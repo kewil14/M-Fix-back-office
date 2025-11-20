@@ -18,6 +18,10 @@ import { AdminDetailComponent } from './users/admin-detail/admin-detail.componen
 import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
 import { InvitationsComponent } from './users/invitations/invitations.component';
 import { InvitationDetailComponent } from './users/invitation-detail/invitation-detail.component';
+import { ShopsComponent } from './shops/shops.component';
+import { ShopDetailComponent } from './shops/shop-detail/shop-detail.component';
+import { ShopEditComponent } from './shops/shop-edit/shop-edit.component';
+import { CreateShopComponent } from './shops/create-shop/create-shop.component';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModalModule } from 'ngx-bootstrap/modal';
@@ -53,6 +57,10 @@ import { TranslateModule } from '@ngx-translate/core';
     AdminEditComponent,
     InvitationsComponent,
     InvitationDetailComponent,
+    ShopsComponent,
+    ShopDetailComponent,
+    ShopEditComponent,
+    CreateShopComponent,
   ],
   imports: [
     CommonModule,

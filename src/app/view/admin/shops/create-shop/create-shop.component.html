@@ -1,0 +1,65 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ 'MESSAGES.ADMIN.SHOP.CREATE_TITLE' | translate }}</h5>
+  <button type="button" class="btn-close" (click)="onCancel()"></button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="shopForm" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.NAME' | translate }} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" formControlName="name" [class.is-invalid]="submitted && f.name.errors">
+        <div class="invalid-feedback" *ngIf="submitted && f.name.errors">
+          {{ 'MESSAGES.ADMIN.SHOP.NAME_REQUIRED' | translate }}
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }} <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="workspaceId" [class.is-invalid]="submitted && f.workspaceId.errors">
+          <option value="">{{ 'MESSAGES.ADMIN.SHOP.SELECT_WORKSPACE' | translate }}</option>
+          <option *ngFor="let workspace of workspaces" [value]="workspace.id">{{ workspace.name }}</option>
+        </select>
+        <div class="invalid-feedback" *ngIf="submitted && f.workspaceId.errors">
+          {{ 'MESSAGES.ADMIN.SHOP.WORKSPACE_REQUIRED' | translate }}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}</label>
+        <input type="email" class="form-control" formControlName="email" [class.is-invalid]="submitted && f.email.errors">
+        <div class="invalid-feedback" *ngIf="submitted && f.email.errors">
+          {{ 'MESSAGES.ADMIN.SHOP.EMAIL_INVALID' | translate }}
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</label>
+        <input type="text" class="form-control" formControlName="phoneNumber">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.ADDRESS' | translate }}</label>
+        <input type="text" class="form-control" formControlName="address">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.CITY' | translate }}</label>
+        <input type="text" class="form-control" formControlName="city">
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.POSTAL_CODE' | translate }}</label>
+        <input type="text" class="form-control" formControlName="postalCode">
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.COUNTRY' | translate }}</label>
+        <input type="text" class="form-control" formControlName="country">
+      </div>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="onCancel()">{{ 'MESSAGES.ADMIN.SHOP.CANCEL' | translate }}</button>
+  <button type="button" class="btn btn-primary" (click)="onSubmit()">{{ 'MESSAGES.ADMIN.SHOP.CREATE' | translate }}</button>
+</div>
+

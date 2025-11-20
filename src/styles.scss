@@ -31,6 +31,15 @@
 
 body {
   font-family: 'Poppins', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Styles pour le dark mode
+[data-layout-mode="dark"] {
+  body {
+    background-color: var(--bs-body-bg, #222736);
+    color: var(--bs-body-color, #a6b0cf);
+  }
 }
 
 
