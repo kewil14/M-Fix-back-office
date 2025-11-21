@@ -4,6 +4,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectAdminState } from 'src/app/core/core.state';
@@ -48,7 +49,8 @@ export class AdminsComponent implements OnInit, OnDestroy {
     private modalService: BsModalService,
     private storeService: Store,
     private actionService: Actions,
-    private router: Router
+    private router: Router,
+    private translateService: TranslateService
   ) {}
 
   ngOnDestroy() {
@@ -137,6 +139,13 @@ export class AdminsComponent implements OnInit, OnDestroy {
     this.loadAdmins();
   }
 
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.isActiveFilter = null;
+    this.currentPage = 0;
+    this.loadAdmins();
+  }
+
   changePage(page: number): void {
     this.currentPage = page;
     this.loadAdmins();
@@ -191,11 +200,11 @@ export class AdminsComponent implements OnInit, OnDestroy {
 
   onDelete(admin: EmployeeResponseDto): void {
     const initialState = {
-      title: 'Désactiver l\'administrateur',
-      message: 'Êtes-vous sûr de vouloir désactiver cet administrateur ?',
+      title: this.translateService.instant('MESSAGES.ADMIN.ADMIN.DELETE_TITLE'),
+      message: this.translateService.instant('MESSAGES.ADMIN.ADMIN.DELETE_MESSAGE'),
       itemName: `${admin.firstName} ${admin.lastName}`,
-      confirmBtnText: 'Désactiver',
-      cancelBtnText: 'Annuler'
+      confirmBtnText: this.translateService.instant('MESSAGES.ADMIN.ADMIN.DELETE_BUTTON'),
+      cancelBtnText: this.translateService.instant('MESSAGES.ADMIN.SHOP.CANCEL')
     };
     
     this.modalRef = this.modalService.show(DeleteConfirmModalComponent, {

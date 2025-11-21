@@ -36,31 +36,31 @@ export const removeShop = createAction(
 
 export const findAllShops = createAction(
   '[Shop] shop/findAllShops', 
-  props<{ filters: ShopListRequestDto }>()
+  props<{ workspaceId: string, filters?: ShopListRequestDto }>()
 );
 
 export const findShopById = createAction(
   '[Shop] shop/findShopById', 
-  props<{ shopId: string }>()
+  props<{ workspaceId: string, shopId: string }>()
 );
 
 export const createShop = createAction(
   '[Shop] shop/createShop', 
-  props<{ createShopDto: CreateShopDto }>()
+  props<{ workspaceId: string, createShopDto: CreateShopDto }>()
 );
 
 export const updateShop = createAction(
   '[Shop] shop/updateShop', 
-  props<{ shopId: string, updateShopDto: UpdateShopDto }>()
+  props<{ workspaceId: string, shopId: string, updateShopDto: UpdateShopDto }>()
 );
 
 export const deleteShop = createAction(
   '[Shop] shop/deleteShop', 
-  props<{ shopId: string }>()
+  props<{ workspaceId: string, shopId: string }>()
 );
 
 export const reactivateShop = createAction(
   '[Shop] shop/reactivateShop', 
-  props<{ shopId: string }>()
+  props<{ workspaceId: string, shopId: string }>()
 );
 

@@ -14,6 +14,7 @@ import { AdminsComponent } from './users/admins/admins.component';
 import { WorkspacesComponent } from './users/workspaces/workspaces.component';
 import { EmployeesComponent } from './users/employees/employees.component';
 import { EmployeeDetailComponent } from './users/employee-detail/employee-detail.component';
+import { EmployeeEditComponent } from './users/employee-edit/employee-edit.component';
 import { AdminDetailComponent } from './users/admin-detail/admin-detail.component';
 import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
 import { InvitationsComponent } from './users/invitations/invitations.component';
@@ -38,7 +39,6 @@ import { SharedModuleModule } from 'src/app/shared-module/shared-module.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 
-
 @NgModule({
   declarations: [
     DashboardComponent,
@@ -53,6 +53,7 @@ import { TranslateModule } from '@ngx-translate/core';
     WorkspacesComponent,
     EmployeesComponent,
     EmployeeDetailComponent,
+    EmployeeEditComponent,
     AdminDetailComponent,
     AdminEditComponent,
     InvitationsComponent,
@@ -82,10 +83,8 @@ import { TranslateModule } from '@ngx-translate/core';
     SimplebarAngularModule,
     NgSelectModule,
 
-    TranslateModule,
-    
+    TranslateModule.forChild(),
     SharedModuleModule,
-    
   ],
   providers: [
     DecimalPipe,

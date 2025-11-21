@@ -30,7 +30,7 @@
                       <input 
                         type="text" 
                         class="form-control" 
-                        placeholder="Rechercher par nom, email..." 
+                        [placeholder]="'MESSAGES.ADMIN.COMMON.SEARCH_PLACEHOLDER' | translate" 
                         [(ngModel)]="searchTerm"
                         (ngModelChange)="onSearchChange()">
                       <i class="ri-search-line search-icon"></i>
@@ -39,21 +39,29 @@
                 </div>
                 <div class="col-md-2">
                   <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
-                    <option [value]="null">Tous les statuts</option>
-                    <option [value]="true">Actifs</option>
-                    <option [value]="false">Inactifs</option>
+                    <option [value]="null">{{ 'MESSAGES.ADMIN.COMMON.ALL_STATUSES' | translate }}</option>
+                    <option [value]="true">{{ 'MESSAGES.ADMIN.COMMON.ACTIVE' | translate }}</option>
+                    <option [value]="false">{{ 'MESSAGES.ADMIN.COMMON.INACTIVE' | translate }}</option>
                   </select>
                 </div>
                 <div class="col-md-6 text-end">
                   <div class="d-flex align-items-center justify-content-end gap-2">
-                    <label class="mb-0">Afficher:</label>
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline-secondary" 
+                      (click)="resetFilters()"
+                      *ngIf="searchTerm || isActiveFilter !== null"
+                      title="{{ 'MESSAGES.ADMIN.COMMON.RESET_FILTERS' | translate }}">
+                      <i class="ri-refresh-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.RESET' | translate }}
+                    </button>
+                    <label class="mb-0">{{ 'MESSAGES.ADMIN.COMMON.SHOW' | translate }}</label>
                     <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (ngModelChange)="changePageSize(pageSize)">
                       <option [value]="5">5</option>
                       <option [value]="10">10</option>
                       <option [value]="20">20</option>
                       <option [value]="50">50</option>
                     </select>
-                    <span class="text-muted">éléments</span>
+                    <span class="text-muted">{{ 'MESSAGES.ADMIN.COMMON.ELEMENTS' | translate }}</span>
                   </div>
                 </div>
               </div>
@@ -64,13 +72,13 @@
                   <thead class="table-light">
                     <tr>
                       <th scope="col" style="width: 60px;">#</th>
-                      <th scope="col">ID</th>
-                      <th scope="col">Nom complet</th>
-                      <th scope="col">Email</th>
-                      <th scope="col">Téléphone</th>
-                      <th scope="col" class="text-center">Statut</th>
-                      <th scope="col">Date de création</th>
-                      <th scope="col" class="text-center" style="width: 200px;">Actions</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.ID' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.FULL_NAME' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.EMAIL' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.PHONE' | translate }}</th>
+                      <th scope="col" class="text-center">{{ 'MESSAGES.ADMIN.COMMON.STATUS' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</th>
+                      <th scope="col" class="text-center" style="width: 200px;">{{ 'MESSAGES.ADMIN.COMMON.ACTIONS' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -94,7 +102,7 @@
                       <td>{{ admin.phoneNumber || 'N/A' }}</td>
                       <td class="text-center">
                         <span class="badge" [ngClass]="admin.isActive ? 'bg-success' : 'bg-danger'">
-                          {{ admin.isActive ? 'Actif' : 'Inactif' }}
+                          {{ admin.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
                         </span>
                       </td>
                       <td>{{ admin.createdAt ? (admin.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
@@ -103,27 +111,27 @@
                           <button 
                             class="btn btn-sm btn-info btn-icon" 
                             (click)="onView(admin)"
-                            title="Voir les détails">
+                            [title]="'MESSAGES.ADMIN.COMMON.VIEW_DETAILS' | translate">
                             <i class="mdi mdi-eye-outline"></i>
                           </button>
                           <button 
                             class="btn btn-sm btn-warning btn-icon" 
                             (click)="onEdit(admin)"
-                            title="Modifier">
+                            [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
                             <i class="mdi mdi-pencil"></i>
                           </button>
                           <button 
                             *ngIf="admin.isActive"
                             class="btn btn-sm btn-danger btn-icon" 
                             (click)="onDelete(admin)"
-                            title="Désactiver">
+                            [title]="'MESSAGES.ADMIN.COMMON.DEACTIVATE' | translate">
                             <i class="mdi mdi-delete-outline"></i>
                           </button>
                           <button 
                             *ngIf="!admin.isActive"
                             class="btn btn-sm btn-success btn-icon" 
                             (click)="onReactivate(admin)"
-                            title="Réactiver">
+                            [title]="'MESSAGES.ADMIN.COMMON.REACTIVATE' | translate">
                             <i class="mdi mdi-restore"></i>
                           </button>
                         </div>
@@ -133,7 +141,7 @@
                       <td colspan="8" class="text-center py-4">
                         <div class="text-muted">
                           <i class="ri-inbox-line" style="font-size: 48px;"></i>
-                          <p class="mt-2 mb-0">Aucun administrateur trouvé</p>
+                          <p class="mt-2 mb-0">{{ 'MESSAGES.ADMIN.ADMIN.NO_ADMIN_FOUND' | translate }}</p>
                         </div>
                       </td>
                     </tr>

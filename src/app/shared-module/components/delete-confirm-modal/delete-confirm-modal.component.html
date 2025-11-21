@@ -11,7 +11,7 @@
     <h4 class="mb-2">{{ title }}</h4>
     <p class="text-muted mb-4" *ngIf="!itemName">{{ message }}</p>
     <p class="text-muted mb-4" *ngIf="itemName">
-      Êtes-vous sûr de vouloir supprimer <strong>"{{ itemName }}"</strong> ? Cette action est irréversible.
+      {{ 'MESSAGES.MODAL.DELETE_CONFIRM_ITEM' | translate }} <strong>"{{ itemName }}"</strong> ? {{ 'MESSAGES.MODAL.DELETE_CONFIRM_MESSAGE' | translate }}
     </p>
   </div>
   <div class="d-flex gap-2 justify-content-center">

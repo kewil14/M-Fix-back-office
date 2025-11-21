@@ -81,6 +81,7 @@ export function createTranslateLoader(http: HttpClient): any {
     MatAutocompleteModule,
     BrowserAnimationsModule,
     TranslateModule.forRoot({
+      defaultLanguage: 'fr', // Langue par défaut
       loader: {
         provide: TranslateLoader,
         useFactory: createTranslateLoader,

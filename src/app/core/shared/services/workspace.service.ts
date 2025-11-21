@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map, share } from 'rxjs';
+import { Observable, map, share, switchMap, of } from 'rxjs';
 import { API_URLS } from '../../config/app.url.config';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
 import { EmployeeResponseDto } from '../dtos/employee-response-dto';
@@ -72,52 +72,122 @@ export class WorkspaceService {
   getWorkspaces(filters: WorkspaceListRequestDto): Observable<RequestResultDto<WorkspaceListResponseDto>> {
     let params = new HttpParams();
     
-    if (filters.search) params = params.set('dto.search', filters.search);
-    if (filters.type) params = params.set('dto.type', filters.type);
-    if (filters.subscriptionPlan) params = params.set('dto.subscriptionPlan', filters.subscriptionPlan);
-    if (filters.isActive !== undefined) params = params.set('dto.isActive', filters.isActive.toString());
-    if (filters.page !== undefined) params = params.set('dto.page', filters.page.toString());
-    if (filters.size !== undefined) params = params.set('dto.size', filters.size.toString());
-    if (filters.sortBy) params = params.set('dto.sortBy', filters.sortBy);
-    if (filters.sortDirection) params = params.set('dto.sortDirection', filters.sortDirection);
+    if (filters.isActive !== undefined) params = params.set('isActive', filters.isActive.toString());
+    if (filters.page !== undefined) params = params.set('page', filters.page.toString());
+    if (filters.size !== undefined) params = params.set('size', filters.size.toString());
 
-    return this.http.get<RequestResultDto<WorkspaceListResponseDto>>(
-      API_URLS.CUSTOMERS_URL + `/workspaces`,
+    return this.http.get<RequestResultDto<any>>(
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces`,
       { params }
-    ).pipe(share());
+    ).pipe(
+      map((data: RequestResultDto<any>) => {
+        // Adapter la réponse pour correspondre à WorkspaceListResponseDto
+        if (data.status === 'SUCCESS' && data.data) {
+          return {
+            ...data,
+            data: {
+              content: data.data.content || [],
+              totalElements: data.data.totalElements || 0,
+              totalPages: data.data.totalPages || 0,
+              size: data.data.size || 20,
+              number: data.data.page || 0,
+              sort: { empty: false, sorted: false, unsorted: true },
+              pageable: {
+                offset: (data.data.page || 0) * (data.data.size || 20),
+                sort: { empty: false, sorted: false, unsorted: true },
+                pageNumber: data.data.page || 0,
+                pageSize: data.data.size || 20,
+                unpaged: false
+              },
+              numberOfElements: data.data.content?.length || 0,
+              first: (data.data.page || 0) === 0,
+              last: (data.data.page || 0) >= (data.data.totalPages || 0) - 1,
+              empty: !data.data.content || data.data.content.length === 0
+            }
+          } as RequestResultDto<WorkspaceListResponseDto>;
+        }
+        return data as RequestResultDto<WorkspaceListResponseDto>;
+      }),
+      share()
+    );
   }
 
   getWorkspaceById(workspaceId: string): Observable<RequestResultDto<WorkspaceResponseDto>> {
     return this.http.get<RequestResultDto<WorkspaceResponseDto>>(
-      API_URLS.CUSTOMERS_URL + `/workspaces/${workspaceId}`
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces/${workspaceId}`
     ).pipe(share());
   }
 
   createWorkspace(createWorkspaceDto: CreateWorkspaceDto): Observable<RequestResultDto<WorkspaceResponseDto>> {
-    return this.http.post<RequestResultDto<WorkspaceResponseDto>>(
-      API_URLS.CUSTOMERS_URL + `/workspaces`,
-      createWorkspaceDto
-    ).pipe(share());
+    // L'endpoint /api/workspaces/init nécessite ownerId, industry, planType, etc.
+    const initDto = {
+      name: createWorkspaceDto.name,
+      ownerId: (createWorkspaceDto as any).adminId || '',
+      industry: createWorkspaceDto.type || 'REPAIR_SHOP',
+      planType: createWorkspaceDto.subscriptionPlan || 'FREE',
+      createdBy: (createWorkspaceDto as any).adminId || '',
+      description: (createWorkspaceDto as any).description || ''
+    };
+    
+    return this.http.post<RequestResultDto<any>>(
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces/init`,
+      initDto
+    ).pipe(
+      switchMap((data: RequestResultDto<any>) => {
+        // Après création, récupérer le workspace complet
+        if (data.status === 'SUCCESS' && data.data?.workspaceId) {
+          return this.getWorkspaceById(data.data.workspaceId);
+        }
+        return of(data as RequestResultDto<WorkspaceResponseDto>);
+      }),
+      share()
+    );
   }
 
   updateWorkspace(workspaceId: string, updateWorkspaceDto: UpdateWorkspaceDto): Observable<RequestResultDto<WorkspaceResponseDto>> {
+    const updateDto: any = {};
+    if (updateWorkspaceDto.description !== undefined) updateDto.description = updateWorkspaceDto.description;
+    if (updateWorkspaceDto.logo !== undefined) updateDto.logo = updateWorkspaceDto.logo;
+    if ((updateWorkspaceDto as any).domain !== undefined) updateDto.domain = (updateWorkspaceDto as any).domain;
+    
     return this.http.put<RequestResultDto<WorkspaceResponseDto>>(
-      API_URLS.CUSTOMERS_URL + `/workspaces/${workspaceId}`,
-      updateWorkspaceDto
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces/${workspaceId}`,
+      updateDto
     ).pipe(share());
   }
 
   deleteWorkspace(workspaceId: string): Observable<RequestResultDto<string>> {
-    return this.http.delete<RequestResultDto<string>>(
-      API_URLS.CUSTOMERS_URL + `/workspaces/${workspaceId}`
+    return this.http.put<RequestResultDto<string>>(
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces/${workspaceId}/deactivate`,
+      {}
     ).pipe(share());
   }
 
   reactivateWorkspace(workspaceId: string): Observable<RequestResultDto<string>> {
-    return this.http.patch<RequestResultDto<string>>(
-      API_URLS.CUSTOMERS_URL + `/workspaces/${workspaceId}/reactivate`,
+    return this.http.put<RequestResultDto<string>>(
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces/${workspaceId}/activate`,
       {}
     ).pipe(share());
+  }
+
+  /**
+   * Export workspaces to CSV
+   * @param isActive Filter by active status (optional)
+   * @param industry Filter by industry (optional)
+   */
+  exportWorkspaces(isActive?: boolean, industry?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (isActive !== undefined) params = params.set('isActive', isActive.toString());
+    if (industry) params = params.set('industry', industry);
+    
+    return this.http.get(
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/workspaces/export`,
+      { 
+        params,
+        responseType: 'blob',
+        observe: 'body'
+      }
+    );
   }
 }
 

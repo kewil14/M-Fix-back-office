@@ -1,0 +1,224 @@
+<ng-container *ngIf="(employeeState$ | async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+    <app-loading5></app-loading5>
+  </ng-container>
+  
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+              <div class="d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                  <i class="ri-edit-line me-2 text-primary"></i>
+                  {{ 'MESSAGES.ADMIN.EMPLOYEE.EDIT_TITLE' | translate }}
+                </h4>
+                <button type="button" class="btn btn-sm btn-light" (click)="onCancel()">
+                  <i class="ri-close-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.CANCEL' | translate }}
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <loto-message-alert [messages$]="messages$"></loto-message-alert>
+              
+              <form (ngSubmit)="onSubmit()" [formGroup]="employeeForm">
+                <div class="row">
+                  <div class="col-12">
+                    <h6 class="mb-3">{{ 'MESSAGES.ADMIN.EMPLOYEE.BASIC_INFO' | translate }}</h6>
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }} <span class="text-danger">*</span></label>
+                        <input class="form-control" type="email" 
+                               formControlName="email"
+                               [ngClass]="{'is-invalid': submitted && f.email.errors}" />
+                        <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
+                          <span *ngIf="f.email.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL_REQUIRED' | translate }}</span>
+                          <span *ngIf="f.email.errors.email">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL_INVALID' | translate }}</span>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</label>
+                        <input class="form-control" type="tel" 
+                               formControlName="phoneNumber" />
+                      </div>
+                    </div>
+
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME' | translate }} <span class="text-danger">*</span></label>
+                        <input class="form-control" type="text" 
+                               formControlName="firstName"
+                               [ngClass]="{'is-invalid': submitted && f.firstName.errors}" />
+                        <div *ngIf="submitted && f.firstName.errors" class="invalid-feedback">
+                          <span *ngIf="f.firstName.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME_REQUIRED' | translate }}</span>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME' | translate }} <span class="text-danger">*</span></label>
+                        <input class="form-control" type="text" 
+                               formControlName="lastName"
+                               [ngClass]="{'is-invalid': submitted && f.lastName.errors}" />
+                        <div *ngIf="submitted && f.lastName.errors" class="invalid-feedback">
+                          <span *ngIf="f.lastName.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME_REQUIRED' | translate }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.BIRTH_DATE' | translate }}</label>
+                        <input class="form-control" type="date" 
+                               formControlName="birthDate" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.PREFERRED_LANGUAGE' | translate }}</label>
+                        <select class="form-control" formControlName="preferredLanguage">
+                          <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_LEVEL' | translate }}</option>
+                          <option value="fr">Français</option>
+                          <option value="en">English</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }}</label>
+                        <select class="form-control" formControlName="workspaceId"
+                                [disabled]="isLoadingWorkspaces">
+                          <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_WORKSPACE' | translate }}</option>
+                          <option *ngFor="let workspace of workspaces" [value]="workspace.id">
+                            {{ workspace.name }}
+                          </option>
+                        </select>
+                        <div *ngIf="isLoadingWorkspaces" class="text-muted small mt-1">
+                          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                          {{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING_WORKSPACES' | translate }}
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SHOP' | translate }}</label>
+                        <select class="form-control" formControlName="shopId"
+                                [disabled]="isLoadingShops || !employeeForm.get('workspaceId')?.value">
+                          <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_SHOP' | translate }}</option>
+                          <option *ngFor="let shop of shops" [value]="shop.id">
+                            {{ shop.name }} {{ shop.city ? '(' + shop.city + ')' : '' }}
+                          </option>
+                        </select>
+                        <div *ngIf="isLoadingShops" class="text-muted small mt-1">
+                          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                          {{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING_SHOPS' | translate }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <hr class="my-4" *ngIf="currentUserTypeValue">
+                    <h6 class="mb-3" *ngIf="currentUserTypeValue">{{ 'MESSAGES.ADMIN.EMPLOYEE.SPECIFIC_FIELDS' | translate }}</h6>
+
+                    <!-- Champs pour EMPLOYEE -->
+                    <div *ngIf="currentUserTypeValue === 'EMPLOYEE'" class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMPLOYEE_CODE' | translate }}</label>
+                        <input class="form-control" type="text" 
+                               formControlName="employeeCode" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.DEPARTMENT' | translate }}</label>
+                        <input class="form-control" type="text" 
+                               formControlName="department" />
+                      </div>
+                    </div>
+
+                    <!-- Champs pour SHOP_MANAGER -->
+                    <div *ngIf="currentUserTypeValue === 'SHOP_MANAGER'" class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.MANAGER_LEVEL' | translate }}</label>
+                        <select class="form-control" formControlName="managerLevel">
+                          <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_LEVEL' | translate }}</option>
+                          <option value="JUNIOR">JUNIOR</option>
+                          <option value="MID">MID</option>
+                          <option value="SENIOR">SENIOR</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Champs pour TECHNICIAN -->
+                    <div *ngIf="currentUserTypeValue === 'TECHNICIAN'" class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SPECIALIZATION' | translate }}</label>
+                        <input class="form-control" type="text" 
+                               formControlName="specialization" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SKILL_LEVEL' | translate }}</label>
+                        <input class="form-control" type="number" min="1" max="5" 
+                               formControlName="skillLevel" />
+                      </div>
+                      <div class="col-md-12">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.CERTIFICATIONS' | translate }}</label>
+                        <input class="form-control" type="text" 
+                               formControlName="certifications" />
+                      </div>
+                    </div>
+
+                    <!-- Champs pour DELIVERER -->
+                    <div *ngIf="currentUserTypeValue === 'DELIVERER'" class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.VEHICLE_TYPE' | translate }}</label>
+                        <select class="form-control" formControlName="vehicleType">
+                          <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_LEVEL' | translate }}</option>
+                          <option value="MOTO">MOTO</option>
+                          <option value="CAR">CAR</option>
+                          <option value="VAN">VAN</option>
+                          <option value="BIKE">BIKE</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.LICENSE_NUMBER' | translate }}</label>
+                        <input class="form-control" type="text" 
+                               formControlName="licenseNumber" />
+                      </div>
+                      <div class="col-md-12">
+                        <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.DELIVERY_ZONES' | translate }}</label>
+                        <textarea class="form-control" 
+                                  formControlName="deliveryZones" rows="3"></textarea>
+                        <small class="form-text text-muted">{{ 'MESSAGES.ADMIN.EMPLOYEE.DELIVERY_ZONES_FORMAT' | translate }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                  <button type="button" class="btn btn-light" (click)="onCancel()">
+                    {{ 'MESSAGES.ADMIN.SHOP.CANCEL' | translate }}
+                  </button>
+                  <button type="submit" class="btn btn-primary" [disabled]="submitted && employeeForm.invalid">
+                    <i class="ri-save-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.SAVE' | translate }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngSwitchCase="dataStateEnum.ERROR">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-danger">
+            <h5>{{ 'MESSAGES.ERRORS.ERROR' | translate }}</h5>
+            <p>{{ state.messages }}</p>
+            <button type="button" class="btn btn-primary" (click)="onCancel()">
+              {{ 'MESSAGES.ADMIN.COMMON.BACK_TO_LIST' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>
+

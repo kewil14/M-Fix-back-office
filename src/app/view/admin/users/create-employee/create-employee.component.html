@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h5 class="modal-title mt-0">Créer Employé</h5>
+  <h5 class="modal-title mt-0">{{ 'MESSAGES.ADMIN.EMPLOYEE.CREATE_TITLE' | translate }}</h5>
   <button type="button" class="btn-close" aria-hidden="true" (click)="bsModalRef?.hide()"></button>
 </div>
 <div class="modal-body">
@@ -8,10 +8,10 @@
   <form (ngSubmit)="onSubmit()" [formGroup]="employeeForm">
     <div class="row">
       <div class="col-12">
-        <h6 class="mb-3">Informations de base</h6>
+        <h6 class="mb-3">{{ 'MESSAGES.ADMIN.EMPLOYEE.BASIC_INFO' | translate }}</h6>
         
         <div class="mb-3">
-          <label class="control-label">Type d'employé <span class="text-danger">*</span></label>
+          <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMPLOYEE_TYPE' | translate }} <span class="text-danger">*</span></label>
           <select class="form-control" formControlName="userType"
                   [ngClass]="{'is-invalid': submitted && f.userType.errors}">
             <option *ngFor="let type of employeeTypes" [value]="type.value">{{type.label}}</option>
@@ -19,78 +19,90 @@
         </div>
 
         <div class="mb-3">
-          <label class="control-label">Email <span class="text-danger">*</span></label>
+          <label class="control-label">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }} <span class="text-danger">*</span></label>
           <input class="form-control" placeholder="employee@techrepair.fr" type="email" 
                  formControlName="email"
                  [ngClass]="{'is-invalid': submitted && f.email.errors}" />
           <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
-            <span *ngIf="f.email.errors.required">Email requis</span>
-            <span *ngIf="f.email.errors.email">Email invalide</span>
+            <span *ngIf="f.email.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL_REQUIRED' | translate }}</span>
+            <span *ngIf="f.email.errors.email">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL_INVALID' | translate }}</span>
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="control-label">Prénom <span class="text-danger">*</span></label>
+          <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME' | translate }} <span class="text-danger">*</span></label>
           <input class="form-control" placeholder="Lucas" type="text" 
                  formControlName="firstName"
                  [ngClass]="{'is-invalid': submitted && f.firstName.errors}" />
           <div *ngIf="submitted && f.firstName.errors" class="invalid-feedback">
-            <span *ngIf="f.firstName.errors.required">Prénom requis</span>
+            <span *ngIf="f.firstName.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME_REQUIRED' | translate }}</span>
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="control-label">Nom <span class="text-danger">*</span></label>
+          <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME' | translate }} <span class="text-danger">*</span></label>
           <input class="form-control" placeholder="Bernard" type="text" 
                  formControlName="lastName"
                  [ngClass]="{'is-invalid': submitted && f.lastName.errors}" />
           <div *ngIf="submitted && f.lastName.errors" class="invalid-feedback">
-            <span *ngIf="f.lastName.errors.required">Nom requis</span>
+            <span *ngIf="f.lastName.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME_REQUIRED' | translate }}</span>
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="control-label">Workspace <span class="text-danger">*</span></label>
+          <label class="control-label">{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }} <span class="text-danger">*</span></label>
           <select class="form-control" formControlName="workspaceId"
                   [ngClass]="{'is-invalid': submitted && f.workspaceId.errors}"
                   [disabled]="isLoadingWorkspaces">
-            <option value="">Sélectionner un workspace...</option>
+            <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_WORKSPACE' | translate }}</option>
             <option *ngFor="let workspace of workspaces" [value]="workspace.id">
               {{ workspace.name }}
             </option>
           </select>
           <div *ngIf="isLoadingWorkspaces" class="text-muted small mt-1">
             <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-            Chargement des workspaces...
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING_WORKSPACES' | translate }}
           </div>
           <div *ngIf="submitted && f.workspaceId.errors" class="invalid-feedback">
-            <span *ngIf="f.workspaceId.errors.required">Workspace requis</span>
+            <span *ngIf="f.workspaceId.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.WORKSPACE_REQUIRED' | translate }}</span>
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="control-label">Shop ID</label>
-          <input class="form-control" placeholder="SHOP1730456100000" type="text" 
-                 formControlName="shopId" />
+          <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SHOP' | translate }}</label>
+          <select class="form-control" formControlName="shopId"
+                  [disabled]="isLoadingShops || !employeeForm.get('workspaceId')?.value">
+            <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_SHOP' | translate }}</option>
+            <option *ngFor="let shop of shops" [value]="shop.id">
+              {{ shop.name }} {{ shop.city ? '(' + shop.city + ')' : '' }}
+            </option>
+          </select>
+          <div *ngIf="isLoadingShops" class="text-muted small mt-1">
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING_SHOPS' | translate }}
+          </div>
+          <small class="form-text text-muted" *ngIf="!employeeForm.get('workspaceId')?.value">
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_WORKSPACE_FIRST' | translate }}
+          </small>
         </div>
 
         <hr class="my-4" *ngIf="currentUserType">
-        <h6 class="mb-3" *ngIf="currentUserType">Champs spécifiques</h6>
+        <h6 class="mb-3" *ngIf="currentUserType">{{ 'MESSAGES.ADMIN.EMPLOYEE.SPECIFIC_FIELDS' | translate }}</h6>
 
         <!-- Champs pour EMPLOYEE -->
         <div *ngIf="currentUserType === 'EMPLOYEE'">
           <div class="mb-3">
-            <label class="control-label">Code Employé <span class="text-danger">*</span></label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMPLOYEE_CODE' | translate }} <span class="text-danger">*</span></label>
             <input class="form-control" placeholder="EMP001" type="text" 
                    formControlName="employeeCode"
                    [ngClass]="{'is-invalid': submitted && f.employeeCode.errors}" />
             <div *ngIf="submitted && f.employeeCode.errors" class="invalid-feedback">
-              <span *ngIf="f.employeeCode.errors.required">Code employé requis</span>
+              <span *ngIf="f.employeeCode.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.EMPLOYEE_CODE_REQUIRED' | translate }}</span>
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="control-label">Département</label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.DEPARTMENT' | translate }}</label>
             <input class="form-control" placeholder="Ventes" type="text" 
                    formControlName="department" />
           </div>
@@ -99,14 +111,14 @@
         <!-- Champs pour SHOP_MANAGER -->
         <div *ngIf="currentUserType === 'SHOP_MANAGER'">
           <div class="mb-3">
-            <label class="control-label">Niveau Manager <span class="text-danger">*</span></label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.MANAGER_LEVEL' | translate }} <span class="text-danger">*</span></label>
             <select class="form-control" formControlName="managerLevel"
                     [ngClass]="{'is-invalid': submitted && f.managerLevel.errors}">
-              <option value="">Sélectionner...</option>
+              <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_LEVEL' | translate }}</option>
               <option *ngFor="let level of managerLevels" [value]="level">{{level}}</option>
             </select>
             <div *ngIf="submitted && f.managerLevel.errors" class="invalid-feedback">
-              <span *ngIf="f.managerLevel.errors.required">Niveau manager requis</span>
+              <span *ngIf="f.managerLevel.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.MANAGER_LEVEL_REQUIRED' | translate }}</span>
             </div>
           </div>
         </div>
@@ -114,28 +126,28 @@
         <!-- Champs pour TECHNICIAN -->
         <div *ngIf="currentUserType === 'TECHNICIAN'">
           <div class="mb-3">
-            <label class="control-label">Spécialisation <span class="text-danger">*</span></label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SPECIALIZATION' | translate }} <span class="text-danger">*</span></label>
             <input class="form-control" placeholder="Smartphones" type="text" 
                    formControlName="specialization"
                    [ngClass]="{'is-invalid': submitted && f.specialization.errors}" />
             <div *ngIf="submitted && f.specialization.errors" class="invalid-feedback">
-              <span *ngIf="f.specialization.errors.required">Spécialisation requise</span>
+              <span *ngIf="f.specialization.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.SPECIALIZATION_REQUIRED' | translate }}</span>
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="control-label">Certifications</label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.CERTIFICATIONS' | translate }}</label>
             <input class="form-control" placeholder="Apple Certified, Samsung Certified" type="text" 
                    formControlName="certifications" />
           </div>
 
           <div class="mb-3">
-            <label class="control-label">Niveau de compétence (1-5)</label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SKILL_LEVEL' | translate }}</label>
             <input class="form-control" type="number" min="1" max="5" 
                    formControlName="skillLevel"
                    [ngClass]="{'is-invalid': submitted && f.skillLevel.errors}" />
             <div *ngIf="submitted && f.skillLevel.errors" class="invalid-feedback">
-              <span *ngIf="f.skillLevel.errors.min || f.skillLevel.errors.max">Niveau entre 1 et 5</span>
+              <span *ngIf="f.skillLevel.errors.min || f.skillLevel.errors.max">{{ 'MESSAGES.ADMIN.EMPLOYEE.SKILL_LEVEL_INVALID' | translate }}</span>
             </div>
           </div>
         </div>
@@ -143,48 +155,48 @@
         <!-- Champs pour DELIVERER -->
         <div *ngIf="currentUserType === 'DELIVERER'">
           <div class="mb-3">
-            <label class="control-label">Type de véhicule <span class="text-danger">*</span></label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.VEHICLE_TYPE' | translate }} <span class="text-danger">*</span></label>
             <select class="form-control" formControlName="vehicleType"
                     [ngClass]="{'is-invalid': submitted && f.vehicleType.errors}">
-              <option value="">Sélectionner...</option>
+              <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_LEVEL' | translate }}</option>
               <option *ngFor="let vehicle of vehicleTypes" [value]="vehicle">{{vehicle}}</option>
             </select>
             <div *ngIf="submitted && f.vehicleType.errors" class="invalid-feedback">
-              <span *ngIf="f.vehicleType.errors.required">Type de véhicule requis</span>
+              <span *ngIf="f.vehicleType.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.VEHICLE_TYPE_REQUIRED' | translate }}</span>
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="control-label">Numéro de permis <span class="text-danger">*</span></label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.LICENSE_NUMBER' | translate }} <span class="text-danger">*</span></label>
             <input class="form-control" placeholder="AB-123-CD" type="text" 
                    formControlName="licenseNumber"
                    [ngClass]="{'is-invalid': submitted && f.licenseNumber.errors}" />
             <div *ngIf="submitted && f.licenseNumber.errors" class="invalid-feedback">
-              <span *ngIf="f.licenseNumber.errors.required">Numéro de permis requis</span>
+              <span *ngIf="f.licenseNumber.errors.required">{{ 'MESSAGES.ADMIN.EMPLOYEE.LICENSE_NUMBER_REQUIRED' | translate }}</span>
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="control-label">Zones de livraison (JSON)</label>
+            <label class="control-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.DELIVERY_ZONES' | translate }}</label>
             <textarea class="form-control" placeholder='["Lyon Centre", "Lyon 2", "Lyon 3"]' 
                       formControlName="deliveryZones" rows="3"></textarea>
-            <small class="form-text text-muted">Format JSON: ["Zone1", "Zone2"]</small>
+            <small class="form-text text-muted">{{ 'MESSAGES.ADMIN.EMPLOYEE.DELIVERY_ZONES_FORMAT' | translate }}</small>
           </div>
         </div>
 
         <div class="alert alert-info mt-3">
-          <small>ℹ️ Un email d'invitation avec un mot de passe temporaire sera envoyé à l'employé. Le token est valide 7 jours.</small>
+          <small>ℹ️ {{ 'MESSAGES.ADMIN.EMPLOYEE.INVITATION_INFO' | translate }}</small>
         </div>
       </div>
     </div>
     
     <div class="d-flex justify-content-end">
       <button type="button" class="btn btn-danger" (click)="closeModal()">
-        Annuler
+        {{ 'MESSAGES.ADMIN.SHOP.CANCEL' | translate }}
       </button>
       <button type="submit" class="btn btn-success btn-load btn-center ms-2">
         <span *ngIf="!submitted || (authentificationState$|async)?.dataState !== dataStateEnum.LOADING">
-          Créer Employé
+          {{ 'MESSAGES.ADMIN.EMPLOYEE.CREATE_EMPLOYEE' | translate }}
         </span>
         <span *ngIf="submitted && (authentificationState$|async)?.dataState == dataStateEnum.LOADING" 
               class="d-flex align-items-center justify-content-center">

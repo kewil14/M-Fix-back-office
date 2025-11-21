@@ -11,6 +11,10 @@ export interface DecodedToken {
   sub?: string;
   iat?: number;
   exp?: number;
+  workspaceId?: string;
+  workspace_id?: string;
+  workspace?: string;
+  [key: string]: any; // Pour permettre d'autres propriétés
 }
 
 @Injectable({ providedIn: 'root' })
@@ -129,7 +133,25 @@ export class PermissionService {
    */
   getWorkspaceId(): string | null {
     const decoded = this.getDecodedToken();
-    return (decoded as any)?.workspaceId || null;
+    if (!decoded) {
+      return null;
+    }
+    
+    // Essayer différents noms de champs possibles
+    const workspaceId = (decoded as any)?.workspaceId || 
+                       (decoded as any)?.workspace_id || 
+                       (decoded as any)?.workspace ||
+                       (decoded as any)?.workspaceId;
+    
+    if (workspaceId) {
+      return String(workspaceId);
+    }
+    
+    // Debug: afficher toutes les clés du token
+    console.log('PermissionService - Token keys:', Object.keys(decoded || {}));
+    console.log('PermissionService - Full decoded token:', decoded);
+    
+    return null;
   }
 
   /**

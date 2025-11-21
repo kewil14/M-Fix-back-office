@@ -99,33 +99,42 @@ export class EmployeeEffects {
   createEmployeeNewEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(createEmployeeNew),
-      mergeMap(({ createEmployeeDto }) =>
-        this.employeeService.createEmployee(createEmployeeDto).pipe(
+      mergeMap(({ createEmployeeDto }) => {
+        console.log('EmployeeEffects - Création d\'employé avec DTO:', JSON.stringify(createEmployeeDto, null, 2));
+        console.log('EmployeeEffects - workspaceId:', createEmployeeDto.workspaceId, 'Type:', typeof createEmployeeDto.workspaceId);
+        
+        return this.employeeService.createEmployee(createEmployeeDto).pipe(
           map((data: RequestResultDto<any>) => {
+            console.log('EmployeeEffects - Réponse du serveur:', data);
             if (data.status === 'SUCCESS' && data.data) {
               this.notificationService.showSuccess(
                 "Employé créé avec succès! Un email d'invitation a été envoyé."
               );
               return addEmployee({ employee: data.data });
             } else {
-              const errorMsg = data.message || "Erreur lors de la création de l'employé";
+              const errorMsg = data.message || data.details || "Erreur lors de la création de l'employé";
+              console.error('EmployeeEffects - Erreur de création:', errorMsg);
               this.notificationService.showError(errorMsg);
               return erreurEmployees({ messages: errorMsg });
             }
           }),
           catchError((error) => {
+            console.error('EmployeeEffects - Erreur HTTP:', error);
+            console.error('EmployeeEffects - Error details:', error?.error);
             if (isCriticalHttpError(error)) {
               throw error;
             }
             const errorMessage =
               error?.error?.message ||
+              error?.error?.details ||
               error?.message ||
               this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            console.error('EmployeeEffects - Message d\'erreur final:', errorMessage);
             this.notificationService.showError(errorMessage);
             return of(erreurEmployees({ messages: errorMessage }));
           })
-        )
-      )
+        );
+      })
     )
   );
 

@@ -1,152 +1,261 @@
-<div class="row">
-  <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-header border-bottom bg-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h4 class="card-title mb-0">
-            <i class="ri-user-line me-2 text-primary"></i>Détails de l'Employé
-          </h4>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-light" (click)="onBack()">
-              <i class="ri-arrow-left-line me-1"></i>Retour
-            </button>
-            <button 
-              type="button" 
-              class="btn btn-info" 
-              (click)="onResendInvitation()"
-              [disabled]="isResendingInvitation || !employee?.email"
-              *ngIf="employee">
-              <i class="ri-mail-send-line me-1"></i>
-              <span *ngIf="!isResendingInvitation">Renvoyer l'invitation</span>
-              <span *ngIf="isResendingInvitation">
-                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                Envoi...
-              </span>
-            </button>
-            <button type="button" class="btn btn-warning" (click)="onEdit()" *ngIf="employee">
-              <i class="ri-edit-line me-1"></i>Modifier
-            </button>
+<ng-container *ngIf="(employeeState$ | async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+    <app-loading5></app-loading5>
+  </ng-container>
+  
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid" *ngIf="employee">
+      <!-- Header Section -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-lg me-4">
+                    <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-2">
+                      {{ (employee.firstName?.[0] || '') + (employee.lastName?.[0] || '') }}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="mb-1">{{ employee.firstName }} {{ employee.lastName }}</h3>
+                    <div class="d-flex gap-2 align-items-center mb-2">
+                      <span class="badge bg-primary">{{ employee.type || 'EMPLOYEE' }}</span>
+                      <span class="badge" [ngClass]="employee.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ employee.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                    </div>
+                    <p class="text-muted mb-0">
+                      <i class="ri-mail-line me-1"></i>{{ employee.email }}
+                    </p>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-light" (click)="onBack()">
+                    <i class="ri-arrow-left-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.VIEW' | translate }}
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-info" 
+                    (click)="onResendInvitation()"
+                    [disabled]="isResendingInvitation || !employee?.email">
+                    <i class="ri-mail-send-line me-1"></i>
+                    <span *ngIf="!isResendingInvitation">{{ 'MESSAGES.ADMIN.EMPLOYEE.RESEND_INVITATION' | translate }}</span>
+                    <span *ngIf="isResendingInvitation">
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.SENDING' | translate }}
+                    </span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="onEdit()">
+                    <i class="ri-edit-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.EDIT' | translate }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="card-body" *ngIf="employee">
-        <!-- Informations principales -->
-        <div class="row mb-4">
-          <div class="col-md-8">
-            <div class="d-flex align-items-center mb-3">
-              <div class="employee-icon me-3">
-                <i class="ri-user-line"></i>
-              </div>
-              <div>
-                <h3 class="mb-1">{{ employee.firstName }} {{ employee.lastName }}</h3>
-                <div class="d-flex gap-2 align-items-center">
-                  <span class="badge bg-primary">{{ employee.type || 'EMPLOYEE' }}</span>
-                  <span class="badge" [ngClass]="employee.isActive ? 'bg-success' : 'bg-danger'">
-                    {{ employee.isActive ? 'Actif' : 'Inactif' }}
-                  </span>
+
+      <!-- Main Content -->
+      <div class="row">
+        <!-- Left Column - Personal Info -->
+        <div class="col-lg-8">
+          <!-- Informations personnelles -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                <i class="ri-user-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.PERSONAL_INFO' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME' | translate }}</label>
+                  <div class="fw-semibold">{{ employee.firstName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME' | translate }}</label>
+                  <div class="fw-semibold">{{ employee.lastName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.USERNAME' | translate }}</label>
+                  <div class="fw-semibold">{{ employee.username || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                </div>
+                <div class="col-md-6" *ngIf="employee.birthDate">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.BIRTH_DATE' | translate }}</label>
+                  <div class="fw-semibold">{{ employee.birthDate | date: 'dd/MM/yyyy' }}</div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="col-md-4 text-end">
-            <div class="employee-stats">
-              <div class="stat-item">
-                <div class="stat-value">{{ employee.roles?.length || 0 }}</div>
-                <div class="stat-label">Rôles</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Informations de contact -->
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <div class="info-card">
-              <label class="info-label">
-                <i class="ri-mail-line me-2"></i>Email
-              </label>
-              <div class="info-value">{{ employee.email }}</div>
-              <div class="mt-1">
-                <span class="badge" [ngClass]="employee.isEmailVerified ? 'bg-success' : 'bg-warning'">
-                  {{ employee.isEmailVerified ? 'Vérifié' : 'Non vérifié' }}
-                </span>
-              </div>
+          <!-- Informations de contact -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-phone-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.CONTACT' | translate }}
+              </h5>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="info-card">
-              <label class="info-label">
-                <i class="ri-phone-line me-2"></i>Téléphone
-              </label>
-              <div class="info-value">{{ employee.phoneNumber || 'N/A' }}</div>
-              <div class="mt-1" *ngIf="employee.phoneNumber">
-                <span class="badge" [ngClass]="employee.isPhoneVerified ? 'bg-success' : 'bg-warning'">
-                  {{ employee.isPhoneVerified ? 'Vérifié' : 'Non vérifié' }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Informations supplémentaires -->
-        <div class="row mb-4">
-          <div class="col-md-4">
-            <div class="info-card">
-              <label class="info-label">
-                <i class="ri-user-name me-2"></i>Nom d'utilisateur
-              </label>
-              <div class="info-value">{{ employee.username || 'N/A' }}</div>
-            </div>
-          </div>
-          <div class="col-md-4" *ngIf="employee.birthDate">
-            <div class="info-card">
-              <label class="info-label">
-                <i class="ri-calendar-line me-2"></i>Date de naissance
-              </label>
-              <div class="info-value">{{ employee.birthDate | date: 'dd/MM/yyyy' }}</div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="info-card">
-              <label class="info-label">
-                <i class="ri-time-line me-2"></i>Dernière connexion
-              </label>
-              <div class="info-value">{{ employee.lastLoginAt ? (employee.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : 'Jamais' }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Rôles -->
-        <div class="row mt-4" *ngIf="employee.roles && employee.roles.length > 0">
-          <div class="col-12">
-            <div class="card border shadow-sm">
-              <div class="card-header bg-gradient-primary text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                  <h5 class="mb-0">
-                    <i class="ri-shield-check-line me-2"></i>Rôles assignés
-                  </h5>
-                  <span class="badge bg-light text-dark">{{ employee.roles.length }} rôle(s)</span>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-mail-line me-1"></i>Email
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold me-2">{{ employee.email }}</div>
+                    <span class="badge" [ngClass]="employee.isEmailVerified ? 'bg-success' : 'bg-warning'">
+                      {{ employee.isEmailVerified ? ('MESSAGES.ADMIN.EMPLOYEE.VERIFIED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_VERIFIED' | translate) }}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div class="card-body">
-                <div class="d-flex flex-wrap gap-2">
-                  <div *ngFor="let role of employee.roles" class="role-badge">
-                    <i class="ri-shield-user-line me-1"></i>
-                    <span>{{ role.name || role.code }}</span>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-phone-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold me-2">{{ employee.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                    <span class="badge" *ngIf="employee.phoneNumber" [ngClass]="employee.isPhoneVerified ? 'bg-success' : 'bg-warning'">
+                      {{ employee.isPhoneVerified ? ('MESSAGES.ADMIN.EMPLOYEE.VERIFIED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_VERIFIED' | translate) }}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Informations spécifiques selon le type -->
+          <div class="card border-0 shadow-sm mb-4" *ngIf="employee.type === 'TECHNICIAN' || employee.type === 'EMPLOYEE' || employee.type === 'SHOP_MANAGER' || employee.type === 'DELIVERER'">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-settings-3-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.SPECIFIC_INFO' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6" *ngIf="employee.workspaceId">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-building-line me-1"></i>Workspace
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold" *ngIf="!isLoadingWorkspace && workspace">
+                      {{ workspace.name }}
+                    </div>
+                    <div class="fw-semibold text-muted" *ngIf="!isLoadingWorkspace && !workspace">
+                      {{ 'MESSAGES.ADMIN.SHOP.N_A' | translate }}
+                    </div>
+                    <div *ngIf="isLoadingWorkspace" class="spinner-border spinner-border-sm ms-2" role="status">
+                      <span class="visually-hidden">{{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING' | translate }}</span>
+                    </div>
+                  </div>
+                  <small class="text-muted" *ngIf="workspace && workspace.industry">
+                    {{ workspace.industry }}
+                  </small>
+                </div>
+                <div class="col-md-6" *ngIf="employee.shopId">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-store-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.SHOPS' | translate }}
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold" *ngIf="!isLoadingShop && shop">
+                      {{ shop.name }}
+                      <span class="text-muted small" *ngIf="shop.city"> - {{ shop.city }}</span>
+                    </div>
+                    <div class="fw-semibold text-muted" *ngIf="!isLoadingShop && !shop">
+                      {{ 'MESSAGES.ADMIN.SHOP.N_A' | translate }}
+                    </div>
+                    <div *ngIf="isLoadingShop" class="spinner-border spinner-border-sm ms-2" role="status">
+                      <span class="visually-hidden">{{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING' | translate }}</span>
+                    </div>
+                  </div>
+                  <small class="text-muted" *ngIf="shop && shop.address">
+                    <i class="ri-map-pin-line me-1"></i>{{ shop.address }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="card-body text-center" *ngIf="!employee">
-        <div class="text-muted py-5">
-          <i class="ri-error-warning-line" style="font-size: 48px;"></i>
-          <p class="mt-2 mb-0">Employé non trouvé</p>
+
+        <!-- Right Column - Stats & Roles -->
+        <div class="col-lg-4">
+          <!-- Statistiques -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-bar-chart-line me-2 text-primary"></i>
+                Statistiques
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div class="text-muted small">Rôles assignés</div>
+                  <div class="h4 mb-0">{{ employee.roles?.length || 0 }}</div>
+                </div>
+                <div class="avatar-sm bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-shield-check-line"></i>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div class="text-muted small">Dernière connexion</div>
+                  <div class="fw-semibold small">{{ employee.lastLoginAt ? (employee.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : 'Jamais' }}</div>
+                </div>
+                <div class="avatar-sm bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-time-line"></i>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted small">Date de création</div>
+                  <div class="fw-semibold small">{{ employee.createdAt | date: 'dd/MM/yyyy' }}</div>
+                </div>
+                <div class="avatar-sm bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-calendar-line"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rôles -->
+          <div class="card border-0 shadow-sm" *ngIf="employee.roles && employee.roles.length > 0">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-shield-check-line me-2 text-primary"></i>
+                Rôles
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let role of employee.roles" class="d-flex align-items-center p-2 bg-light rounded">
+                  <i class="ri-shield-user-line me-2 text-primary"></i>
+                  <span class="fw-semibold">{{ role.name || role.code }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </ng-container>
 
+  <ng-container *ngSwitchCase="dataStateEnum.ERROR">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-danger">
+            <h5>{{ 'MESSAGES.ERRORS.ERROR' | translate }}</h5>
+            <p>{{ state.messages }}</p>
+            <button type="button" class="btn btn-primary" (click)="onBack()">
+              {{ 'BUTTONS.RETRY' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>

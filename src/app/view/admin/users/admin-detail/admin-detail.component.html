@@ -2,127 +2,207 @@
   <ng-container *ngSwitchCase="dataStateEnum.LOADING">
     <app-loading5></app-loading5>
   </ng-container>
+  
   <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
     <div class="container-fluid" *ngIf="admin">
-      <div class="row">
+      <!-- Header Section -->
+      <div class="row mb-4">
         <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header border-bottom">
-              <div class="row align-items-center">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-lg me-4">
+                    <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-2">
+                      {{ (admin.firstName?.[0] || '') + (admin.lastName?.[0] || '') }}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="mb-1">{{ admin.firstName }} {{ admin.lastName }}</h3>
+                    <div class="d-flex gap-2 align-items-center mb-2">
+                      <span class="badge bg-primary">{{ isWorkspaceAdmin ? 'WORKSPACE_ADMIN' : 'ADMIN' }}</span>
+                      <span class="badge" [ngClass]="admin.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ admin.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                    </div>
+                    <p class="text-muted mb-0">
+                      <i class="ri-mail-line me-1"></i>{{ admin.email }}
+                    </p>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-light" (click)="onBack()">
+                    <i class="ri-arrow-left-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.BACK_TO_LIST' | translate }}
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-info" 
+                    (click)="onResendInvitation()"
+                    [disabled]="isResendingInvitation || !admin?.email">
+                    <i class="ri-mail-send-line me-1"></i>
+                    <span *ngIf="!isResendingInvitation">{{ 'MESSAGES.ADMIN.EMPLOYEE.RESEND_INVITATION' | translate }}</span>
+                    <span *ngIf="isResendingInvitation">
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.SENDING' | translate }}
+                    </span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="onEdit()">
+                    <i class="ri-edit-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.EDIT' | translate }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="row">
+        <!-- Left Column - Personal Info -->
+        <div class="col-lg-8">
+          <!-- Informations personnelles -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-user-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.PERSONAL_INFO' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
                 <div class="col-md-6">
-                  <h4 class="card-title mb-0">{{ isWorkspaceAdmin ? 'Détails du Workspace Admin' : 'Détails de l\'Administrateur' }}</h4>
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME' | translate }}</label>
+                  <div class="fw-semibold">{{ admin.firstName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
                 </div>
                 <div class="col-md-6">
-                  <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary" (click)="onBack()">
-                      <i class="mdi mdi-arrow-left me-1"></i> Retour
-                    </button>
-                    <button 
-                      type="button" 
-                      class="btn btn-info" 
-                      (click)="onResendInvitation()"
-                      [disabled]="isResendingInvitation || !admin?.email">
-                      <i class="mdi mdi-email-send-outline me-1"></i> 
-                      <span *ngIf="!isResendingInvitation">Renvoyer l'invitation</span>
-                      <span *ngIf="isResendingInvitation">
-                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                        Envoi...
-                      </span>
-                    </button>
-                    <button type="button" class="btn btn-warning" (click)="onEdit()">
-                      <i class="mdi mdi-pencil me-1"></i> Modifier
-                    </button>
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME' | translate }}</label>
+                  <div class="fw-semibold">{{ admin.lastName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.USERNAME' | translate }}</label>
+                  <div class="fw-semibold">{{ admin.username || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                </div>
+                <div class="col-md-6" *ngIf="admin.birthDate">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.BIRTH_DATE' | translate }}</label>
+                  <div class="fw-semibold">{{ admin.birthDate | date: 'dd/MM/yyyy' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informations de contact -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-phone-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.CONTACT' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-mail-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold me-2">{{ admin.email }}</div>
+                    <span class="badge" [ngClass]="admin.isEmailVerified ? 'bg-success' : 'bg-warning'">
+                      {{ admin.isEmailVerified ? ('MESSAGES.ADMIN.EMPLOYEE.VERIFIED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_VERIFIED' | translate) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-phone-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold me-2">{{ admin.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                    <span class="badge" *ngIf="admin.phoneNumber" [ngClass]="admin.isPhoneVerified ? 'bg-success' : 'bg-warning'">
+                      {{ admin.isPhoneVerified ? ('MESSAGES.ADMIN.EMPLOYEE.VERIFIED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_VERIFIED' | translate) }}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Informations supplémentaires -->
+          <div class="card border-0 shadow-sm mb-4" *ngIf="admin.preferredLanguage || admin.timezone">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-settings-3-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.PREFERENCES' | translate }}
+              </h5>
+            </div>
             <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">ID</label>
-                    <p class="form-control-plaintext">{{ admin.id || 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Email</label>
-                    <p class="form-control-plaintext">{{ admin.email || 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Prénom</label>
-                    <p class="form-control-plaintext">{{ admin.firstName || 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Nom</label>
-                    <p class="form-control-plaintext">{{ admin.lastName || 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Nom d'utilisateur</label>
-                    <p class="form-control-plaintext">{{ admin.username || 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Téléphone</label>
-                    <p class="form-control-plaintext">{{ admin.phoneNumber || 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Statut</label>
-                    <p>
-                      <span class="badge" [ngClass]="admin.isActive ? 'bg-success' : 'bg-danger'">
-                        {{ admin.isActive ? 'Actif' : 'Inactif' }}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Date de création</label>
-                    <p class="form-control-plaintext">{{ admin.createdAt ? (admin.createdAt | date: 'dd/MM/yyyy HH:mm') : 'N/A' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6" *ngIf="admin.lastLoginAt">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Dernière connexion</label>
-                    <p class="form-control-plaintext">{{ admin.lastLoginAt | date: 'dd/MM/yyyy HH:mm' }}</p>
-                  </div>
-                </div>
-                <div class="col-md-6" *ngIf="admin.birthDate">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Date de naissance</label>
-                    <p class="form-control-plaintext">{{ admin.birthDate | date: 'dd/MM/yyyy' }}</p>
-                  </div>
-                </div>
+              <div class="row g-3">
                 <div class="col-md-6" *ngIf="admin.preferredLanguage">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Langue préférée</label>
-                    <p class="form-control-plaintext">{{ admin.preferredLanguage }}</p>
-                  </div>
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.PREFERRED_LANGUAGE' | translate }}</label>
+                  <div class="fw-semibold">{{ admin.preferredLanguage }}</div>
                 </div>
                 <div class="col-md-6" *ngIf="admin.timezone">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Fuseau horaire</label>
-                    <p class="form-control-plaintext">{{ admin.timezone }}</p>
-                  </div>
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.TIMEZONE' | translate }}</label>
+                  <div class="fw-semibold">{{ admin.timezone }}</div>
                 </div>
-                <div class="col-12" *ngIf="admin.roles && admin.roles.length > 0">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Rôles</label>
-                    <div class="d-flex flex-wrap gap-2">
-                      <span class="badge bg-primary" *ngFor="let role of admin.roles">
-                        {{ role.name }}
-                      </span>
-                    </div>
-                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Stats & Roles -->
+        <div class="col-lg-4">
+          <!-- Statistiques -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-bar-chart-line me-2 text-primary"></i>
+                Statistiques
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div class="text-muted small">Rôles assignés</div>
+                  <div class="h4 mb-0">{{ admin.roles?.length || 0 }}</div>
+                </div>
+                <div class="avatar-sm bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-shield-check-line"></i>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div class="text-muted small">Dernière connexion</div>
+                  <div class="fw-semibold small">{{ admin.lastLoginAt ? (admin.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : 'Jamais' }}</div>
+                </div>
+                <div class="avatar-sm bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-time-line"></i>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-muted small">Date de création</div>
+                  <div class="fw-semibold small">{{ admin.createdAt | date: 'dd/MM/yyyy' }}</div>
+                </div>
+                <div class="avatar-sm bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-calendar-line"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rôles -->
+          <div class="card border-0 shadow-sm" *ngIf="admin.roles && admin.roles.length > 0">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-shield-check-line me-2 text-primary"></i>
+                Rôles
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let role of admin.roles" class="d-flex align-items-center p-2 bg-light rounded">
+                  <i class="ri-shield-user-line me-2 text-primary"></i>
+                  <span class="fw-semibold">{{ role.name || role.code }}</span>
                 </div>
               </div>
             </div>
@@ -131,16 +211,20 @@
       </div>
     </div>
   </ng-container>
-  <ng-container *ngSwitchDefault>
+
+  <ng-container *ngSwitchCase="dataStateEnum.ERROR">
     <div class="container-fluid">
       <div class="row">
         <div class="col-12">
           <div class="alert alert-danger">
-            Erreur lors du chargement des données
+            <h5>{{ 'MESSAGES.ERRORS.ERROR' | translate }}</h5>
+            <p>{{ state.messages }}</p>
+            <button type="button" class="btn btn-primary" (click)="onBack()">
+              {{ 'BUTTONS.RETRY' | translate }}
+            </button>
           </div>
         </div>
       </div>
     </div>
   </ng-container>
 </ng-container>
-

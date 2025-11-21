@@ -4,6 +4,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectEmployeeState } from 'src/app/core/core.state';
@@ -47,18 +48,19 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
   // Options de filtres
   userTypeOptions = [
-    { value: '', label: 'Tous les types' },
-    { value: 'EMPLOYEE', label: 'Employé' },
-    { value: 'SHOP_MANAGER', label: 'Manager de Boutique' },
-    { value: 'TECHNICIAN', label: 'Technicien' },
-    { value: 'DELIVERER', label: 'Livreur' }
+    { value: '', label: 'MESSAGES.ADMIN.COMMON.ALL_TYPES' },
+    { value: 'EMPLOYEE', label: 'MESSAGES.ADMIN.COMMON.EMPLOYEE' },
+    { value: 'SHOP_MANAGER', label: 'MESSAGES.ADMIN.COMMON.SHOP_MANAGER' },
+    { value: 'TECHNICIAN', label: 'MESSAGES.ADMIN.COMMON.TECHNICIAN' },
+    { value: 'DELIVERER', label: 'MESSAGES.ADMIN.COMMON.DELIVERER' }
   ];
 
   constructor(
     private modalService: BsModalService,
     private storeService: Store,
     private actionService: Actions,
-    private router: Router
+    private router: Router,
+    private translateService: TranslateService
   ) {}
 
   ngOnDestroy() {
@@ -116,6 +118,15 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     this.loadEmployees();
   }
 
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.departmentFilter = '';
+    this.userTypeFilter = '';
+    this.isActiveFilter = null;
+    this.currentPage = 0;
+    this.loadEmployees();
+  }
+
   changePage(page: number): void {
     this.currentPage = page;
     this.loadEmployees();
@@ -169,11 +180,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
   onDelete(employee: EmployeeResponseDto): void {
     const initialState = {
-      title: 'Désactiver l\'employé',
-      message: 'Êtes-vous sûr de vouloir désactiver cet employé ?',
+      title: this.translateService.instant('MESSAGES.ADMIN.EMPLOYEE.DELETE_TITLE'),
+      message: this.translateService.instant('MESSAGES.ADMIN.EMPLOYEE.DELETE_MESSAGE'),
       itemName: `${employee.firstName} ${employee.lastName}`,
-      confirmBtnText: 'Désactiver',
-      cancelBtnText: 'Annuler'
+      confirmBtnText: this.translateService.instant('MESSAGES.ADMIN.EMPLOYEE.DELETE_BUTTON'),
+      cancelBtnText: this.translateService.instant('MESSAGES.ADMIN.SHOP.CANCEL')
     };
     
     this.modalRef = this.modalService.show(DeleteConfirmModalComponent, {

@@ -15,10 +15,6 @@ import { PermissionService } from '../../core/shared/services/permission.service
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
 })
-
-/**
- * Sidebar component
- */
 export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
   @ViewChild('componentRef') scrollRef;
   @Input() isCondensed = false;
@@ -79,9 +75,6 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
     }, 300);
   }
 
-  /**
-   * remove active and mm-active class
-   */
   _removeAllClass(className) {
     const els = document.getElementsByClassName(className);
     while (els[0]) {
@@ -89,15 +82,11 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
     }
   }
 
-  /**
-   * Activate the parent dropdown
-   */
   _activateMenuDropdown() {
     this._removeAllClass('mm-active');
     this._removeAllClass('mm-show');
     const links = document.getElementsByClassName('side-nav-link-ref');
     let menuItemEl = null;
-    // tslint:disable-next-line: prefer-for-of
     const paths = [];
     for (let i = 0; i < links.length; i++) {
       paths.push(links[i]['pathname']);
@@ -142,35 +131,24 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
 
   }
 
-  /**
-   * Initialize
-   */
   initialize(): void {
-    // Filtrer le menu selon les permissions
     this.menuItems = this.filterMenuByPermissions(MENU);
   }
 
-  /**
-   * Filtre le menu selon les permissions de l'utilisateur
-   */
   private filterMenuByPermissions(menu: MenuItem[]): MenuItem[] {
     const isSuperAdmin = this.permissionService.isSuperAdmin();
     const isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
-    const userType = this.permissionService.getUserType();
     
     return menu.filter(item => {
-      // Si c'est un titre ou un layout, toujours l'afficher
       if (item.isTitle || item.isLayout) {
         return true;
       }
 
-      // Super Admin voit tout
       if (isSuperAdmin) {
-        // Filtrer les sous-items pour le super admin aussi
         if (item.subItems && item.subItems.length > 0) {
           item.subItems = item.subItems.filter((subItem: MenuItem) => {
             if (subItem.visibleForSuperAdmin) {
-              return true; // Super admin voit tout
+              return true;
             }
             if (subItem.requiredRole) {
               const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
@@ -182,44 +160,35 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
         return true;
       }
 
-      // Si le menu nécessite d'être super admin
       if (item.visibleForSuperAdmin) {
-        return false; // Pas super admin, donc ne pas afficher
+        return false;
       }
 
-      // Workspace Admin : voir seulement ses workspaces, employés et shops
       if (isWorkspaceAdmin) {
-        // Dashboard toujours visible
         if (item.link === '/admin' || (item.subItems && item.subItems.some(sub => sub.link === '/admin'))) {
           return true;
         }
         
-        // Section Utilisateurs : seulement Workspaces, Employees, Shops
         if (item.subItems && item.subItems.length > 0) {
           item.subItems = item.subItems.filter((subItem: MenuItem) => {
-            // Workspace Admin peut voir : Workspaces, Employees, Shops
             return subItem.link === '/admin/workspaces' || 
                    subItem.link === '/admin/employees' || 
                    subItem.link === '/admin/shops';
           });
           
-          // Si tous les sous-items ont été filtrés, ne pas afficher le menu parent
           if (item.subItems.length === 0) {
             return false;
           }
           return true;
         }
         
-        // Autres menus individuels : ne pas afficher pour workspace admin
         if (item.link && item.link !== '/admin') {
           return false;
         }
         
-        // Par défaut pour workspace admin, ne pas afficher
         return false;
       }
 
-      // Si le menu nécessite un rôle spécifique
       if (item.requiredRole) {
         const requiredRoles = Array.isArray(item.requiredRole) ? item.requiredRole : [item.requiredRole];
         const hasRole = this.permissionService.hasAnyRole(requiredRoles);
@@ -229,11 +198,10 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
         }
       }
 
-      // Filtrer aussi les sous-items
       if (item.subItems && item.subItems.length > 0) {
         item.subItems = item.subItems.filter((subItem: MenuItem) => {
           if (subItem.visibleForSuperAdmin) {
-            return false; // Pas super admin
+            return false;
           }
           if (subItem.requiredRole) {
             const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
@@ -242,21 +210,15 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
           return true;
         });
         
-        // Si tous les sous-items ont été filtrés, ne pas afficher le menu parent
         if (item.subItems.length === 0) {
           return false;
         }
       }
 
-      // Par défaut, afficher le menu
       return true;
     });
   }
 
-  /**
-   * Returns true or false if given menu item has child or not
-   * @param item menuItem
-   */
   hasItems(item: MenuItem) {
     return item.subItems !== undefined ? item.subItems.length > 0 : false;
   }

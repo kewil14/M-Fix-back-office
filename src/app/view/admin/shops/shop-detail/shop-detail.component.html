@@ -2,78 +2,215 @@
   <ng-container *ngSwitchCase="dataStateEnum.LOADING">
     <app-loading5></app-loading5>
   </ng-container>
+  
   <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
     <div class="container-fluid" *ngIf="shop">
-      <div class="row">
+      <!-- Header Section -->
+      <div class="row mb-4">
         <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header border-bottom">
-              <div class="row align-items-center">
-                <div class="col-md-6">
-                  <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.SHOP.DETAIL_TITLE' | translate }}</h4>
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center">
+                  <div class="avatar-lg me-4">
+                    <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-2">
+                      <i class="ri-store-line"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="mb-1">{{ shop.name }}</h3>
+                    <div class="d-flex gap-2 align-items-center mb-2">
+                      <span class="badge bg-primary" *ngIf="shop.isMainShop">
+                        {{ 'MESSAGES.ADMIN.SHOP.MAIN_SHOP' | translate }}
+                      </span>
+                      <span class="badge" [ngClass]="shop.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ shop.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                    </div>
+                    <p class="text-muted mb-0" *ngIf="shop.email">
+                      <i class="ri-mail-line me-1"></i>{{ shop.email }}
+                    </p>
+                  </div>
                 </div>
-                <div class="col-md-6 text-end">
-                  <button type="button" class="btn btn-primary" (click)="onEdit()">
-                    <i class="mdi mdi-pencil me-1"></i> {{ 'MESSAGES.ADMIN.SHOP.EDIT' | translate }}
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-light" (click)="router.navigate(['/admin/shops'])">
+                    <i class="ri-arrow-left-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.BACK_TO_LIST' | translate }}
+                  </button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="onEdit()">
+                    <i class="ri-edit-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.EDIT' | translate }}
                   </button>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="row">
+        <!-- Left Column - Main Info -->
+        <div class="col-lg-8">
+          <!-- Informations générales -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-information-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.SHOP.GENERAL_INFO' | translate }}
+              </h5>
+            </div>
             <div class="card-body">
-              <div class="row">
+              <div class="row g-3">
                 <div class="col-md-6">
-                  <h6>{{ 'MESSAGES.ADMIN.SHOP.GENERAL_INFO' | translate }}</h6>
-                  <table class="table table-borderless">
-                    <tr>
-                      <th width="40%">{{ 'MESSAGES.ADMIN.SHOP.NAME' | translate }}:</th>
-                      <td>{{ shop.name }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }}:</th>
-                      <td>{{ shop.workspaceName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.MANAGER' | translate }}:</th>
-                      <td>{{ shop.managerName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}:</th>
-                      <td>
-                        <span class="badge" [ngClass]="shop.isActive ? 'bg-success' : 'bg-danger'">
-                          {{ shop.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
-                        </span>
-                      </td>
-                    </tr>
-                  </table>
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.NAME' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.name }}</div>
                 </div>
-                <div class="col-md-6">
-                  <h6>{{ 'MESSAGES.ADMIN.SHOP.CONTACT' | translate }}</h6>
-                  <table class="table table-borderless">
-                    <tr>
-                      <th width="40%">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}:</th>
-                      <td>{{ shop.email || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}:</th>
-                      <td>{{ shop.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.ADDRESS' | translate }}:</th>
-                      <td>{{ shop.address || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.CITY' | translate }}:</th>
-                      <td>{{ shop.city || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.POSTAL_CODE' | translate }}:</th>
-                      <td>{{ shop.postalCode || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                    <tr>
-                      <th>{{ 'MESSAGES.ADMIN.SHOP.COUNTRY' | translate }}:</th>
-                      <td>{{ shop.country || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                    </tr>
-                  </table>
+                <div class="col-md-6" *ngIf="shop.code">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.CODE' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.code }}</div>
+                </div>
+                <div class="col-md-6" *ngIf="shop.workspaceName">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.workspaceName }}</div>
+                </div>
+                <div class="col-md-6" *ngIf="shop.managerName">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.MANAGER' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.managerName }}</div>
+                </div>
+                <div class="col-12" *ngIf="shop.description">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.DESCRIPTION' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informations de contact -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-phone-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.SHOP.CONTACT' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6" *ngIf="shop.email">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-mail-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold me-2">{{ shop.email }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6" *ngIf="shop.phoneNumber || shop.phone">
+                  <label class="form-label text-muted small mb-1">
+                    <i class="ri-phone-line me-1"></i>{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}
+                  </label>
+                  <div class="d-flex align-items-center">
+                    <div class="fw-semibold me-2">{{ shop.phoneNumber || shop.phone }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Adresse -->
+          <div class="card border-0 shadow-sm mb-4" *ngIf="shop.address || shop.city || shop.postalCode || shop.country">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-map-pin-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.SHOP.ADDRESS' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-12" *ngIf="shop.address">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.ADDRESS' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.address }}</div>
+                </div>
+                <div class="col-md-4" *ngIf="shop.city">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.CITY' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.city }}</div>
+                </div>
+                <div class="col-md-4" *ngIf="shop.postalCode">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.POSTAL_CODE' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.postalCode }}</div>
+                </div>
+                <div class="col-md-4" *ngIf="shop.country">
+                  <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.COUNTRY' | translate }}</label>
+                  <div class="fw-semibold">{{ shop.country }}</div>
+                </div>
+                <div class="col-12" *ngIf="shop.latitude && shop.longitude">
+                  <label class="form-label text-muted small mb-1">Coordonnées GPS</label>
+                  <div class="fw-semibold">{{ shop.latitude }}, {{ shop.longitude }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Stats & Additional Info -->
+        <div class="col-lg-4">
+          <!-- Statistiques -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-bar-chart-line me-2 text-primary"></i>
+                Statistiques
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div class="text-muted small">{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}</div>
+                  <div class="fw-semibold small">
+                    <span class="badge" [ngClass]="shop.isActive ? 'bg-success' : 'bg-danger'">
+                      {{ shop.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="avatar-sm bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-checkbox-circle-line"></i>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3" *ngIf="shop.isMainShop !== undefined">
+                <div>
+                  <div class="text-muted small">{{ 'MESSAGES.ADMIN.SHOP.MAIN_SHOP' | translate }}</div>
+                  <div class="fw-semibold small">
+                    <span class="badge" [ngClass]="shop.isMainShop ? 'bg-warning' : 'bg-secondary'">
+                      {{ shop.isMainShop ? ('MESSAGES.ADMIN.COMMON.YES' | translate) : ('MESSAGES.ADMIN.COMMON.NO' | translate) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="avatar-sm bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-star-line"></i>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center" *ngIf="shop.createdAt">
+                <div>
+                  <div class="text-muted small">Date de création</div>
+                  <div class="fw-semibold small">{{ shop.createdAt | date: 'dd/MM/yyyy' }}</div>
+                </div>
+                <div class="avatar-sm bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
+                  <i class="ri-calendar-line"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Horaires d'ouverture -->
+          <div class="card border-0 shadow-sm" *ngIf="hasOpeningHours()">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-time-line me-2 text-primary"></i>
+                Horaires d'ouverture
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let day of getOpeningHoursArray()" class="d-flex align-items-center justify-content-between p-2 bg-light rounded">
+                  <span class="fw-semibold small">{{ day.day }}</span>
+                  <span class="text-muted small">{{ day.hours || ('MESSAGES.ADMIN.SHOP.CLOSED' | translate) }}</span>
                 </div>
               </div>
             </div>
@@ -82,8 +219,24 @@
       </div>
     </div>
   </ng-container>
+  
   <ng-container *ngSwitchCase="dataStateEnum.ERROR">
-    <div class="alert alert-danger">{{ state.messages }}</div>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-danger">
+            <h5>{{ 'MESSAGES.ERRORS.ERROR' | translate }}</h5>
+            <p>{{ state.messages }}</p>
+            <button type="button" class="btn btn-primary" (click)="router.navigate(['/admin/shops'])">
+              {{ 'BUTTONS.RETRY' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  
+  <ng-container *ngSwitchCase="dataStateEnum.INITIAL">
+    <app-loading5></app-loading5>
   </ng-container>
 </ng-container>
-

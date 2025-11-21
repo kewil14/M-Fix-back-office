@@ -1,20 +1,27 @@
 export interface ShopResponseDto {
   id: string;
+  workspaceId: string;
+  code?: string;
   name: string;
-  slug: string;
+  description?: string;
   address?: string;
   city?: string;
   postalCode?: string;
   country?: string;
-  phoneNumber?: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
   email?: string;
-  workspaceId: string;
+  isActive: boolean;
+  isMainShop?: boolean;
+  openingHours?: { [key: string]: string };
+  createdAt: string;
+  updatedAt?: string;
+  // Champs pour compatibilité
+  phoneNumber?: string;
   workspaceName?: string;
   managerId?: string;
   managerName?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt?: string;
 }
 
 export interface ShopListResponseDto {
@@ -62,9 +69,14 @@ export interface CreateShopDto {
   city?: string;
   postalCode?: string;
   country?: string;
-  phoneNumber?: string;
+  phone?: string;
   email?: string;
-  workspaceId: string;
+  description?: string;
+  latitude?: number;
+  longitude?: number;
+  // Champs pour compatibilité
+  phoneNumber?: string;
+  workspaceId?: string; // Sera passé dans l'URL
   managerId?: string;
 }
 
@@ -74,8 +86,12 @@ export interface UpdateShopDto {
   city?: string;
   postalCode?: string;
   country?: string;
-  phoneNumber?: string;
+  phone?: string;
   email?: string;
+  description?: string;
+  openingHours?: { [key: string]: string };
+  // Champs pour compatibilité
+  phoneNumber?: string;
   managerId?: string;
   isActive?: boolean;
 }

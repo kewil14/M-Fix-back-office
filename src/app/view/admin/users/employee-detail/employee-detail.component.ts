@@ -10,6 +10,10 @@ import { findEmployeeById } from 'src/app/core/shared/stores/employee/employee.a
 import { EmployeeState } from 'src/app/core/shared/stores/employee/employee.state';
 import { resendInvitation, resendInvitationOk, resendInvitationError } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { ResendInvitationDto } from 'src/app/core/shared/dtos/resend-invitation-dto.modal';
+import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
+import { ShopService } from 'src/app/core/shared/services/shop.service';
+import { WorkspaceResponseDto } from 'src/app/core/shared/dtos/workspace-response-dto';
+import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 
 @Component({
   selector: 'app-employee-detail',
@@ -24,12 +28,19 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
   breadCrumbItems: Array<{}> = [];
   isResendingInvitation = false;
+  
+  workspace: WorkspaceResponseDto | null = null;
+  shop: ShopResponseDto | null = null;
+  isLoadingWorkspace: boolean = false;
+  isLoadingShop: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private storeService: Store,
-    private actionService: Actions
+    private actionService: Actions,
+    private workspaceService: WorkspaceService,
+    private shopService: ShopService
   ) {}
 
   ngOnInit(): void {
@@ -71,9 +82,48 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
       this.employeeState$.subscribe(state => {
         if (state.dataState === DataStateEnum.SUCCESS && state.employee) {
           this.employee = state.employee;
+          // Charger les informations du workspace et du shop
+          if (this.employee.workspaceId) {
+            this.loadWorkspace(this.employee.workspaceId);
+          }
+          if (this.employee.workspaceId && this.employee.shopId) {
+            this.loadShop(this.employee.workspaceId, this.employee.shopId);
+          }
         }
       })
     );
+  }
+
+  loadWorkspace(workspaceId: string): void {
+    this.isLoadingWorkspace = true;
+    this.workspaceService.getWorkspaceById(workspaceId).subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.workspace = response.data;
+        }
+        this.isLoadingWorkspace = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement du workspace:', error);
+        this.isLoadingWorkspace = false;
+      }
+    });
+  }
+
+  loadShop(workspaceId: string, shopId: string): void {
+    this.isLoadingShop = true;
+    this.shopService.getShopById(workspaceId, shopId).subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.shop = response.data;
+        }
+        this.isLoadingShop = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement du shop:', error);
+        this.isLoadingShop = false;
+      }
+    });
   }
 
   onEdit(): void {

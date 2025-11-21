@@ -35,14 +35,7 @@ export function createTranslateLoader(http: HttpClient): TranslateHttpLoader {
   declarations: [],
   imports: [
     CommonModule,
-    TranslateModule.forRoot({
-      defaultLanguage: APP_ENUMS.PREFIX_DEFAULT_LANGUAGE,
-      loader: {
-        provide: TranslateLoader,
-        useFactory: (createTranslateLoader),
-        deps: [HttpClient]
-      }
-    }),
+    TranslateModule, // Pas de forRoot ici, déjà configuré dans app.module.ts
     StoreModule.forRoot(reducers, {}),
     EffectsModule.forRoot([
       AuthenticationEffects, ProfileEffects, 

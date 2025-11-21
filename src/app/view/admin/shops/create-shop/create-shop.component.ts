@@ -13,6 +13,7 @@ import { createShop, erreurShops, addShop } from 'src/app/core/shared/stores/sho
 import { ShopState } from 'src/app/core/shared/stores/shop/shop.state';
 import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
 import { WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-create-shop',
@@ -35,6 +36,7 @@ export class CreateShopComponent implements OnInit, OnDestroy {
   modalRef?: BsModalRef;
   workspaces: WorkspaceDto[] = [];
   isLoadingWorkspaces: boolean = false;
+  workspaceId: string | null = null;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
@@ -43,15 +45,27 @@ export class CreateShopComponent implements OnInit, OnDestroy {
     public modalService: BsModalService,
     public bsModalRef: BsModalRef,
     private workspaceService: WorkspaceService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private permissionService: PermissionService
   ) {
     this.modalRef = bsModalRef;
   }
 
   ngOnInit() {
+    this.workspaceId = this.permissionService.getWorkspaceId();
     this.shopState$ = this.storeService.select(selectShopState).pipe();
     this.initForm();
-    this.loadWorkspaces();
+    // Pour workspace admin, workspaceId est déjà connu, pas besoin de charger la liste
+    if (!this.permissionService.isSuperAdmin()) {
+      // Workspace admin : utiliser son workspaceId
+      if (this.workspaceId) {
+        this.shopForm.patchValue({ workspaceId: this.workspaceId });
+        this.shopForm.get('workspaceId')?.disable();
+      }
+    } else {
+      // Super admin : charger la liste des workspaces
+      this.loadWorkspaces();
+    }
     this.actionShop();
   }
 
@@ -114,20 +128,26 @@ export class CreateShopComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const workspaceId = this.workspaceId || this.shopForm.value.workspaceId;
+    if (!workspaceId) {
+      console.error('WorkspaceId is required');
+      return;
+    }
+
     const formValue = this.shopForm.value;
     const createShopDto: CreateShopDto = {
       name: formValue.name,
-      workspaceId: formValue.workspaceId,
       address: formValue.address || undefined,
       city: formValue.city || undefined,
       postalCode: formValue.postalCode || undefined,
       country: formValue.country || undefined,
-      phoneNumber: formValue.phoneNumber || undefined,
+      phone: formValue.phoneNumber || undefined,
+      phoneNumber: formValue.phoneNumber || undefined, // Pour compatibilité
       email: formValue.email || undefined,
       managerId: formValue.managerId || undefined
     };
 
-    this.storeService.dispatch(createShop({ createShopDto }));
+    this.storeService.dispatch(createShop({ workspaceId, createShopDto }));
   }
 
   onCancel() {

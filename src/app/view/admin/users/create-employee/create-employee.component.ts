@@ -16,6 +16,8 @@ import { createEmployeeNew, addEmployee, erreurEmployees } from 'src/app/core/sh
 import { CreateEmployeeDto } from 'src/app/core/shared/dtos/create-employee-dto.modal';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { ShopService } from 'src/app/core/shared/services/shop.service';
+import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 
 @Component({
   selector: 'app-create-employee',
@@ -47,7 +49,9 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
   managerLevels = ['JUNIOR', 'MID', 'SENIOR'];
   vehicleTypes = ['MOTO', 'CAR', 'VAN', 'BIKE'];
   workspaces: WorkspaceDto[] = [];
+  shops: ShopResponseDto[] = [];
   isLoadingWorkspaces: boolean = false;
+  isLoadingShops: boolean = false;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
@@ -55,7 +59,8 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     private actionService: Actions,
     public modalService: BsModalService,
     public bsModalRef: BsModalRef,
-    private workspaceService: WorkspaceService
+    private workspaceService: WorkspaceService,
+    private shopService: ShopService
   ) {
     this.modalRef = bsModalRef;
   }
@@ -69,20 +74,79 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     this.employeeForm.get('userType')?.valueChanges.subscribe(type => {
       this.updateFormValidation(type);
     });
+
+    // Charger les shops quand le workspace change
+    this.employeeForm.get('workspaceId')?.valueChanges.subscribe(workspaceId => {
+      if (workspaceId) {
+        this.loadShops(workspaceId);
+      } else {
+        this.shops = [];
+        this.employeeForm.patchValue({ shopId: '' });
+      }
+    });
   }
 
   loadWorkspaces(): void {
     this.isLoadingWorkspaces = true;
-    this.workspaceService.findAllWorkspaces().subscribe({
+    // Utiliser getWorkspaces au lieu de findAllWorkspaces pour obtenir les vrais workspaces
+    this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).subscribe({
       next: (response) => {
-        if (response.status === 'SUCCESS' && response.data) {
-          this.workspaces = response.data;
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          // Convertir WorkspaceListResponseDto en WorkspaceDto[]
+          this.workspaces = response.data.content.map(ws => ({
+            id: ws.id,
+            name: ws.name,
+            adminName: undefined
+          }));
+          console.log('Workspaces chargés depuis /api/workspaces:', this.workspaces);
+          // Vérifier que les IDs sont bien des UUIDs valides
+          this.workspaces.forEach(ws => {
+            console.log(`Workspace: ${ws.name}, ID: ${ws.id}, Type: ${typeof ws.id}`);
+          });
+        } else {
+          console.error('Erreur lors du chargement des workspaces - Status:', response.status, 'Message:', response.message);
+          this.messages$.next({
+            type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+            title: APP_COLORS.DANGER,
+            message: response.message || 'Erreur lors du chargement des workspaces',
+            dismissible: true
+          });
         }
         this.isLoadingWorkspaces = false;
       },
       error: (error) => {
         console.error('Erreur lors du chargement des workspaces:', error);
         this.isLoadingWorkspaces = false;
+        this.messages$.next({
+          type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+          title: APP_COLORS.DANGER,
+          message: error?.error?.message || 'Erreur lors du chargement des workspaces',
+          dismissible: true
+        });
+      }
+    });
+  }
+
+  loadShops(workspaceId: string): void {
+    if (!workspaceId) {
+      this.shops = [];
+      return;
+    }
+    
+    this.isLoadingShops = true;
+    this.shopService.getShops(workspaceId).subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS' && response.data) {
+          this.shops = response.data;
+        } else {
+          this.shops = [];
+        }
+        this.isLoadingShops = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des shops:', error);
+        this.shops = [];
+        this.isLoadingShops = false;
       }
     });
   }
@@ -201,13 +265,38 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.employeeForm.value;
+    
+    // Vérifier que le workspaceId est valide
+    if (!formValue.workspaceId || formValue.workspaceId.trim() === '') {
+      this.messages$.next({
+        type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+        title: APP_COLORS.DANGER,
+        message: 'Workspace ID est requis',
+        dismissible: true
+      });
+      return;
+    }
+
+    // Vérifier que le workspace existe dans la liste chargée
+    const selectedWorkspace = this.workspaces.find(ws => ws.id === formValue.workspaceId);
+    if (!selectedWorkspace) {
+      console.error('Workspace sélectionné non trouvé dans la liste:', formValue.workspaceId);
+      this.messages$.next({
+        type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+        title: APP_COLORS.DANGER,
+        message: 'Le workspace sélectionné n\'est pas valide. Veuillez recharger la page.',
+        dismissible: true
+      });
+      return;
+    }
+
     const createEmployeeDto: CreateEmployeeDto = {
       email: formValue.email,
       firstName: formValue.firstName,
       lastName: formValue.lastName,
       userType: formValue.userType,
-      workspaceId: formValue.workspaceId,
-      shopId: formValue.shopId || undefined,
+      workspaceId: formValue.workspaceId.trim(), // S'assurer qu'il n'y a pas d'espaces
+      shopId: formValue.shopId && formValue.shopId.trim() !== '' ? formValue.shopId.trim() : undefined,
       roleIds: []
     };
 
@@ -226,6 +315,9 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       createEmployeeDto.deliveryZones = formValue.deliveryZones;
     }
 
+    console.log('Création d\'employé - DTO envoyé:', JSON.stringify(createEmployeeDto, null, 2));
+    console.log('Workspace sélectionné:', selectedWorkspace);
+    
     this.storeService.dispatch(createEmployeeNew({createEmployeeDto}));
   }
 

@@ -3,17 +3,17 @@ import { MenuItem } from './menu.model';
 export const MENU: MenuItem[] = [
     {
         id: 1,
-        label: 'Dashboard',
+        label: 'MESSAGES.MENU.DASHBOARD',
         isTitle: true
     },
     {
         id: 2,
-        label: 'Dashboard',
+        label: 'MESSAGES.MENU.DASHBOARD',
         icon: 'bx-home-circle',
         subItems: [
             {
                 id: 3,
-                label: 'Dashboard',
+                label: 'MESSAGES.MENU.DASHBOARD',
                 link: '/admin',
                 parentId: 2
             },
@@ -31,7 +31,7 @@ export const MENU: MenuItem[] = [
     },
     {
         id: 10,
-        label: 'Demande',
+        label: 'MESSAGES.MENU.DEMANDE',
         icon: 'bx-envelope',
         link: '/admin/invitations',
         visibleForSuperAdmin: true,
@@ -39,80 +39,75 @@ export const MENU: MenuItem[] = [
     
     {
         id: 66,
-        label: 'users',
+        label: 'MESSAGES.MENU.USERS_TITLE',
         isTitle: true
     },
     {
         id: 67,
-        label: 'Utilisateurs',
+        label: 'MESSAGES.MENU.USERS',
         icon: 'bx-user-circle',
         subItems: [
             {
                 id: 68,
-                label: 'Users',
+                label: 'MESSAGES.MENU.USERS',
                 link: '/admin/users',
                 parentId: 67,
-                visibleForSuperAdmin: true  // Seulement pour super admin
+                visibleForSuperAdmin: true
             },
             {
                 id: 70,
-                label: 'Administrateurs',
+                label: 'MESSAGES.MENU.ADMINISTRATEURS',
                 link: '/admin/admins',
                 parentId: 67,
-                visibleForSuperAdmin: true  // Seulement pour super admin
+                visibleForSuperAdmin: true
             },
             {
                 id: 72,
-                label: 'Workspace',
+                label: 'MESSAGES.MENU.WORKSPACE',
                 link: '/admin/workspaces',
                 parentId: 67
-                // Visible pour super admin et workspace admin
             },
             {
                 id: 73,
-                label: 'Shops',
+                label: 'MESSAGES.MENU.SHOPS',
                 link: '/admin/shops',
                 parentId: 67
-                // Visible pour super admin et workspace admin
             },
             {
                 id: 69,
-                label: 'Employe',
+                label: 'MESSAGES.MENU.EMPLOYE',
                 link: '/admin/employees',
                 parentId: 67
-                // Visible pour super admin et workspace admin
             },
         ]
     },
 
     {
         id: 76,
-        label: 'Permissions',
+        label: 'MESSAGES.MENU.PERMISSIONS',
         isTitle: true
     },
     {
         id: 77,
-        label: 'Permissions',
+        label: 'MESSAGES.MENU.PERMISSIONS',
         icon: 'bx-shield-quarter',
-        visibleForSuperAdmin: true,  // Seulement pour super admin
+        visibleForSuperAdmin: true,
         subItems: [
             {
                 id: 78,
-                label: 'Role',
+                label: 'MESSAGES.MENU.ROLE',
                 link: '/admin/autorisation/role',
                 parentId: 77,
                 visibleForSuperAdmin: true
             },
             {
                 id: 79,
-                label: 'Autorisation',
+                label: 'MESSAGES.MENU.AUTORISATION',
                 link: '/admin/autorisation',
                 parentId: 77,
                 visibleForSuperAdmin: true
             }
         ]
-    },
-    
-  
+    }
 ];
 

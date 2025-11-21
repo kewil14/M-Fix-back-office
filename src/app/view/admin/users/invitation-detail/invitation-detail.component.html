@@ -1,144 +1,177 @@
-<div class="container-fluid">
-  <div class="row">
+<div class="container-fluid" *ngIf="!isLoading && invitation">
+  <!-- Header Section -->
+  <div class="row mb-4">
     <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header border-bottom">
-          <div class="row align-items-center">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-center">
+              <div class="avatar-lg me-4">
+                <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-2">
+                  <i class="ri-mail-line"></i>
+                </div>
+              </div>
+              <div>
+                <h3 class="mb-1">{{ invitation.firstName }} {{ invitation.lastName }}</h3>
+                <div class="d-flex gap-2 align-items-center mb-2">
+                  <span class="badge bg-primary">{{ invitation.type || 'INVITATION' }}</span>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(invitation.status)">
+                    {{ getStatusLabel(invitation.status) }}
+                  </span>
+                </div>
+                <p class="text-muted mb-0">
+                  <i class="ri-mail-line me-1"></i>{{ invitation.email }}
+                </p>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-light" (click)="onBack()">
+                <i class="ri-arrow-left-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.BACK_TO_LIST' | translate }}
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-info" 
+                (click)="onResendInvitation()"
+                [disabled]="isResendingInvitation || !invitation?.email || invitation?.isInvitationUsed">
+                <i class="ri-mail-send-line me-1"></i>
+                <span *ngIf="!isResendingInvitation">{{ 'MESSAGES.ADMIN.EMPLOYEE.RESEND_INVITATION' | translate }}</span>
+                <span *ngIf="isResendingInvitation">
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  {{ 'MESSAGES.ADMIN.EMPLOYEE.SENDING' | translate }}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row">
+    <!-- Left Column - User Info -->
+    <div class="col-lg-8">
+      <!-- Informations utilisateur -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0">
+            <i class="ri-user-line me-2 text-primary"></i>
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.USER_INFO' | translate }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
             <div class="col-md-6">
-              <h4 class="card-title mb-0">
-                <i class="mdi mdi-email-multiple-outline me-2"></i>Détails de l'Invitation
-              </h4>
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.firstName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
             </div>
             <div class="col-md-6">
-              <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" (click)="onBack()">
-                  <i class="mdi mdi-arrow-left me-1"></i> Retour
-                </button>
-                <button 
-                  type="button" 
-                  class="btn btn-info" 
-                  (click)="onResendInvitation()"
-                  [disabled]="isResendingInvitation || !invitation?.email || invitation?.isInvitationUsed">
-                  <i class="mdi mdi-email-send-outline me-1"></i> 
-                  <span *ngIf="!isResendingInvitation">Renvoyer l'invitation</span>
-                  <span *ngIf="isResendingInvitation">
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    Envoi...
-                  </span>
-                </button>
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.lastName || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.email || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.USER_TYPE' | translate }}</label>
+              <div class="fw-semibold">
+                <span class="badge bg-info">{{ invitation.type || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</span>
+              </div>
+            </div>
+            <div class="col-md-6" *ngIf="invitation.userId">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.USER_ID' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.userId }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations invitation -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0">
+            <i class="ri-mail-line me-2 text-primary"></i>
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.INVITATION_INFO' | translate }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6" *ngIf="invitation.invitationId">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.INVITATION_ID' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.invitationId }}</div>
+            </div>
+            <div class="col-md-6" *ngIf="invitation.invitationCreatedAt">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</label>
+              <div class="fw-semibold">{{ invitation.invitationCreatedAt | date: 'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+            <div class="col-md-6" *ngIf="invitation.invitationExpiresAt">
+              <label class="form-label text-muted small mb-1">{{ 'MESSAGES.ADMIN.EMPLOYEE.EXPIRATION_DATE' | translate }}</label>
+              <div class="fw-semibold">
+                {{ invitation.invitationExpiresAt | date: 'dd/MM/yyyy HH:mm' }}
+                <span *ngIf="invitation.daysUntilExpiration !== undefined" class="text-muted ms-2 small">
+                  ({{ invitation.daysUntilExpiration }} {{ 'MESSAGES.ADMIN.EMPLOYEE.DAYS_REMAINING' | translate }})
+                </span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Stats & Status -->
+    <div class="col-lg-4">
+      <!-- Statut -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0">
+            <i class="ri-bar-chart-line me-2 text-primary"></i>
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.STATUS' | translate }}
+          </h5>
+        </div>
         <div class="card-body">
-          <!-- Messages -->
-          <loto-message-alert [messages$]="messages$"></loto-message-alert>
-
-          <!-- Loading -->
-          <div class="text-center py-5" *ngIf="isLoading">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Chargement...</span>
-            </div>
-            <p class="mt-2 text-muted">Chargement des détails de l'invitation...</p>
-          </div>
-
-          <!-- Détails de l'invitation -->
-          <div *ngIf="!isLoading && invitation" class="row">
-            <!-- Informations utilisateur -->
-            <div class="col-md-6">
-              <h5 class="mb-3">
-                <i class="mdi mdi-account-outline me-2"></i>Informations Utilisateur
-              </h5>
-              <div class="mb-3">
-                <label class="form-label fw-bold">ID Utilisateur</label>
-                <p class="form-control-plaintext">{{ invitation.userId || 'N/A' }}</p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Email</label>
-                <p class="form-control-plaintext">{{ invitation.email || 'N/A' }}</p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Prénom</label>
-                <p class="form-control-plaintext">{{ invitation.firstName || 'N/A' }}</p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Nom</label>
-                <p class="form-control-plaintext">{{ invitation.lastName || 'N/A' }}</p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Téléphone</label>
-                <p class="form-control-plaintext">{{ invitation.phoneNumber || 'N/A' }}</p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Type d'utilisateur</label>
-                <p>
-                  <span class="badge bg-info">{{ invitation.type || 'N/A' }}</span>
-                </p>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <div class="text-muted small">{{ 'MESSAGES.ADMIN.EMPLOYEE.STATUS' | translate }}</div>
+              <div class="fw-semibold small">
+                <span class="badge" [ngClass]="getStatusBadgeClass(invitation.status)">
+                  {{ getStatusLabel(invitation.status) }}
+                </span>
               </div>
             </div>
-
-            <!-- Informations invitation -->
-            <div class="col-md-6">
-              <h5 class="mb-3">
-                <i class="mdi mdi-email-outline me-2"></i>Informations Invitation
-              </h5>
-              <div class="mb-3">
-                <label class="form-label fw-bold">ID Invitation</label>
-                <p class="form-control-plaintext">{{ invitation.invitationId || 'N/A' }}</p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Date de création</label>
-                <p class="form-control-plaintext">
-                  {{ invitation.invitationCreatedAt ? (invitation.invitationCreatedAt | date: 'dd/MM/yyyy HH:mm') : 'N/A' }}
-                </p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Date d'expiration</label>
-                <p class="form-control-plaintext">
-                  {{ invitation.invitationExpiresAt ? (invitation.invitationExpiresAt | date: 'dd/MM/yyyy HH:mm') : 'N/A' }}
-                  <span *ngIf="invitation.daysUntilExpiration !== undefined" class="text-muted ms-2">
-                    ({{ invitation.daysUntilExpiration }} jour(s) restant(s))
-                  </span>
-                </p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">Statut</label>
-                <p>
-                  <span class="badge" [ngClass]="getStatusBadgeClass(invitation.status)">
-                    {{ getStatusLabel(invitation.status) }}
-                  </span>
-                </p>
-              </div>
-              <div class="mb-3">
-                <label class="form-label fw-bold">État de l'invitation</label>
-                <div class="d-flex flex-column gap-2">
-                  <span class="badge" [ngClass]="invitation.isInvitationExpired ? 'bg-danger' : 'bg-success'">
-                    <i class="mdi mdi-clock-outline me-1"></i>
-                    {{ invitation.isInvitationExpired ? 'Expirée' : 'Valide' }}
-                  </span>
-                  <span class="badge" [ngClass]="invitation.isInvitationUsed ? 'bg-info' : 'bg-warning'">
-                    <i class="mdi mdi-check-circle-outline me-1"></i>
-                    {{ invitation.isInvitationUsed ? 'Utilisée' : 'Non utilisée' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Avatar si disponible -->
-            <div class="col-12" *ngIf="invitation.avatar">
-              <div class="mb-3">
-                <label class="form-label fw-bold">Avatar</label>
-                <div>
-                  <img [src]="invitation.avatar" alt="Avatar" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                </div>
-              </div>
+            <div class="avatar-sm bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center">
+              <i class="ri-information-line"></i>
             </div>
           </div>
-
-          <!-- Message si aucune invitation -->
-          <div *ngIf="!isLoading && !invitation" class="text-center py-5">
-            <i class="mdi mdi-information-outline text-muted" style="font-size: 3rem;"></i>
-            <p class="text-muted mt-3">Aucune invitation trouvée</p>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <div class="text-muted small">{{ 'MESSAGES.ADMIN.EMPLOYEE.EXPIRATION_DATE' | translate }}</div>
+              <div class="fw-semibold small">
+                <span class="badge" [ngClass]="invitation.isInvitationExpired ? 'bg-danger' : 'bg-success'">
+                  {{ invitation.isInvitationExpired ? ('MESSAGES.ADMIN.EMPLOYEE.EXPIRED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.VALID' | translate) }}
+                </span>
+              </div>
+            </div>
+            <div class="avatar-sm bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center">
+              <i class="ri-time-line"></i>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small">{{ 'MESSAGES.ADMIN.EMPLOYEE.USAGE' | translate }}</div>
+              <div class="fw-semibold small">
+                <span class="badge" [ngClass]="invitation.isInvitationUsed ? 'bg-info' : 'bg-warning'">
+                  {{ invitation.isInvitationUsed ? ('MESSAGES.ADMIN.EMPLOYEE.USED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_USED' | translate) }}
+                </span>
+              </div>
+            </div>
+            <div class="avatar-sm bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center">
+              <i class="ri-checkbox-circle-line"></i>
+            </div>
           </div>
         </div>
       </div>
@@ -146,3 +179,29 @@
   </div>
 </div>
 
+<!-- Loading -->
+<div class="container-fluid" *ngIf="isLoading">
+  <div class="row">
+    <div class="col-12">
+      <app-loading5></app-loading5>
+    </div>
+  </div>
+</div>
+
+<!-- Error or No invitation -->
+<div class="container-fluid" *ngIf="!isLoading && !invitation">
+  <div class="row">
+    <div class="col-12">
+      <div class="alert alert-danger">
+        <h5>{{ 'MESSAGES.ERRORS.ERROR' | translate }}</h5>
+        <p>Aucune invitation trouvée</p>
+        <button type="button" class="btn btn-primary" (click)="onBack()">
+          {{ 'BUTTONS.RETRY' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Messages -->
+<loto-message-alert [messages$]="messages$"></loto-message-alert>

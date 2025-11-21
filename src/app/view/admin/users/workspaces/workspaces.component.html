@@ -10,12 +10,19 @@
             <div class="card-header border-bottom">
               <div class="row align-items-center">
                 <div class="col-md-6">
-                  <h4 class="card-title mb-0">Gestion des Workspaces</h4>
+                  <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.COMMON.WORKSPACES' | translate }}</h4>
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-success" (click)="openCreateModal()">
-                      <i class="mdi mdi-plus me-1"></i> Nouveau Workspace
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline-info" 
+                      (click)="onExportWorkspaces()"
+                      title="{{ 'MESSAGES.ADMIN.WORKSPACE.EXPORT' | translate }}">
+                      <i class="mdi mdi-download"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" (click)="openCreateModal()">
+                      <i class="mdi mdi-plus me-1"></i> {{ 'MESSAGES.ADMIN.WORKSPACE.NEW_WORKSPACE' | translate }}
                     </button>
                   </div>
                 </div>
@@ -30,7 +37,7 @@
                       <input 
                         type="text" 
                         class="form-control" 
-                        placeholder="Rechercher par nom, email..." 
+                        [placeholder]="'MESSAGES.ADMIN.SHOP.SEARCH_PLACEHOLDER' | translate" 
                         [(ngModel)]="searchTerm"
                         (ngModelChange)="onSearchChange()">
                       <i class="ri-search-line search-icon"></i>
@@ -39,21 +46,28 @@
                 </div>
                 <div class="col-md-2">
                   <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
-                    <option [value]="null">Tous les statuts</option>
-                    <option [value]="true">Actifs</option>
-                    <option [value]="false">Inactifs</option>
+                    <option [value]="null">{{ 'MESSAGES.ADMIN.SHOP.ALL_STATUS' | translate }}</option>
+                    <option [value]="true">{{ 'MESSAGES.ADMIN.SHOP.ACTIVE' | translate }}</option>
+                    <option [value]="false">{{ 'MESSAGES.ADMIN.SHOP.INACTIVE' | translate }}</option>
                   </select>
                 </div>
                 <div class="col-md-6 text-end">
                   <div class="d-flex align-items-center justify-content-end gap-2">
-                    <label class="mb-0">Afficher:</label>
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-outline-secondary" 
+                      (click)="resetFilters()"
+                      *ngIf="searchTerm || isActiveFilter !== null"
+                      title="{{ 'MESSAGES.ADMIN.COMMON.RESET_FILTERS' | translate }}">
+                      <i class="ri-refresh-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.RESET' | translate }}
+                    </button>
+                    <label class="mb-0">{{ 'MESSAGES.ADMIN.SHOP.SHOW' | translate }}</label>
                     <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (ngModelChange)="changePageSize(pageSize)">
                       <option [value]="5">5</option>
                       <option [value]="10">10</option>
                       <option [value]="20">20</option>
                       <option [value]="50">50</option>
                     </select>
-                    <span class="text-muted">éléments</span>
                   </div>
                 </div>
               </div>
@@ -65,18 +79,18 @@
                     <tr>
                       <th scope="col" style="width: 60px;">#</th>
                       <th scope="col">ID</th>
-                      <th scope="col">Nom complet</th>
-                      <th scope="col">Email</th>
-                      <th scope="col">Téléphone</th>
-                      <th scope="col" class="text-center">Statut</th>
-                      <th scope="col">Date de création</th>
-                      <th scope="col" class="text-center" style="width: 200px;">Actions</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.FULL_NAME' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</th>
+                      <th scope="col" class="text-center">{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</th>
+                      <th scope="col" class="text-center" style="width: 200px;">{{ 'MESSAGES.ADMIN.COMMON.ACTIONS' | translate }}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngFor="let workspaceAdmin of state.workspaceAdmins; let index = index">
                       <th scope="row">{{ (state.currentPage * state.pageSize) + index + 1 }}</th>
-                      <td>{{ workspaceAdmin.id || 'N/A' }}</td>
+                      <td>{{ workspaceAdmin.id || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-sm me-2">
@@ -91,10 +105,10 @@
                         </div>
                       </td>
                       <td>{{ workspaceAdmin.email }}</td>
-                      <td>{{ workspaceAdmin.phoneNumber || 'N/A' }}</td>
+                      <td>{{ workspaceAdmin.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
                       <td class="text-center">
                         <span class="badge" [ngClass]="workspaceAdmin.isActive ? 'bg-success' : 'bg-danger'">
-                          {{ workspaceAdmin.isActive ? 'Actif' : 'Inactif' }}
+                          {{ workspaceAdmin.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
                         </span>
                       </td>
                       <td>{{ workspaceAdmin.createdAt ? (workspaceAdmin.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
@@ -103,27 +117,27 @@
                           <button 
                             class="btn btn-sm btn-info btn-icon" 
                             (click)="onView(workspaceAdmin)"
-                            title="Voir les détails">
+                            [title]="'MESSAGES.ADMIN.COMMON.VIEW' | translate">
                             <i class="mdi mdi-eye-outline"></i>
                           </button>
                           <button 
                             class="btn btn-sm btn-warning btn-icon" 
                             (click)="onEdit(workspaceAdmin)"
-                            title="Modifier">
+                            [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
                             <i class="mdi mdi-pencil"></i>
                           </button>
                           <button 
                             *ngIf="workspaceAdmin.isActive"
                             class="btn btn-sm btn-danger btn-icon" 
                             (click)="onDelete(workspaceAdmin)"
-                            title="Désactiver">
+                            [title]="'MESSAGES.ADMIN.COMMON.DELETE' | translate">
                             <i class="mdi mdi-delete-outline"></i>
                           </button>
                           <button 
                             *ngIf="!workspaceAdmin.isActive"
                             class="btn btn-sm btn-success btn-icon" 
                             (click)="onReactivate(workspaceAdmin)"
-                            title="Réactiver">
+                            [title]="'MESSAGES.ADMIN.COMMON.REACTIVATE' | translate">
                             <i class="mdi mdi-restore"></i>
                           </button>
                         </div>
@@ -133,7 +147,7 @@
                       <td colspan="8" class="text-center py-4">
                         <div class="text-muted">
                           <i class="ri-inbox-line" style="font-size: 48px;"></i>
-                          <p class="mt-2 mb-0">Aucun workspace trouvé</p>
+                          <p class="mt-2 mb-0">{{ 'MESSAGES.ADMIN.WORKSPACE.NO_WORKSPACE_FOUND' | translate }}</p>
                         </div>
                       </td>
                     </tr>
@@ -145,9 +159,9 @@
               <div class="row align-items-center mt-3" *ngIf="state.totalPages > 0">
                 <div class="col-md-6">
                   <div class="text-muted">
-                    Affichage de <strong>{{ (state.currentPage * state.pageSize) + 1 }}</strong> à 
+                    {{ 'MESSAGES.ADMIN.SHOP.DISPLAYING' | translate }} <strong>{{ (state.currentPage * state.pageSize) + 1 }}</strong> {{ 'MESSAGES.ADMIN.SHOP.TO' | translate }} 
                     <strong>{{ Math.min((state.currentPage + 1) * state.pageSize, state.totalElements) }}</strong> 
-                    sur <strong>{{ state.totalElements }}</strong> résultats
+                    {{ 'MESSAGES.ADMIN.SHOP.OF' | translate }} <strong>{{ state.totalElements }}</strong> {{ 'MESSAGES.ADMIN.SHOP.RESULTS' | translate }}
                   </div>
                 </div>
                 <div class="col-md-6">

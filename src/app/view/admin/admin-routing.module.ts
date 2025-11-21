@@ -12,6 +12,7 @@ import { AdminsComponent } from './users/admins/admins.component';
 import { WorkspacesComponent } from './users/workspaces/workspaces.component';
 import { EmployeesComponent } from './users/employees/employees.component';
 import { EmployeeDetailComponent } from './users/employee-detail/employee-detail.component';
+import { EmployeeEditComponent } from './users/employee-edit/employee-edit.component';
 import { AdminDetailComponent } from './users/admin-detail/admin-detail.component';
 import { AdminEditComponent } from './users/admin-edit/admin-edit.component';
 import { InvitationsComponent } from './users/invitations/invitations.component';
@@ -138,7 +139,7 @@ const routes: Routes = [
       },
       {
         path: 'edit/:id',
-        component: EmployeeDetailComponent, // TODO: Créer un composant d'édition
+        component: EmployeeEditComponent,
         canActivate: [PermissionGuard],
         data: { permissions: ['employees:update'] }
       }

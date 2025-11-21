@@ -20,10 +20,15 @@ export class AppComponent implements OnInit  {
     private localStorageService: LocalStorageService,
     private actionService: Actions,
   ){
-    this.languageService.setLanguage(APP_ENUMS.PREFIX_DEFAULT_LANGUAGE);
+    // Le LanguageService initialise déjà la langue dans son constructeur
+    // On s'assure juste que la langue est bien définie
+    const savedLang = this.localStorageService.localLangValue || this.languageService.translate.currentLang || 'fr';
+    if (!this.languageService.translate.currentLang) {
+      this.languageService.setLanguage(savedLang);
+    }
     // Initialiser le thème (sera appliqué automatiquement par le service)
     this.themeService.theme$.subscribe();
-    document.documentElement.lang = this.localStorageService.localLangValue;
+    document.documentElement.lang = savedLang;
   }
 
   ngOnInit() {

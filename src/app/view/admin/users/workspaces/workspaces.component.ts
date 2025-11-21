@@ -4,6 +4,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectWorkspaceAdminState } from 'src/app/core/core.state';
@@ -21,6 +22,8 @@ import {
 } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.actions';
 import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
 import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-workspace-admin.component';
+import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-workspaces',
@@ -48,7 +51,10 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     private modalService: BsModalService,
     private storeService: Store,
     private actionService: Actions,
-    private router: Router
+    private router: Router,
+    private translateService: TranslateService,
+    private workspaceService: WorkspaceService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnDestroy() {
@@ -114,6 +120,13 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     this.loadWorkspaces();
   }
 
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.isActiveFilter = null;
+    this.currentPage = 0;
+    this.loadWorkspaces();
+  }
+
   changePage(page: number): void {
     this.currentPage = page;
     this.loadWorkspaces();
@@ -168,11 +181,11 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   onDelete(workspaceAdmin: EmployeeResponseDto): void {
     const initialState = {
-      title: 'Désactiver le workspace',
-      message: 'Êtes-vous sûr de vouloir désactiver ce workspace ? Cela désactivera également tous les employés du workspace.',
+      title: this.translateService.instant('MESSAGES.ADMIN.WORKSPACE.DELETE_TITLE'),
+      message: this.translateService.instant('MESSAGES.ADMIN.WORKSPACE.DELETE_MESSAGE'),
       itemName: `${workspaceAdmin.firstName} ${workspaceAdmin.lastName}`,
-      confirmBtnText: 'Désactiver',
-      cancelBtnText: 'Annuler'
+      confirmBtnText: this.translateService.instant('MESSAGES.ADMIN.WORKSPACE.DELETE_BUTTON'),
+      cancelBtnText: this.translateService.instant('MESSAGES.ADMIN.SHOP.CANCEL')
     };
     
     this.modalRef = this.modalService.show(DeleteConfirmModalComponent, {
@@ -197,5 +210,48 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.loadWorkspaces();
     }, 1000);
+  }
+
+  onExportWorkspaces(): void {
+    if (!this.permissionService.isSuperAdmin()) {
+      this.messages$.next({
+        type: { icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER },
+        title: APP_COLORS.DANGER,
+        message: this.translateService.instant('MESSAGES.ERRORS.PERMISSION_DENIED'),
+        dismissible: true
+      });
+      return;
+    }
+
+    this.workspaceService.exportWorkspaces(
+      this.isActiveFilter !== null ? this.isActiveFilter : undefined
+    ).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `workspaces_${new Date().getTime()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        this.messages$.next({
+          type: { icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS },
+          title: APP_COLORS.SUCCESS,
+          message: this.translateService.instant('MESSAGES.SUCCESS_ACTION.WORKSPACE_EXPORT'),
+          dismissible: true
+        });
+      },
+      error: (error) => {
+        console.error('Error exporting workspaces:', error);
+        this.messages$.next({
+          type: { icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER },
+          title: APP_COLORS.DANGER,
+          message: error?.error?.message || this.translateService.instant('MESSAGES.ERRORS.EXPORT'),
+          dismissible: true
+        });
+      }
+    });
   }
 }

@@ -5,7 +5,7 @@ export const environment = {
   production: true,
 
   baseUrlBackend: `http://${ipAdress}:8000/auth-service/api`,
-
+  workspaceServiceUrl: `http://${ipAdress}:8000/workspace-service`,
 
   
   defaultauth: 'fackbackend',

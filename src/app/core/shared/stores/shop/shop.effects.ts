@@ -7,6 +7,7 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 import { RequestResultDto } from '../../dtos/request-result-dto.modal';
 import { ShopService } from '../../services/shop.service';
 import { NotificationService } from '../../services/notification.service';
+import { PermissionService } from '../../services/permission.service';
 import { isCriticalHttpError } from '../../utils/error-handler.util';
 import {
   findAllShops,
@@ -29,30 +30,52 @@ export class ShopEffects {
     private shopService: ShopService,
     private storeService: Store,
     private translateService: TranslateService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private permissionService: PermissionService
   ) {}
 
   findAllShopsEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(findAllShops),
-      mergeMap(({ filters }) =>
-        this.shopService.getShops(filters).pipe(
+      mergeMap(({ workspaceId, filters }) => {
+        console.log('ShopEffects - findAllShops called with workspaceId:', workspaceId, 'filters:', filters);
+        if (!workspaceId) {
+          console.error('ShopEffects - workspaceId is required');
+          return of(erreurShops({ messages: 'WorkspaceId is required' }));
+        }
+        return this.shopService.getShops(workspaceId, filters).pipe(
           map((data: RequestResultDto<any>) => {
+            console.log('ShopEffects - getShops response:', data);
             if (data.status === 'SUCCESS' && data.data) {
+              let shops = Array.isArray(data.data) ? data.data : [];
+              const totalElements = shops.length;
+              console.log('ShopEffects - Shops loaded (before pagination):', totalElements);
+              
+              // Appliquer la pagination côté client
+              const page = filters?.page || 0;
+              const size = filters?.size || 10;
+              const startIndex = page * size;
+              const endIndex = startIndex + size;
+              shops = shops.slice(startIndex, endIndex);
+              
+              console.log('ShopEffects - Shops after pagination:', shops.length, 'page:', page, 'size:', size);
+              
               return loadShops({
-                shops: data.data.content || [],
-                totalElements: data.data.totalElements || 0,
-                totalPages: data.data.totalPages || 0,
-                currentPage: data.data.number || 0,
-                pageSize: data.data.size || 10
+                shops: shops,
+                totalElements: totalElements,
+                totalPages: Math.ceil(totalElements / size) || 1,
+                currentPage: page,
+                pageSize: size
               });
             } else {
+              console.error('ShopEffects - Error in response:', data.message);
               return erreurShops({
                 messages: data.message || 'Erreur lors de la récupération des shops'
               });
             }
           }),
           catchError((error) => {
+            console.error('ShopEffects - HTTP Error:', error);
             if (isCriticalHttpError(error)) {
               throw error;
             }
@@ -62,16 +85,16 @@ export class ShopEffects {
               this.translateService.instant('MESSAGES.ERRORS.LOAD');
             return of(erreurShops({ messages: errorMessage }));
           })
-        )
-      )
+        );
+      })
     )
   );
 
   findShopByIdEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(findShopById),
-      mergeMap(({ shopId }) =>
-        this.shopService.getShopById(shopId).pipe(
+      mergeMap(({ workspaceId, shopId }) =>
+        this.shopService.getShopById(workspaceId, shopId).pipe(
           map((data: RequestResultDto<any>) => {
             if (data.status === 'SUCCESS' && data.data) {
               return setShop({ shop: data.data });
@@ -99,8 +122,8 @@ export class ShopEffects {
   createShopEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(createShop),
-      mergeMap(({ createShopDto }) =>
-        this.shopService.createShop(createShopDto).pipe(
+      mergeMap(({ workspaceId, createShopDto }) =>
+        this.shopService.createShop(workspaceId, createShopDto).pipe(
           map((data: RequestResultDto<any>) => {
             if (data.status === 'SUCCESS' && data.data) {
               this.notificationService.showSuccess('Shop créé avec succès!');
@@ -130,8 +153,8 @@ export class ShopEffects {
   updateShopEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(updateShop),
-      mergeMap(({ shopId, updateShopDto }) =>
-        this.shopService.updateShop(shopId, updateShopDto).pipe(
+      mergeMap(({ workspaceId, shopId, updateShopDto }) =>
+        this.shopService.updateShop(workspaceId, shopId, updateShopDto).pipe(
           map((data: RequestResultDto<any>) => {
             if (data.status === 'SUCCESS' && data.data) {
               this.notificationService.showSuccess('Shop mis à jour avec succès!');
@@ -161,8 +184,8 @@ export class ShopEffects {
   deleteShopEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(deleteShop),
-      mergeMap(({ shopId }) =>
-        this.shopService.deleteShop(shopId).pipe(
+      mergeMap(({ workspaceId, shopId }) =>
+        this.shopService.deactivateShop(workspaceId, shopId).pipe(
           map((data: RequestResultDto<any>) => {
             if (data.status === 'SUCCESS') {
               this.notificationService.showSuccess('Shop désactivé avec succès!');
@@ -192,12 +215,12 @@ export class ShopEffects {
   reactivateShopEffect = createEffect(() =>
     this.actions$.pipe(
       ofType(reactivateShop),
-      mergeMap(({ shopId }) =>
-        this.shopService.reactivateShop(shopId).pipe(
+      mergeMap(({ workspaceId, shopId }) =>
+        this.shopService.activateShop(workspaceId, shopId).pipe(
           map((data: RequestResultDto<any>) => {
             if (data.status === 'SUCCESS') {
               this.notificationService.showSuccess('Shop réactivé avec succès!');
-              return findShopById({ shopId });
+              return findShopById({ workspaceId, shopId });
             } else {
               return erreurShops({
                 messages: data.message || "Erreur lors de la réactivation du shop"

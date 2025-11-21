@@ -1,99 +1,50 @@
-.employee-icon {
-  width: 60px;
-  height: 60px;
+.avatar-lg {
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
-  font-size: 28px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  font-size: 2rem;
+  font-weight: 600;
 }
 
-.employee-stats {
-  .stat-item {
-    display: inline-block;
-    text-align: center;
-    padding: 1rem;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 12px;
-    min-width: 100px;
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #667eea;
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 0.875rem;
-      color: #6c757d;
-      margin-top: 0.25rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-  }
-}
-
-.info-card {
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 3px solid #667eea;
-  transition: all 0.3s ease;
-  height: 100%;
-
-  &:hover {
-    background: #e9ecef;
-    transform: translateX(4px);
-  }
-
-  .info-label {
-    display: flex;
-    align-items: center;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-
-    i {
-      font-size: 1rem;
-    }
-  }
-
-  .info-value {
-    font-size: 1rem;
-    color: #212529;
-    font-weight: 500;
-  }
-}
-
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.role-badge {
-  display: inline-flex;
+.avatar-sm {
+  width: 40px;
+  height: 40px;
+  display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  color: #495057;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  justify-content: center;
+  font-size: 1.25rem;
+}
 
+.card {
+  transition: all 0.3s ease;
+  
   &:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
   }
 }
 
+.bg-primary-subtle {
+  background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+}
+
+.bg-info-subtle {
+  background-color: rgba(var(--bs-info-rgb), 0.1) !important;
+}
+
+.bg-success-subtle {
+  background-color: rgba(var(--bs-success-rgb), 0.1) !important;
+}
+
+.text-primary {
+  color: var(--bs-primary) !important;
+}
+
+.text-info {
+  color: var(--bs-info) !important;
+}
+
+.text-success {
+  color: var(--bs-success) !important;
+}

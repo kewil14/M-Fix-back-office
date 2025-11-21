@@ -11,6 +11,7 @@ import { selectShopState } from 'src/app/core/core.state';
 import { UpdateShopDto } from 'src/app/core/shared/dtos/shop-response-dto';
 import { findShopById, updateShop, setShop, erreurShops } from 'src/app/core/shared/stores/shop/shop.actions';
 import { ShopState } from 'src/app/core/shared/stores/shop/shop.state';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-shop-edit',
@@ -21,6 +22,7 @@ export class ShopEditComponent implements OnInit, OnDestroy {
   shopForm: FormGroup;
   submitted = false;
   shopId: string | null = null;
+  workspaceId: string | null = null;
   
   shopState$!: Observable<ShopState>;
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
@@ -39,7 +41,8 @@ export class ShopEditComponent implements OnInit, OnDestroy {
     private router: Router,
     private storeService: Store,
     private actionService: Actions,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit() {
@@ -63,6 +66,7 @@ export class ShopEditComponent implements OnInit, OnDestroy {
       this.shopState$.subscribe(state => {
         if (state.dataState === DataStateEnum.SUCCESS && state.shop) {
           if (state.shop.id === this.shopId) {
+            this.workspaceId = state.shop.workspaceId || this.permissionService.getWorkspaceId();
             this.populateForm(state.shop);
           }
         }
@@ -102,7 +106,12 @@ export class ShopEditComponent implements OnInit, OnDestroy {
 
   loadShop(): void {
     if (this.shopId) {
-      this.storeService.dispatch(findShopById({ shopId: this.shopId }));
+      this.workspaceId = this.permissionService.getWorkspaceId();
+      if (!this.workspaceId) {
+        console.error('WorkspaceId is required to load shop');
+        return;
+      }
+      this.storeService.dispatch(findShopById({ workspaceId: this.workspaceId, shopId: this.shopId }));
     }
   }
 
@@ -128,7 +137,7 @@ export class ShopEditComponent implements OnInit, OnDestroy {
 
   onSubmit() {
     this.submitted = true;
-    if (this.shopForm.invalid || !this.shopId) {
+    if (this.shopForm.invalid || !this.shopId || !this.workspaceId) {
       return;
     }
 
@@ -139,12 +148,13 @@ export class ShopEditComponent implements OnInit, OnDestroy {
       city: formValue.city || undefined,
       postalCode: formValue.postalCode || undefined,
       country: formValue.country || undefined,
-      phoneNumber: formValue.phoneNumber || undefined,
+      phone: formValue.phoneNumber || undefined,
+      phoneNumber: formValue.phoneNumber || undefined, // Pour compatibilité
       email: formValue.email || undefined,
       isActive: formValue.isActive
     };
 
-    this.storeService.dispatch(updateShop({ shopId: this.shopId, updateShopDto }));
+    this.storeService.dispatch(updateShop({ workspaceId: this.workspaceId, shopId: this.shopId, updateShopDto }));
   }
 
   onCancel() {
