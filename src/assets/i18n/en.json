@@ -83,7 +83,23 @@
         "NO_WORKSPACE_FOUND": "No workspace found",
         "DELETE_TITLE": "Deactivate workspace",
         "DELETE_MESSAGE": "Are you sure you want to deactivate this workspace? This will also deactivate all employees in the workspace.",
-        "DELETE_BUTTON": "Deactivate"
+        "DELETE_BUTTON": "Deactivate",
+        "ADMIN_INFO": "Administrator Information",
+        "ADMIN_EMAIL": "Email",
+        "ADMIN_FIRST_NAME": "First Name",
+        "ADMIN_LAST_NAME": "Last Name",
+        "ADMIN_ROLES": "Roles",
+        "ROLES_HELP": "Select the roles to assign to this administrator.",
+        "ADMIN_CREATE_INFO": "An invitation email will be sent to the administrator to activate their account.",
+        "EMAIL_REQUIRED": "Email required",
+        "EMAIL_INVALID": "Invalid email",
+        "FIRST_NAME_REQUIRED": "First name required",
+        "LAST_NAME_REQUIRED": "Last name required",
+        "ROLES_REQUIRED": "At least one role is required",
+        "SELECT_ROLES_PLACEHOLDER": "Select roles...",
+        "ADMIN_EMAIL_PLACEHOLDER": "admin@example.com",
+        "ADMIN_FIRST_NAME_PLACEHOLDER": "John",
+        "ADMIN_LAST_NAME_PLACEHOLDER": "Doe"
       },
       "SHOP": {
         "MANAGEMENT": "Shop Management",
@@ -167,6 +183,16 @@
         "DEACTIVATE": "Deactivate",
         "ACTIVATE": "Activate"
       },
+      "USER_TYPES": {
+        "SUPER_ADMIN": "Super Administrator",
+        "ADMIN": "Administrator",
+        "WORKSPACE_ADMIN": "Workspace Administrator",
+        "SHOP_MANAGER": "Shop Manager",
+        "EMPLOYEE": "Employee",
+        "TECHNICIAN": "Technician",
+        "DELIVERER": "Deliverer",
+        "CUSTOMER": "Customer"
+      },
       "EMPLOYEE": {
         "MANAGEMENT": "Employee Management",
         "NEW_EMPLOYEE": "New Employee",
@@ -238,7 +264,28 @@
         "VALID": "Valid",
         "USAGE": "Usage",
         "USED": "Used",
-        "NOT_USED": "Not used"
+        "NOT_USED": "Not used",
+        "EMAIL_VERIFIED": "Email verified",
+        "ACCOUNT_INFO": "Account information",
+        "CREATED_AT": "Created at",
+        "LAST_LOGIN": "Last login",
+        "LANGUAGE": "Language",
+        "STATISTICS": "Statistics",
+        "ACCOUNT_STATUS": "Account status",
+        "EMAIL_STATUS": "Email status",
+        "PHONE_STATUS": "Phone status",
+        "ROLES": "Roles",
+        "USER_CODE": "User code",
+        "PHONE": "Phone",
+        "NO_USER_DATA": "No user data available",
+        "PLEASE_LOGIN": "Please log in to view your information",
+        "SYSTEM_ROLE": "System role",
+        "ENTER_PASSWORD_UNLOCK": "Enter your password to unlock the screen!",
+        "ENTER_PASSWORD": "Enter password",
+        "UNLOCK": "Unlock",
+        "UNLOCKING": "Unlocking...",
+        "NOT_YOU": "Not you ? return",
+        "USER": "User"
       },
       "ADMIN": {
         "MANAGEMENT": "Administrator Management",
@@ -272,6 +319,7 @@
     "MENU": {
       "DASHBOARD": "Dashboard",
       "DEMANDE": "Request",
+      "INVITATION": "Invitation",
       "USERS": "Users",
       "USERS_TITLE": "Users",
       "ADMINISTRATEURS": "Administrators",
@@ -280,7 +328,19 @@
       "EMPLOYE": "Employee",
       "PERMISSIONS": "Permissions",
       "ROLE": "Role",
-      "AUTORISATION": "Authorization"
+      "AUTORISATION": "Authorization",
+      "PROFILE": "Profile"
+    },
+    "DASHBOARD": {
+      "WELCOME_BACK": "Welcome Back",
+      "ADMINISTRATOR": "Administrator",
+      "TOTAL_REQUESTS": "Total Requests",
+      "TOTAL_QUOTES": "Total Quotes",
+      "TOTAL_USERS": "Total Users",
+      "USER_STATISTICS": "User Statistics",
+      "NO_STATISTICS": "No statistics available",
+      "STATISTICS": "Statistics",
+      "LATEST_REQUESTS": "Latest Requests"
     },
     "HEADER": {
       "PROFILE": "Profile",
@@ -294,6 +354,10 @@
           "TITLE": "New request"
         }
       }
+    },
+    "MODAL": {
+      "DELETE_CONFIRM_ITEM": "Are you sure you want to delete",
+      "DELETE_CONFIRM_MESSAGE": "This action is irreversible."
     }
   }
 }

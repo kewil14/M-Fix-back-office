@@ -45,6 +45,11 @@ export class InvitationsComponent implements OnInit, OnDestroy {
   workspaceIdFilter: string = '';
   shopIdFilter: string = '';
 
+  // Frontend filtering
+  allInvitations: InvitationResponseDto[] = [];
+  filteredInvitations: InvitationResponseDto[] = [];
+  paginatedInvitations: InvitationResponseDto[] = [];
+
   // Tri
   sortBy: string = 'invitationCreatedAt';
   sortDirection: string = 'desc';
@@ -87,10 +92,8 @@ export class InvitationsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.actionService.pipe(ofType(getInvitationsOk)).subscribe(({invitations}) => {
         this.isLoading = false;
-        this.invitations = invitations.content || [];
-        this.totalElements = invitations.totalElements || 0;
-        this.totalPages = invitations.totalPages || 0;
-        this.currentPage = invitations.number || 0;
+        this.allInvitations = invitations.content || [];
+        this.applyFilters();
       }),
       this.actionService.pipe(ofType(getInvitationsError)).subscribe(({messages}) => {
         this.isLoading = false;
@@ -110,14 +113,15 @@ export class InvitationsComponent implements OnInit, OnDestroy {
 
   loadInvitations() {
     this.isLoading = true;
+    // Charger toutes les données une fois
     const filters: InvitationListRequestDto = {
-      search: this.searchTerm || undefined,
-      userType: this.userTypeFilter || undefined,
-      status: this.statusFilter || undefined,
-      workspaceId: this.workspaceIdFilter || undefined,
-      shopId: this.shopIdFilter || undefined,
-      page: this.currentPage,
-      size: this.pageSize,
+      search: undefined,
+      userType: undefined,
+      status: undefined,
+      workspaceId: undefined,
+      shopId: undefined,
+      page: 0,
+      size: 10000, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
@@ -125,19 +129,56 @@ export class InvitationsComponent implements OnInit, OnDestroy {
     this.storeService.dispatch(getInvitations({ invitationListRequestDto: filters }));
   }
 
+  applyFilters(): void {
+    // Filtrer les données localement
+    this.filteredInvitations = this.allInvitations.filter(invitation => {
+      // Filtre de recherche
+      const matchesSearch = !this.searchTerm || 
+        (invitation.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         invitation.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         invitation.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()));
+
+      // Filtre de type d'utilisateur (utilise 'type' au lieu de 'userType')
+      const matchesUserType = !this.userTypeFilter || invitation.type === this.userTypeFilter;
+
+      // Filtre de statut
+      const matchesStatus = !this.statusFilter || invitation.status === this.statusFilter;
+
+      // Les filtres workspaceId et shopId ne sont pas disponibles dans InvitationResponseDto
+      // Si ces filtres sont nécessaires, ils devront être ajoutés au DTO ou supprimés de l'interface
+
+      return matchesSearch && matchesUserType && matchesStatus;
+    });
+
+    // Trier les données filtrées
+    this.sortFilteredInvitations();
+
+    // Appliquer la pagination
+    this.applyPagination();
+  }
+
+  applyPagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedInvitations = this.filteredInvitations.slice(startIndex, endIndex);
+    this.invitations = this.paginatedInvitations; // Pour compatibilité avec le template
+    this.totalElements = this.filteredInvitations.length;
+    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
+  }
+
   onSearch() {
     this.currentPage = 0;
-    this.loadInvitations();
+    this.applyFilters();
   }
 
   onFilterChange() {
     this.currentPage = 0;
-    this.loadInvitations();
+    this.applyFilters();
   }
 
   onPageChange(page: number) {
     this.currentPage = page;
-    this.loadInvitations();
+    this.applyFilters();
   }
 
   onSort(column: string) {
@@ -147,7 +188,37 @@ export class InvitationsComponent implements OnInit, OnDestroy {
       this.sortBy = column;
       this.sortDirection = 'asc';
     }
-    this.loadInvitations();
+    // Trier les données localement
+    this.sortFilteredInvitations();
+    this.applyPagination();
+  }
+
+  sortFilteredInvitations(): void {
+    this.filteredInvitations.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (this.sortBy) {
+        case 'email':
+          aValue = a.email?.toLowerCase() || '';
+          bValue = b.email?.toLowerCase() || '';
+          break;
+        case 'invitationCreatedAt':
+          aValue = a.invitationCreatedAt ? new Date(a.invitationCreatedAt).getTime() : 0;
+          bValue = b.invitationCreatedAt ? new Date(b.invitationCreatedAt).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   }
 
   onResendInvitation(invitation: InvitationResponseDto) {

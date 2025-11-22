@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
@@ -26,7 +27,8 @@ import { ProfileComponent } from './profile/profile.component';
     NgSelectModule,
     NgApexchartsModule,
     FormsModule, 
-    ReactiveFormsModule ,
+    ReactiveFormsModule,
+    TranslateModule,
     TooltipModule.forRoot(),
     PaginationModule.forRoot()
   ]

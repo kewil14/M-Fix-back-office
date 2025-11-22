@@ -100,17 +100,27 @@ export class CreateUserComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const userRequestDto: UserRequestDto = {
-      userFirstName: this.userForm.value.userFirstName,
-      userLastName: this.userForm.value.userLastName,
-      userEmail: this.userForm.value.userEmail,
-      userPhoneNumber: this.userForm.value.userPhoneNumber,
-      country: this.userForm.value.country,
-      userType: this.userForm.value.userType,
-      userPassword: 'TempPassword123!',
-      image: ''
-    };
+    const userRequestDto = new UserRequestDto(
+      undefined,
+      this.userForm.value.userFirstName,
+      this.userForm.value.userLastName,
+      undefined,
+      undefined,
+      this.userForm.value.userEmail,
+      this.userForm.value.country,
+      this.userForm.value.userPhoneNumber,
+      'TempPassword123!',
+      undefined,
+      undefined,
+      '',
+      undefined,
+      this.userForm.value.userType,
+      undefined
+    );
 
+    console.log('Création utilisateur - DTO envoyé:', JSON.stringify(userRequestDto, null, 2));
+    console.log('Type d\'utilisateur:', userRequestDto.userType);
+    
     this.storeService.dispatch(createUser({user: userRequestDto}));
   }
 

@@ -31,7 +31,7 @@ export const MENU: MenuItem[] = [
     },
     {
         id: 10,
-        label: 'MESSAGES.MENU.DEMANDE',
+        label: 'MESSAGES.MENU.INVITATION',
         icon: 'bx-envelope',
         link: '/admin/invitations',
         visibleForSuperAdmin: true,

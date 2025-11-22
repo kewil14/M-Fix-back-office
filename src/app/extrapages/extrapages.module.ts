@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { CarouselModule } from 'ngx-owl-carousel-o';
 import { NgOtpInputModule } from  'ng-otp-input';
@@ -31,6 +32,7 @@ import { ComingsoonComponent } from './comingsoon/comingsoon.component';
     RouterModule,
     ReactiveFormsModule,
     FormsModule,
+    TranslateModule,
     CarouselModule,
     ExtrapagesRoutingModule,
     NgOtpInputModule,

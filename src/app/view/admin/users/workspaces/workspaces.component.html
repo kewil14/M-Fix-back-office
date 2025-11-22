@@ -39,7 +39,9 @@
                         class="form-control" 
                         [placeholder]="'MESSAGES.ADMIN.SHOP.SEARCH_PLACEHOLDER' | translate" 
                         [(ngModel)]="searchTerm"
-                        (ngModelChange)="onSearchChange()">
+                        (ngModelChange)="onSearchChange()"
+                        (keyup.enter)="onSearchChange()"
+                        (blur)="onSearchChange()">
                       <i class="ri-search-line search-icon"></i>
                     </div>
                   </div>
@@ -78,7 +80,6 @@
                   <thead class="table-light">
                     <tr>
                       <th scope="col" style="width: 60px;">#</th>
-                      <th scope="col">ID</th>
                       <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.FULL_NAME' | translate }}</th>
                       <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}</th>
                       <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</th>
@@ -88,9 +89,8 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let workspaceAdmin of state.workspaceAdmins; let index = index">
-                      <th scope="row">{{ (state.currentPage * state.pageSize) + index + 1 }}</th>
-                      <td>{{ workspaceAdmin.id || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    <tr *ngFor="let workspaceAdmin of paginatedWorkspaces; let index = index">
+                      <th scope="row">{{ (currentPage * pageSize) + index + 1 }}</th>
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-sm me-2">
@@ -143,7 +143,7 @@
                         </div>
                       </td>
                     </tr>
-                    <tr *ngIf="state.workspaceAdmins.length === 0">
+                    <tr *ngIf="paginatedWorkspaces.length === 0">
                       <td colspan="8" class="text-center py-4">
                         <div class="text-muted">
                           <i class="ri-inbox-line" style="font-size: 48px;"></i>
@@ -156,27 +156,27 @@
               </div>
 
               <!-- Pagination -->
-              <div class="row align-items-center mt-3" *ngIf="state.totalPages > 0">
+              <div class="row align-items-center mt-3" *ngIf="totalPages > 0">
                 <div class="col-md-6">
                   <div class="text-muted">
-                    {{ 'MESSAGES.ADMIN.SHOP.DISPLAYING' | translate }} <strong>{{ (state.currentPage * state.pageSize) + 1 }}</strong> {{ 'MESSAGES.ADMIN.SHOP.TO' | translate }} 
-                    <strong>{{ Math.min((state.currentPage + 1) * state.pageSize, state.totalElements) }}</strong> 
-                    {{ 'MESSAGES.ADMIN.SHOP.OF' | translate }} <strong>{{ state.totalElements }}</strong> {{ 'MESSAGES.ADMIN.SHOP.RESULTS' | translate }}
+                    {{ 'MESSAGES.ADMIN.SHOP.DISPLAYING' | translate }} <strong>{{ (currentPage * pageSize) + 1 }}</strong> {{ 'MESSAGES.ADMIN.SHOP.TO' | translate }} 
+                    <strong>{{ Math.min((currentPage + 1) * pageSize, totalElements) }}</strong> 
+                    {{ 'MESSAGES.ADMIN.SHOP.OF' | translate }} <strong>{{ totalElements }}</strong> {{ 'MESSAGES.ADMIN.SHOP.RESULTS' | translate }}
                   </div>
                 </div>
                 <div class="col-md-6">
                   <nav aria-label="Page navigation">
                     <ul class="pagination pagination-sm justify-content-end mb-0">
-                      <li class="page-item" [class.disabled]="state.currentPage === 0">
-                        <a class="page-link" href="javascript:void(0);" (click)="changePage(state.currentPage - 1)">
+                      <li class="page-item" [class.disabled]="currentPage === 0">
+                        <a class="page-link" (click)="changePage(currentPage - 1); $event.preventDefault()">
                           <i class="mdi mdi-chevron-left"></i>
                         </a>
                       </li>
-                      <li class="page-item" *ngFor="let page of getPageNumbers(state)" [class.active]="page === state.currentPage">
-                        <a class="page-link" href="javascript:void(0);" (click)="changePage(page)">{{ page + 1 }}</a>
+                      <li class="page-item" *ngFor="let page of getPageNumbersLocal()" [class.active]="page === currentPage">
+                        <a class="page-link" (click)="changePage(page); $event.preventDefault()">{{ page + 1 }}</a>
                       </li>
-                      <li class="page-item" [class.disabled]="state.currentPage >= state.totalPages - 1">
-                        <a class="page-link" href="javascript:void(0);" (click)="changePage(state.currentPage + 1)">
+                      <li class="page-item" [class.disabled]="currentPage >= totalPages - 1">
+                        <a class="page-link" (click)="changePage(currentPage + 1); $event.preventDefault()">
                           <i class="mdi mdi-chevron-right"></i>
                         </a>
                       </li>

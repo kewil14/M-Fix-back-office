@@ -1,240 +1,310 @@
-<div class="container-fluid">
-
-  <app-page-title title="Profile" [breadcrumbItems]="breadCrumbItems"></app-page-title>
-
-  <div class="row">
-    <div class="col-xl-4">
-      <div class="card overflow-hidden">
-        <div class="bg-soft bg-primary">
-          <div class="row">
-            <div class="col-7">
-              <div class="text-primary p-3">
-                <h5 class="text-primary">Welcome Back !</h5>
-                <p>It will seem like simplified</p>
-              </div>
-            </div>
-            <div class="col-5 align-self-end">
-              <img src="assets/images/profile-img.png" alt="" class="img-fluid">
-            </div>
-          </div>
-        </div>
-        <div class="card-body pt-0">
-          <div class="row">
-            <div class="col-sm-4">
-              <div class="avatar-md profile-user-wid mb-4">
-                <img src="assets/images/users/avatar-1.jpg" alt="" class="img-thumbnail rounded-circle">
-              </div>
-              <h5 class="font-size-15 text-truncate">Cynthia Price</h5>
-              <p class="text-muted mb-0 text-truncate">UI/UX Designer</p>
-            </div>
-
-            <div class="col-sm-8">
-              <div class="pt-4">
-
-                <div class="row">
-                  <div class="col-6">
-                    <h5 class="font-size-15">125</h5>
-                    <p class="text-muted mb-0">Projects</p>
-                  </div>
-                  <div class="col-6">
-                    <h5 class="font-size-15">$1245</h5>
-                    <p class="text-muted mb-0">Revenue</p>
-                  </div>
-                </div>
-                <div class="mt-4">
-                  <a href="javascript: void(0);" class="btn btn-primary btn-sm">View Profile <i
-                      class="mdi mdi-arrow-right ms-1"></i></a>
-                </div>
-              </div>
-            </div>
-          </div>
+<ng-container *ngIf="(profileState$ | async) as state" [ngSwitch]="state.dataState">
+  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
+    <div class="container-fluid">
+      <div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
       </div>
-      <!-- end card -->
-
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title mb-4">Personal Information</h4>
-
-          <p class="text-muted mb-4">Hi I'm Cynthia Price,has been the industry's standard dummy text To an English
-            person, it will seem like simplified English, as a skeptical Cambridge.</p>
-          <div class="table-responsive">
-            <table class="table table-nowrap mb-0">
-              <tbody>
-                <tr>
-                  <th scope="row">Full Name :</th>
-                  <td>Cynthia Price</td>
-                </tr>
-                <tr>
-                  <th scope="row">Mobile :</th>
-                  <td>(123) 123 1234</td>
-                </tr>
-                <tr>
-                  <th scope="row">E-mail :</th>
-                  <td>cynthiaskote@gmail.com</td>
-                </tr>
-                <tr>
-                  <th scope="row">Location :</th>
-                  <td>California, United States</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <!-- end card -->
-
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title mb-5">Experience</h4>
-          <div class="">
-            <ul class="verti-timeline list-unstyled">
-              <li class="event-list active">
-                <div class="event-timeline-dot">
-                  <i class="bx bx-right-arrow-circle bx-fade-right"></i>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-3">
-                    <i class="bx bx-server h4 text-primary"></i>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div>
-                      <h5 class="font-size-15"><a href="javascript: void(0);" class="text-dark">Back end Developer</a></h5>
-                      <span class="text-primary">2016 - 19</span>
-                    </div>
-                  </div>
-                </div>
-              </li>
-              <li class="event-list">
-                <div class="event-timeline-dot">
-                  <i class="bx bx-right-arrow-circle"></i>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-3">
-                    <i class="bx bx-code h4 text-primary"></i>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div>
-                      <h5 class="font-size-15"><a href="javascript: void(0);" class="text-dark">Front end Developer</a></h5>
-                      <span class="text-primary">2013 - 16</span>
-                    </div>
-                  </div>
-                </div>
-              </li>
-              <li class="event-list">
-                <div class="event-timeline-dot">
-                  <i class="bx bx-right-arrow-circle"></i>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-3">
-                    <i class="bx bx-edit h4 text-primary"></i>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div>
-                      <h5 class="font-size-15"><a href="javascript: void(0);" class="text-dark">UI /UX Designer</a></h5>
-                      <span class="text-primary">2011 - 13</span>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-        </div>
-      </div>
-      <!-- end card -->
     </div>
+  </ng-container>
+  
+  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
+    <div class="container-fluid" *ngIf="(user$ | async) as user">
+      <!-- Header Section -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm profile-header-card">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-4">
+                <div class="d-flex align-items-center gap-4">
+                  <div class="profile-avatar-wrapper">
+                    <img 
+                      *ngIf="user.avatar || user.image" 
+                      [src]="user.avatar || user.image" 
+                      [alt]="user.firstName || 'User'"
+                      class="profile-avatar"
+                      onerror="this.src='assets/images/logo.png'">
+                    <div 
+                      *ngIf="!user.avatar && !user.image" 
+                      class="profile-avatar-initials">
+                      {{ getInitials(user.firstName, user.lastName) }}
+                    </div>
+                  </div>
+                  <div>
+                    <h2 class="mb-2 fw-bold">
+                      {{ user.firstName || user.userFirstName || user.firstname || 'User' }}
+                      {{ user.lastName || user.userLastName || user.lastname || '' }}
+                    </h2>
+                    <div class="d-flex gap-2 align-items-center mb-2 flex-wrap">
+                      <span class="badge bg-primary">{{ user.type || 'USER' }}</span>
+                      <span class="badge" [ngClass]="user.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ user.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                      <span *ngIf="user.isEmailVerified" class="badge bg-info">
+                        <i class="ri-mail-check-line me-1"></i>{{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL_VERIFIED' | translate }}
+                      </span>
+                    </div>
+                    <p class="text-muted mb-0">
+                      <i class="ri-mail-line me-1"></i>{{ user.email || user.userEmail || 'N/A' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="col-xl-8">
-
+      <!-- Main Content -->
       <div class="row">
-        <div *ngFor="let stat of statData" class="col-md-4">
-          <app-stat [title]="stat.title" [value]="stat.value" [icon]="stat.icon"></app-stat>
+        <!-- Left Column - Personal Info -->
+        <div class="col-lg-8">
+          <!-- Personal Information -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-user-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.PERSONAL_INFO' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-user-3-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.FIRST_NAME' | translate }}
+                    </label>
+                    <div class="info-value">{{ user.firstName || user.userFirstName || user.firstname || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-user-3-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_NAME' | translate }}
+                    </label>
+                    <div class="info-value">{{ user.lastName || user.userLastName || user.lastname || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-at-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.USERNAME' | translate }}
+                    </label>
+                    <div class="info-value">{{ user.username || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-id-card-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.USER_CODE' | translate }}
+                    </label>
+                    <div class="info-value">{{ user.userCode || user.id || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-phone-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.CONTACT' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-mail-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL' | translate }}
+                    </label>
+                    <div class="info-value">
+                      {{ user.email || user.userEmail || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}
+                      <span *ngIf="user.isEmailVerified" class="badge bg-success ms-2">
+                        <i class="ri-check-line"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-phone-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.PHONE' | translate }}
+                    </label>
+                    <div class="info-value">
+                      {{ user.phoneNumber || user.userPhoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}
+                      <span *ngIf="user.isPhoneVerified" class="badge bg-success ms-2">
+                        <i class="ri-check-line"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Information -->
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-settings-3-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.ACCOUNT_INFO' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-calendar-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.CREATED_AT' | translate }}
+                    </label>
+                    <div class="info-value">
+                      {{ user.createdAt ? (user.createdAt | date: 'dd/MM/yyyy HH:mm') : ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-time-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.LAST_LOGIN' | translate }}
+                    </label>
+                    <div class="info-value">
+                      {{ user.lastLoginAt ? (user.lastLoginAt | date: 'dd/MM/yyyy HH:mm') : ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-global-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.LANGUAGE' | translate }}
+                    </label>
+                    <div class="info-value">{{ user.preferredLanguage || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <label class="info-label">
+                      <i class="ri-time-zone-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.TIMEZONE' | translate }}
+                    </label>
+                    <div class="info-value">{{ user.timezone || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title mb-4">Revenue</h4>
-          <apx-chart dir="ltr" class="apex-charts" [series]="revenueBarChart.series" [chart]="revenueBarChart.chart"
-            [xaxis]="revenueBarChart.xaxis" [colors]="revenueBarChart.colors" [yaxis]="revenueBarChart.yaxis"
-            [dataLabels]="revenueBarChart.dataLabels" [stroke]="revenueBarChart.stroke"
-            [plotOptions]="revenueBarChart.plotOptions" [fill]="revenueBarChart.fill">
-          </apx-chart>
-        </div>
-      </div>
+        <!-- Right Column - Roles & Permissions -->
+        <div class="col-lg-4">
+          <!-- Roles -->
+          <div class="card border-0 shadow-sm mb-4" *ngIf="user.roles && user.roles.length > 0">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-shield-user-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.ROLES' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let role of user.roles" class="role-badge">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <strong>{{ role.name }}</strong>
+                      <p class="text-muted small mb-0">{{ role.description || role.code }}</p>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary" *ngIf="role.isSystemRole">
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.SYSTEM_ROLE' | translate }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div class="card">
-        <div class="card-body">
-          <h4 class="card-title mb-4">My Projects</h4>
-          <div class="table-responsive">
-            <table class="table table-nowrap table-hover mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Projects</th>
-                  <th scope="col">Start Date</th>
-                  <th scope="col">Deadline</th>
-                  <th scope="col">Budget</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">1</th>
-                  <td>Skote admin UI</td>
-                  <td>2 Sep, 2019</td>
-                  <td>20 Oct, 2019</td>
-                  <td>$506</td>
-                </tr>
-
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Skote admin Logo</td>
-                  <td>1 Sep, 2019</td>
-                  <td>2 Sep, 2019</td>
-                  <td>$94</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Redesign - Landing page</td>
-                  <td>21 Sep, 2019</td>
-                  <td>29 Sep, 2019</td>
-                  <td>$156</td>
-                </tr>
-                <tr>
-                  <th scope="row">4</th>
-                  <td>App Landing UI</td>
-                  <td>29 Sep, 2019</td>
-                  <td>04 Oct, 2019</td>
-                  <td>$122</td>
-                </tr>
-                <tr>
-                  <th scope="row">5</th>
-                  <td>Blog Template</td>
-                  <td>05 Oct, 2019</td>
-                  <td>16 Oct, 2019</td>
-                  <td>$164</td>
-                </tr>
-                <tr>
-                  <th scope="row">6</th>
-                  <td>Redesign - Multipurpose Landing</td>
-                  <td>17 Oct, 2019</td>
-                  <td>05 Nov, 2019</td>
-                  <td>$192</td>
-                </tr>
-                <tr>
-                  <th scope="row">7</th>
-                  <td>Logo Branding</td>
-                  <td>04 Nov, 2019</td>
-                  <td>05 Nov, 2019</td>
-                  <td>$94</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Quick Stats -->
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <i class="ri-bar-chart-line me-2 text-primary"></i>
+                {{ 'MESSAGES.ADMIN.EMPLOYEE.STATISTICS' | translate }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-column gap-3">
+                <div class="stat-item">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-muted">
+                      <i class="ri-checkbox-circle-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.ACCOUNT_STATUS' | translate }}
+                    </span>
+                    <span class="badge" [ngClass]="user.isActive ? 'bg-success' : 'bg-danger'">
+                      {{ user.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-muted">
+                      <i class="ri-mail-check-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.EMAIL_STATUS' | translate }}
+                    </span>
+                    <span class="badge" [ngClass]="user.isEmailVerified ? 'bg-success' : 'bg-warning'">
+                      {{ user.isEmailVerified ? ('MESSAGES.ADMIN.EMPLOYEE.VERIFIED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_VERIFIED' | translate) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-muted">
+                      <i class="ri-phone-check-line me-2"></i>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.PHONE_STATUS' | translate }}
+                    </span>
+                    <span class="badge" [ngClass]="user.isPhoneVerified ? 'bg-success' : 'bg-warning'">
+                      {{ user.isPhoneVerified ? ('MESSAGES.ADMIN.EMPLOYEE.VERIFIED' | translate) : ('MESSAGES.ADMIN.EMPLOYEE.NOT_VERIFIED' | translate) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <!-- end row -->
-</div>
+
+    <!-- No User Found -->
+    <div class="container-fluid" *ngIf="!(user$ | async)">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="ri-user-line display-1 text-muted mb-3"></i>
+          <h4 class="text-muted">{{ 'MESSAGES.ADMIN.EMPLOYEE.NO_USER_DATA' | translate }}</h4>
+          <p class="text-muted">{{ 'MESSAGES.ADMIN.EMPLOYEE.PLEASE_LOGIN' | translate }}</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngSwitchCase="dataStateEnum.ERROR">
+    <div class="container-fluid">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="ri-error-warning-line display-1 text-danger mb-3"></i>
+          <h4 class="text-danger">{{ 'MESSAGES.ERRORS.LOAD' | translate }}</h4>
+          <p class="text-muted">{{ state.messages || 'MESSAGES.ERRORS.UNKNOWN' | translate }}</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>

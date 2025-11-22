@@ -7,8 +7,8 @@
             <div class="row">
               <div class="col-7">
                 <div class="text-primary p-4">
-                  <h5 class="text-primary">Lock screen</h5>
-                  <p>Enter your password to unlock the screen!</p>
+                  <h5 class="text-primary">{{ 'MESSAGES.HEADER.LOCK_SCREEN' | translate }}</h5>
+                  <p>{{ 'MESSAGES.ADMIN.EMPLOYEE.ENTER_PASSWORD_UNLOCK' | translate }}</p>
                 </div>
               </div>
               <div class="col-5 align-self-end">
@@ -18,7 +18,7 @@
           </div>
           <div class="card-body pt-0">
             <div>
-              <a routerLink="/dashboard">
+              <a routerLink="/admin">
                 <div class="avatar-md profile-user-wid mb-4">
                   <span class="avatar-title rounded-circle bg-light">
                     <img src="assets/images/logo.svg" alt="" class="rounded-circle" height="34">
@@ -27,29 +27,70 @@
               </a>
             </div>
             <div class="p-2">
-              <form>
-
-                <div class="user-thumb text-center mb-4">
-                  <img src="assets/images/users/avatar-1.jpg" class="rounded-circle img-thumbnail avatar-md"
-                    alt="thumbnail">
-                  <h5 class="font-size-15 mt-3">Maria Laird</h5>
+              <form [formGroup]="unlockForm" (ngSubmit)="onSubmit()">
+                <div class="user-thumb text-center mb-4" *ngIf="(user$ | async) as user">
+                  <img 
+                    *ngIf="user.avatar || user.image" 
+                    [src]="user.avatar || user.image" 
+                    [alt]="user.firstName || 'User'"
+                    class="rounded-circle img-thumbnail avatar-md"
+                    onerror="this.src='assets/images/logo.png'">
+                  <div 
+                    *ngIf="!user.avatar && !user.image" 
+                    class="rounded-circle img-thumbnail avatar-md d-inline-flex align-items-center justify-content-center bg-primary text-white"
+                    style="width: 80px; height: 80px; font-size: 2rem; font-weight: 600;">
+                    {{ getInitials(user.firstName, user.lastName) }}
+                  </div>
+                  <h5 class="font-size-15 mt-3">
+                    {{ user.firstName || user.userFirstName || user.firstname || 'User' }}
+                    {{ user.lastName || user.userLastName || user.lastname || '' }}
+                  </h5>
+                  <p class="text-muted small mb-0">{{ user.email || user.userEmail || '' }}</p>
                 </div>
+                <div class="user-thumb text-center mb-4" *ngIf="!(user$ | async)">
+                  <div class="rounded-circle img-thumbnail avatar-md d-inline-flex align-items-center justify-content-center bg-primary text-white"
+                    style="width: 80px; height: 80px; font-size: 2rem; font-weight: 600;">
+                    U
+                  </div>
+                  <h5 class="font-size-15 mt-3">{{ 'MESSAGES.ADMIN.EMPLOYEE.USER' | translate }}</h5>
+                </div>
+
                 <div class="mb-3">
-                  <label for="userpassword">Password</label>
-                  <input type="password" class="form-control" id="userpassword" placeholder="Enter password">
+                  <label for="userpassword">{{ 'MESSAGES.AUTH.FORM.PASSWORD' | translate }}</label>
+                  <input 
+                    type="password" 
+                    class="form-control" 
+                    id="userpassword" 
+                    formControlName="password"
+                    placeholder="{{ 'MESSAGES.ADMIN.EMPLOYEE.ENTER_PASSWORD' | translate }}"
+                    [ngClass]="{ 'is-invalid': submitted && f.password.errors }">
+                  <div *ngIf="submitted && f.password.errors" class="invalid-feedback">
+                    <span *ngIf="f.password.errors.required">{{ 'MESSAGES.ERRORS.REQUIRED' | translate }}</span>
+                  </div>
+                </div>
+
+                <div *ngIf="error" class="alert alert-danger" role="alert">
+                  {{ error }}
                 </div>
 
                 <div class="text-end">
-                    <button class="btn btn-primary w-md" type="submit">Unlock</button>
-                  </div>
-
+                  <button 
+                    class="btn btn-primary w-md" 
+                    type="submit"
+                    [disabled]="isLoading">
+                    <span *ngIf="!isLoading">{{ 'MESSAGES.ADMIN.EMPLOYEE.UNLOCK' | translate }}</span>
+                    <span *ngIf="isLoading" class="d-flex align-items-center justify-content-center">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      {{ 'MESSAGES.ADMIN.EMPLOYEE.UNLOCKING' | translate }}
+                    </span>
+                  </button>
+                </div>
               </form>
             </div>
-
           </div>
         </div>
         <div class="mt-5 text-center">
-          <p>Not you ? return <a routerLink="/account/login-1" class="fw-medium text-primary"> Sign In </a> </p>
+          <p>{{ 'MESSAGES.ADMIN.EMPLOYEE.NOT_YOU' | translate }} <a routerLink="/" class="fw-medium text-primary">{{ 'MESSAGES.AUTH.FORM.SIGN' | translate }}</a></p>
           <p>© {{year}} Skote. Crafted with <i class="mdi mdi-heart text-danger"></i> by Themesbrand</p>
         </div>
       </div>

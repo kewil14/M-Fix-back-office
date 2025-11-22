@@ -47,6 +47,11 @@ export class ShopsComponent implements OnInit, OnDestroy {
   pageSize: number = 10;
   sortBy: string = 'createdAt';
   sortDirection: string = 'desc';
+  
+  // Données complètes chargées une fois
+  allShops: ShopResponseDto[] = [];
+  filteredShops: ShopResponseDto[] = [];
+  displayedShops: ShopResponseDto[] = [];
 
   workspaceId: string | null = null;
   workspaces: WorkspaceDto[] = [];
@@ -89,15 +94,16 @@ export class ShopsComponent implements OnInit, OnDestroy {
     this.shopState$ = this.storeService.select(selectShopState).pipe();
     this.actionShops();
     
-    // S'abonner au state pour voir les changements
+    // S'abonner au state pour récupérer toutes les données
     this.subscriptions.push(
       this.shopState$.subscribe(state => {
-        console.log('ShopsComponent - ShopState changed:', {
-          dataState: state.dataState,
-          shopsCount: state.shops?.length || 0,
-          totalElements: state.totalElements,
-          messages: state.messages
-        });
+        if (state.dataState === DataStateEnum.SUCCESS && state.shops) {
+          // Stocker toutes les données une fois chargées
+          if (this.allShops.length === 0 || state.shops.length > this.allShops.length) {
+            this.allShops = [...state.shops];
+          }
+          this.applyFilters();
+        }
       })
     );
     
@@ -106,7 +112,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
       this.loadWorkspacesForSuperAdmin();
     } else if (this.workspaceId) {
       // Workspace admin ou workspaceId trouvé, charger directement les shops
-      this.loadShops();
+      this.loadAllShops();
     } else {
       console.warn('ShopsComponent - Cannot load shops: workspaceId is missing and user is not super admin');
       this.storeService.dispatch(erreurShops({ 
@@ -125,7 +131,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
           // Utiliser le premier workspace par défaut
           this.workspaceId = this.workspaces[0].id;
           console.log('ShopsComponent - Using first workspace:', this.workspaceId);
-          this.loadShops();
+          this.loadAllShops();
         } else {
           console.error('ShopsComponent - No workspaces found');
           this.storeService.dispatch(erreurShops({ 
@@ -149,7 +155,8 @@ export class ShopsComponent implements OnInit, OnDestroy {
     this.currentPage = 0;
     this.searchTerm = '';
     this.isActiveFilter = null;
-    this.loadShops();
+    this.allShops = [];
+    this.loadAllShops();
   }
 
   actionShops() {
@@ -164,7 +171,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
           {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: this.translateService.instant('MESSAGES.SUCCESS_ACTION.SHOP_CREATE'), dismissible: false}
         );
         setTimeout(() => {
-          this.loadShops();
+          this.loadAllShops();
         }, 1000);
       }),
       this.actionService.pipe(ofType(loadShops)).subscribe(() => {
@@ -172,56 +179,108 @@ export class ShopsComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadShops() {
+  // Charger toutes les données une seule fois au début
+  loadAllShops() {
     if (!this.workspaceId) {
       console.error('Cannot load shops: workspaceId is required');
       return;
     }
     const filters: ShopListRequestDto = {
-      search: this.searchTerm || undefined,
-      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
-      page: this.currentPage,
-      size: this.pageSize,
+      page: 0,
+      size: 10000, // Charger beaucoup de données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
     this.storeService.dispatch(findAllShops({ workspaceId: this.workspaceId, filters }));
   }
 
+  // Appliquer les filtres localement sans recharger
+  applyFilters(): void {
+    let filtered = [...this.allShops];
+    
+    // Filtre par recherche
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(shop => 
+        (shop.name || '').toLowerCase().includes(term) ||
+        (shop.email || '').toLowerCase().includes(term) ||
+        (shop.city || '').toLowerCase().includes(term) ||
+        (shop.workspaceName || '').toLowerCase().includes(term) ||
+        (shop.managerName || '').toLowerCase().includes(term)
+      );
+    }
+    
+    // Filtre par statut actif
+    if (this.isActiveFilter !== null) {
+      filtered = filtered.filter(shop => shop.isActive === this.isActiveFilter);
+    }
+    
+    // Trier
+    filtered = this.sortData(filtered);
+    
+    this.filteredShops = filtered;
+    this.applyPagination();
+  }
+
+  // Trier les données
+  sortData(data: ShopResponseDto[]): ShopResponseDto[] {
+    return [...data].sort((a, b) => {
+      let aVal: any = a[this.sortBy as keyof ShopResponseDto];
+      let bVal: any = b[this.sortBy as keyof ShopResponseDto];
+      
+      if (aVal === null || aVal === undefined) aVal = '';
+      if (bVal === null || bVal === undefined) bVal = '';
+      
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+      
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return this.sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
+
+  // Appliquer la pagination
+  applyPagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.displayedShops = this.filteredShops.slice(startIndex, endIndex);
+  }
+
   onSearchChange(): void {
     this.currentPage = 0;
-    this.loadShops();
+    this.applyFilters();
   }
 
   onFilterChange(): void {
     this.currentPage = 0;
-    this.loadShops();
+    this.applyFilters();
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.isActiveFilter = null;
     this.currentPage = 0;
-    this.loadShops();
+    this.applyFilters();
   }
 
   changePage(page: number): void {
     this.currentPage = page;
-    this.loadShops();
+    this.applyPagination();
   }
 
   changePageSize(size: number): void {
     this.pageSize = size;
     this.currentPage = 0;
-    this.loadShops();
+    this.applyPagination();
   }
 
-  getPageNumbers(state: ShopState): number[] {
-    if (!state || state.totalPages === 0) return [];
+  getPageNumbers(): number[] {
+    const totalPages = Math.ceil(this.filteredShops.length / this.pageSize);
+    if (totalPages === 0) return [];
     const pages: number[] = [];
-    const maxPages = Math.min(5, state.totalPages);
-    let startPage = Math.max(0, state.currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(state.totalPages - 1, startPage + maxPages - 1);
+    const maxPages = Math.min(5, totalPages);
+    let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(totalPages - 1, startPage + maxPages - 1);
     
     if (endPage - startPage < maxPages - 1) {
       startPage = Math.max(0, endPage - maxPages + 1);
@@ -231,6 +290,14 @@ export class ShopsComponent implements OnInit, OnDestroy {
       pages.push(i);
     }
     return pages;
+  }
+
+  getTotalElements(): number {
+    return this.filteredShops.length;
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.filteredShops.length / this.pageSize);
   }
 
   get Math() {
@@ -290,7 +357,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
         if (confirmed && this.workspaceId) {
           this.storeService.dispatch(deleteShop({ workspaceId: this.workspaceId, shopId: shop.id }));
           setTimeout(() => {
-            this.loadShops();
+            this.loadAllShops();
           }, 1000);
         }
       });
@@ -304,7 +371,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
     }
     this.storeService.dispatch(reactivateShop({ workspaceId: this.workspaceId, shopId: shop.id }));
     setTimeout(() => {
-      this.loadShops();
+      this.loadAllShops();
     }, 1000);
   }
 
@@ -397,7 +464,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
           });
           // Recharger les shops après import
           setTimeout(() => {
-            this.loadShops();
+            this.loadAllShops();
           }, 1000);
         } else {
           this.messages$.next({

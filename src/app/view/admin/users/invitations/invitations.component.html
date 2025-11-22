@@ -28,6 +28,7 @@
                 class="form-control" 
                 placeholder="Rechercher (email, nom...)"
                 [(ngModel)]="searchTerm"
+                (ngModelChange)="onSearch()"
                 (keyup.enter)="onSearch()">
             </div>
             <div class="col-md-2">

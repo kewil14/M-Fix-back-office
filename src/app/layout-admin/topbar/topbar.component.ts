@@ -14,6 +14,11 @@ import { logout } from 'src/app/core/shared/stores/authentification/authentifica
 import { Actions, ofType } from '@ngrx/effects';
 import { logoutOk } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { take } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { selectProfileState } from 'src/app/core/core.state';
+import { ProfileState } from 'src/app/core/shared/stores/profile/profile.state';
+import { setUserProfile } from 'src/app/core/shared/stores/profile/profile.actions';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-topbar',
@@ -33,6 +38,8 @@ export class TopbarComponent implements OnInit {
   valueset: any;
   currentTheme: ThemeMode = 'light';
   isDarkMode: boolean = false;
+  profileState$: Observable<ProfileState>;
+  user$: Observable<any>;
 
   constructor(
     @Inject(DOCUMENT) private document: any, 
@@ -65,6 +72,23 @@ export class TopbarComponent implements OnInit {
   ngOnInit() {
     this.openMobileMenu = false;
     this.element = document.documentElement;
+    
+    this.profileState$ = this.storeService.select(selectProfileState);
+    
+    this.user$ = this.profileState$.pipe(
+      map(state => {
+        if (state?.user && state.user && Object.keys(state.user).length > 0) {
+          return this.normalizeUser(state.user);
+        }
+        const localUser = this.localStorageService.currentUserValue;
+        if (localUser && Object.keys(localUser).length > 0) {
+          const normalizedUser = this.normalizeUser(localUser);
+          this.storeService.dispatch(setUserProfile({ user: normalizedUser }));
+          return normalizedUser;
+        }
+        return null;
+      })
+    );
 
     this.cookieValue = this._cookiesService.get('lang');
     const val = this.listLang.filter(x => x.lang === this.cookieValue);
@@ -75,13 +99,38 @@ export class TopbarComponent implements OnInit {
       this.flagvalue = val[0].flag;
     }
 
-    // Initialiser le thème
     this.currentTheme = this.themeService.currentTheme;
     this.isDarkMode = this.currentTheme === 'dark';
     this.themeService.theme$.subscribe(theme => {
       this.currentTheme = theme;
       this.isDarkMode = theme === 'dark';
     });
+  }
+
+  normalizeUser(user: any): any {
+    if (!user || Object.keys(user).length === 0) {
+      return null;
+    }
+    return {
+      id: user.id || user.userCode,
+      userCode: user.userCode || user.id,
+      email: user.email || user.userEmail,
+      userEmail: user.userEmail || user.email,
+      firstName: user.firstName || user.userFirstName || user.firstname,
+      lastName: user.lastName || user.userLastName || user.lastname,
+      userFirstName: user.userFirstName || user.firstName || user.firstname,
+      userLastName: user.userLastName || user.lastName || user.lastname,
+      firstname: user.firstName || user.userFirstName || user.firstname,
+      lastname: user.lastName || user.userLastName || user.lastname,
+      image: user.image || user.avatar,
+      avatar: user.avatar || user.image,
+      phoneNumber: user.phoneNumber || user.userPhoneNumber,
+      userPhoneNumber: user.userPhoneNumber || user.phoneNumber,
+      username: user.username,
+      isActive: user.isActive,
+      roles: user.roles,
+      type: user.type
+    };
   }
 
   setLanguage(text: string, lang: string, flag: string) {
@@ -115,12 +164,16 @@ export class TopbarComponent implements OnInit {
     this.mobileMenuButtonClicked.emit();
   }
 
-  /**
-   * Logout the user
-   */
   logout() {
-    // Dispatch l'action logout qui va appeler l'API, nettoyer le localStorage et rediriger
     this.storeService.dispatch(logout());
+  }
+
+  goToProfile() {
+    this.router.navigate(['/pages/contacts/profile']);
+  }
+
+  lockScreen() {
+    this.router.navigate(['/auth/lock-screen-1']);
   }
 
   /**

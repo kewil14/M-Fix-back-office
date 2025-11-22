@@ -78,6 +78,15 @@
             formControlName="country"
             [ngClass]="{'is-invalid': submitted && f.country.errors}">
             <option [value]="CountryEnum.FRANCE">France</option>
+            <option [value]="CountryEnum.BELGIUM">Belgique</option>
+            <option [value]="CountryEnum.SWITZERLAND">Suisse</option>
+            <option [value]="CountryEnum.CANADA">Canada</option>
+            <option [value]="CountryEnum.SPAIN">Espagne</option>
+            <option [value]="CountryEnum.ITALY">Italie</option>
+            <option [value]="CountryEnum.GERMANY">Allemagne</option>
+            <option [value]="CountryEnum.PORTUGAL">Portugal</option>
+            <option [value]="CountryEnum.UNITED_KINGDOM">Royaume-Uni</option>
+            <option [value]="CountryEnum.UNITED_STATES">États-Unis</option>
           </select>
           <div *ngIf="submitted && f.country.errors" class="invalid-feedback">
             <span *ngIf="f.country.errors.required">Pays requis</span>
@@ -93,6 +102,9 @@
             [ngClass]="{'is-invalid': submitted && f.userType.errors}">
             <option [value]="UserTypeEnum.CUSTOMER">Client</option>
             <option [value]="UserTypeEnum.EMPLOYEE">Employé</option>
+            <option [value]="UserTypeEnum.SHOP_MANAGER">Manager de Boutique</option>
+            <option [value]="UserTypeEnum.TECHNICIAN">Technicien</option>
+            <option [value]="UserTypeEnum.DELIVERER">Livreur</option>
           </select>
           <div *ngIf="submitted && f.userType.errors" class="invalid-feedback">
             <span *ngIf="f.userType.errors.required">Type d'utilisateur requis</span>

@@ -1,6 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { AdminDashboardComponent } from './dashboard/admin-dashboard/admin-dashboard.component';
+import { WorkspaceAdminDashboardComponent } from './dashboard/workspace-admin-dashboard/workspace-admin-dashboard.component';
+import { ShopManagerDashboardComponent } from './dashboard/shop-manager-dashboard/shop-manager-dashboard.component';
+import { TechnicianDashboardComponent } from './dashboard/technician-dashboard/technician-dashboard.component';
+import { DelivererDashboardComponent } from './dashboard/deliverer-dashboard/deliverer-dashboard.component';
 import { CustomersComponent } from './customers/customers.component';
 import { LoadCustomerGuard } from 'src/app/core/shared/guards/load-customers.guard';
 import { LoadGrilleGuard } from 'src/app/core/shared/guards/load-grille.guard';
@@ -26,6 +31,36 @@ const routes: Routes = [
     path: '', 
     component: DashboardComponent,
     canActivate: [PermissionGuard]
+  },
+  {
+    path: 'admin-dashboard',
+    component: AdminDashboardComponent,
+    canActivate: [PermissionGuard],
+    data: { userTypes: ['ADMIN', 'SUPER_ADMIN'] }
+  },
+  {
+    path: 'workspace-admin-dashboard',
+    component: WorkspaceAdminDashboardComponent,
+    canActivate: [PermissionGuard],
+    data: { userTypes: ['WORKSPACE_ADMIN'] }
+  },
+  {
+    path: 'shop-manager-dashboard',
+    component: ShopManagerDashboardComponent,
+    canActivate: [PermissionGuard],
+    data: { userTypes: ['SHOP_MANAGER'] }
+  },
+  {
+    path: 'technician-dashboard',
+    component: TechnicianDashboardComponent,
+    canActivate: [PermissionGuard],
+    data: { userTypes: ['TECHNICIAN'] }
+  },
+  {
+    path: 'deliverer-dashboard',
+    component: DelivererDashboardComponent,
+    canActivate: [PermissionGuard],
+    data: { userTypes: ['DELIVERER'] }
   },
   {
     path: 'customers',

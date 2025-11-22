@@ -131,9 +131,13 @@ export class LoginComponent implements OnInit {
                   redirectUrl = APP_LINK.LINK_DASHBOARD_SHOP_MANAGER;
                   break;
                 case UserTypeEnum.EMPLOYEE:
-                case UserTypeEnum.TECHNICIAN:
-                case UserTypeEnum.DELIVERER:
                   redirectUrl = APP_LINK.LINK_DASHBOARD_EMPLOYEE;
+                  break;
+                case UserTypeEnum.TECHNICIAN:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_TECHNICIAN;
+                  break;
+                case UserTypeEnum.DELIVERER:
+                  redirectUrl = APP_LINK.LINK_DASHBOARD_DELIVERER;
                   break;
                 case UserTypeEnum.CUSTOMER:
                   redirectUrl = APP_LINK.LINK_DASHBOARD_USER || "/";

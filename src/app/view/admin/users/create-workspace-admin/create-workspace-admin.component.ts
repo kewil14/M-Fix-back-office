@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { selectauthentificationState, selectAdminState } from 'src/app/core/core.state';
+import { selectauthentificationState, selectRoleState } from 'src/app/core/core.state';
 import { AuthentificationState } from 'src/app/core/shared/stores/authentification/authentification.state';
 import { 
   createWorkspaceWithAdmin, 
@@ -14,11 +14,8 @@ import {
 } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { CreateWorkspaceWithAdminDto } from 'src/app/core/shared/dtos/create-workspace-admin-dto.modal';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { AdminService } from 'src/app/core/shared/services/admin.service';
-import { AdminListRequestDto } from 'src/app/core/shared/dtos/admin-list-request-dto';
-import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
-import { findAllAdmins } from 'src/app/core/shared/stores/admin/admin.actions';
-import { AdminState } from 'src/app/core/shared/stores/admin/admin.state';
+import { findAvailableRoles } from 'src/app/core/shared/stores/role/role.actions';
+import { RoleState } from 'src/app/core/shared/stores/role/role.state';
 
 @Component({
   selector: 'app-create-workspace-admin',
@@ -43,27 +40,24 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
   workspaceTypes = ['REPAIR_SHOP', 'RETAIL', 'SERVICE'];
   subscriptionPlans = ['FREE', 'BASIC', 'PREMIUM'];
   
-  adminState$!: Observable<AdminState>;
-  admins: EmployeeResponseDto[] = [];
-  isLoadingAdmins: boolean = false;
-  selectedAdmin: EmployeeResponseDto | null = null;
+  roleState$!: Observable<RoleState>;
+  isLoadingRoles: boolean = false;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
     private storeService: Store,
     private actionService: Actions,
     public modalService: BsModalService,
-    public bsModalRef: BsModalRef,
-    private adminService: AdminService
+    public bsModalRef: BsModalRef
   ) {
     this.modalRef = bsModalRef;
   }
 
   ngOnInit() {
     this.authentificationState$ = this.storeService.select(selectauthentificationState).pipe();
-    this.adminState$ = this.storeService.select(selectAdminState).pipe();
+    this.roleState$ = this.storeService.select(selectRoleState).pipe();
     this.initForm();
-    this.loadAdmins();
+    this.loadRoles();
     this.actionWorkspaceAdmin();
   }
 
@@ -76,44 +70,28 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
       workspaceName: ['', [Validators.required]],
       workspaceType: ['REPAIR_SHOP', [Validators.required]],
       subscriptionPlan: ['PREMIUM', [Validators.required]],
-      adminId: ['', [Validators.required]]
+      adminEmail: ['', [Validators.required, Validators.email]],
+      adminFirstName: ['', [Validators.required]],
+      adminLastName: ['', [Validators.required]],
+      adminRoleIds: [[], [Validators.required]]
     });
   }
 
-  loadAdmins() {
-    this.isLoadingAdmins = true;
-    const filters: AdminListRequestDto = {
-      isActive: true,
-      isSuperAdmin: false, // Exclure les super admins
-      page: 0,
-      size: 1000,
-      sortBy: 'firstName',
-      sortDirection: 'asc'
-    };
-    
-    this.storeService.dispatch(findAllAdmins({ filters }));
+  loadRoles() {
+    this.isLoadingRoles = true;
+    this.storeService.dispatch(findAvailableRoles({}));
     
     this.subscriptions.push(
-      this.adminState$.subscribe(state => {
+      this.roleState$.subscribe(state => {
         if (state.dataState === DataStateEnum.SUCCESS) {
-          this.admins = state.admins;
-          this.isLoadingAdmins = false;
+          this.isLoadingRoles = false;
         } else if (state.dataState === DataStateEnum.LOADING) {
-          this.isLoadingAdmins = true;
+          this.isLoadingRoles = true;
         } else if (state.dataState === DataStateEnum.ERROR) {
-          this.isLoadingAdmins = false;
+          this.isLoadingRoles = false;
         }
       })
     );
-  }
-
-  onAdminChange(adminId: string) {
-    this.selectedAdmin = this.admins.find(admin => admin.id === adminId) || null;
-  }
-
-  getAdminDisplayName(admin: EmployeeResponseDto): string {
-    const name = `${admin.firstName || ''} ${admin.lastName || ''}`.trim();
-    return name ? `${name} (${admin.email})` : admin.email;
   }
 
   get f() { return this.workspaceAdminForm.controls; }
@@ -149,17 +127,7 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const selectedAdminId = this.workspaceAdminForm.value.adminId;
-    const selectedAdmin = this.admins.find(admin => admin.id === selectedAdminId);
-    
-    if (!selectedAdmin) {
-      this.messages$.next(
-        {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: 'Admin sélectionné introuvable', dismissible: false}
-      );
-      return;
-    }
-
-    // Envoyer les informations de l'admin sélectionné au format attendu par l'endpoint
+    // Créer le DTO avec les informations saisies
     const createWorkspaceWithAdminDto: CreateWorkspaceWithAdminDto = {
       workspace: {
         name: this.workspaceAdminForm.value.workspaceName,
@@ -167,15 +135,14 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
         subscriptionPlan: this.workspaceAdminForm.value.subscriptionPlan
       },
       admin: {
-        email: selectedAdmin.email,
-        firstName: selectedAdmin.firstName,
-        lastName: selectedAdmin.lastName,
-        roleIds: selectedAdmin.roles?.map(role => role.id || '') || []
-      },
-      adminId: selectedAdminId  // Garder aussi l'ID pour référence
+        email: this.workspaceAdminForm.value.adminEmail,
+        firstName: this.workspaceAdminForm.value.adminFirstName,
+        lastName: this.workspaceAdminForm.value.adminLastName,
+        roleIds: this.workspaceAdminForm.value.adminRoleIds || []
+      }
     };
 
-    console.log('Création Workspace avec Admin existant:', createWorkspaceWithAdminDto);
+    console.log('Création Workspace avec nouvel Admin:', createWorkspaceWithAdminDto);
     this.storeService.dispatch(createWorkspaceWithAdmin({createWorkspaceWithAdminDto}));
   }
 

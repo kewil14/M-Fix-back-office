@@ -45,12 +45,16 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   pageSize: number = 10;
   sortBy: string = 'createdAt';
   sortDirection: string = 'desc';
+  
+  // Données complètes chargées une fois
+  allEmployees: EmployeeResponseDto[] = [];
+  filteredEmployees: EmployeeResponseDto[] = [];
+  displayedEmployees: EmployeeResponseDto[] = [];
 
   // Options de filtres
   userTypeOptions = [
     { value: '', label: 'MESSAGES.ADMIN.COMMON.ALL_TYPES' },
     { value: 'EMPLOYEE', label: 'MESSAGES.ADMIN.COMMON.EMPLOYEE' },
-    { value: 'SHOP_MANAGER', label: 'MESSAGES.ADMIN.COMMON.SHOP_MANAGER' },
     { value: 'TECHNICIAN', label: 'MESSAGES.ADMIN.COMMON.TECHNICIAN' },
     { value: 'DELIVERER', label: 'MESSAGES.ADMIN.COMMON.DELIVERER' }
   ];
@@ -71,7 +75,22 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Employés', active: true }];
     this.employeeState$ = this.storeService.select(selectEmployeeState).pipe();
     this.actionEmployees();
-    this.loadEmployees();
+    
+    // S'abonner au state pour récupérer toutes les données
+    this.subscriptions.push(
+      this.employeeState$.subscribe(state => {
+        if (state.dataState === DataStateEnum.SUCCESS && state.employees) {
+          // Stocker toutes les données une fois chargées
+          if (this.allEmployees.length === 0 || state.employees.length > this.allEmployees.length) {
+            this.allEmployees = [...state.employees];
+          }
+          this.applyFilters();
+        }
+      })
+    );
+    
+    // Charger toutes les données au début (sans filtres, grande taille)
+    this.loadAllEmployees();
   }
 
   actionEmployees() {
@@ -86,7 +105,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
           {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Employé créé avec succès!', dismissible: false}
         );
         setTimeout(() => {
-          this.loadEmployees();
+          this.loadAllEmployees();
         }, 1000);
       }),
       this.actionService.pipe(ofType(loadEmployees)).subscribe(() => {
@@ -94,28 +113,88 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadEmployees() {
+  // Charger toutes les données une seule fois au début
+  loadAllEmployees() {
     const filters: EmployeeListRequestDto = {
-      search: this.searchTerm || undefined,
-      department: this.departmentFilter || undefined,
-      userType: this.userTypeFilter || undefined,
-      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
-      page: this.currentPage,
-      size: this.pageSize,
+      page: 0,
+      size: 10000, // Charger beaucoup de données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
     this.storeService.dispatch(findAllEmployees({ filters }));
   }
 
+  // Appliquer les filtres localement sans recharger
+  applyFilters(): void {
+    let filtered = [...this.allEmployees];
+    
+    // Filtre par recherche
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(emp => 
+        (emp.firstName || '').toLowerCase().includes(term) ||
+        (emp.lastName || '').toLowerCase().includes(term) ||
+        (emp.email || '').toLowerCase().includes(term) ||
+        (emp.username || '').toLowerCase().includes(term)
+      );
+    }
+    
+    // Filtre par type
+    if (this.userTypeFilter) {
+      filtered = filtered.filter(emp => emp.type === this.userTypeFilter);
+    }
+    
+    // Filtre par département (workspaceId)
+    if (this.departmentFilter) {
+      filtered = filtered.filter(emp => 
+        (emp.workspaceId || '').toLowerCase().includes(this.departmentFilter.toLowerCase())
+      );
+    }
+    
+    // Filtre par statut actif
+    if (this.isActiveFilter !== null) {
+      filtered = filtered.filter(emp => emp.isActive === this.isActiveFilter);
+    }
+    
+    // Trier
+    filtered = this.sortData(filtered);
+    
+    this.filteredEmployees = filtered;
+    this.applyPagination();
+  }
+
+  // Trier les données
+  sortData(data: EmployeeResponseDto[]): EmployeeResponseDto[] {
+    return [...data].sort((a, b) => {
+      let aVal: any = a[this.sortBy as keyof EmployeeResponseDto];
+      let bVal: any = b[this.sortBy as keyof EmployeeResponseDto];
+      
+      if (aVal === null || aVal === undefined) aVal = '';
+      if (bVal === null || bVal === undefined) bVal = '';
+      
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+      
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return this.sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
+
+  // Appliquer la pagination
+  applyPagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.displayedEmployees = this.filteredEmployees.slice(startIndex, endIndex);
+  }
+
   onSearchChange(): void {
     this.currentPage = 0;
-    this.loadEmployees();
+    this.applyFilters();
   }
 
   onFilterChange(): void {
     this.currentPage = 0;
-    this.loadEmployees();
+    this.applyFilters();
   }
 
   resetFilters(): void {
@@ -124,26 +203,26 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     this.userTypeFilter = '';
     this.isActiveFilter = null;
     this.currentPage = 0;
-    this.loadEmployees();
+    this.applyFilters();
   }
 
   changePage(page: number): void {
     this.currentPage = page;
-    this.loadEmployees();
+    this.applyPagination();
   }
 
   changePageSize(size: number): void {
     this.pageSize = size;
     this.currentPage = 0;
-    this.loadEmployees();
+    this.applyPagination();
   }
 
-  getPageNumbers(state: EmployeeState): number[] {
-    if (!state || state.totalPages === 0) return [];
+  getPageNumbers(): number[] {
+    const totalPages = Math.ceil(this.filteredEmployees.length / this.pageSize);
+    if (totalPages === 0) return [];
     const pages: number[] = [];
-    const totalPages = state.totalPages;
     const maxPages = Math.min(5, totalPages);
-    let startPage = Math.max(0, state.currentPage - Math.floor(maxPages / 2));
+    let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
     let endPage = Math.min(totalPages - 1, startPage + maxPages - 1);
     
     if (endPage - startPage < maxPages - 1) {
@@ -154,6 +233,14 @@ export class EmployeesComponent implements OnInit, OnDestroy {
       pages.push(i);
     }
     return pages;
+  }
+
+  getTotalElements(): number {
+    return this.filteredEmployees.length;
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.filteredEmployees.length / this.pageSize);
   }
 
   get Math() {
@@ -197,7 +284,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (confirmed) {
           this.storeService.dispatch(deleteEmployee({ employeeId: employee.id }));
           setTimeout(() => {
-            this.loadEmployees();
+            this.loadAllEmployees();
           }, 1000);
         }
       });
@@ -207,7 +294,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   onReactivate(employee: EmployeeResponseDto): void {
     this.storeService.dispatch(reactivateEmployee({ employeeId: employee.id }));
     setTimeout(() => {
-      this.loadEmployees();
+      this.loadAllEmployees();
     }, 1000);
   }
 }

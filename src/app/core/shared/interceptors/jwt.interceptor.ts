@@ -13,15 +13,7 @@ export class JwtInterceptor implements HttpInterceptor {
     private excludedUrls: string[] = [
         '/api/auth/login',
         '/api/authentication/login',
-        '/api/initialisation/check-system-state',
-        '/api/authentication/createAccount',
-        // Endpoints d'activation de compte (publics - utilisés par les utilisateurs non authentifiés)
         '/api/auth/invitations/activate',
-        // Endpoints publics qui ne nécessitent pas d'authentification
-        '/api/avis',
-        '/api/devis/findAll',
-        '/api/users/all-with-filters',
-        '/api/demands/create',
     ];
 
     constructor(

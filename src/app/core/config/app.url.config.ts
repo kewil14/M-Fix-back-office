@@ -15,10 +15,12 @@ export const APP_LINK = {
   LINK_AUTH_LOGIN: '/auth',
   LINK_AUTH_RESET_PASSWORD: '/auth/reset-password',
   LINK_AUTH_NEW_PASSWORD: '/auth/new-password',
-  LINK_DASHBOARD_ADMIN: '/admin',
+  LINK_DASHBOARD_ADMIN: '/admin/admin-dashboard',
   LINK_DASHBOARD_USER: '/user',
-  LINK_DASHBOARD_WORKSPACE_ADMIN: '/admin', // Workspace admin utilise le dashboard admin
-  LINK_DASHBOARD_SHOP_MANAGER: '/admin', // Shop manager utilise le dashboard admin
-  LINK_DASHBOARD_EMPLOYEE: '/admin', // Employee utilise le dashboard admin
+  LINK_DASHBOARD_WORKSPACE_ADMIN: '/admin/workspace-admin-dashboard',
+  LINK_DASHBOARD_SHOP_MANAGER: '/admin/shop-manager-dashboard',
+  LINK_DASHBOARD_EMPLOYEE: '/admin/technician-dashboard',
+  LINK_DASHBOARD_TECHNICIAN: '/admin/technician-dashboard',
+  LINK_DASHBOARD_DELIVERER: '/admin/deliverer-dashboard',
   LINK_LISTE_AUTH_ADMIN: '/auth/sign-up-admin'
 }

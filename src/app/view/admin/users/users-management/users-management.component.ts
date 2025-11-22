@@ -44,6 +44,13 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   sortBy: string = 'createdAt';
   sortDirection: string = 'desc';
 
+  // Frontend filtering
+  allUsers: EmployeeResponseDto[] = [];
+  filteredUsers: EmployeeResponseDto[] = [];
+  paginatedUsers: EmployeeResponseDto[] = [];
+  totalElements: number = 0;
+  totalPages: number = 0;
+
   constructor(
     private modalService: BsModalService,
     private storeService: Store,
@@ -59,6 +66,17 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Utilisateurs', active: true }];
     this.adminState$ = this.storeService.select(selectAdminState).pipe();
     this.actionUsers();
+    
+    // Écouter les changements du state pour mettre à jour les données
+    this.subscriptions.push(
+      this.adminState$.subscribe(state => {
+        if (state && state.dataState === DataStateEnum.SUCCESS && state.admins) {
+          this.allUsers = this.getFilteredUsers(state.admins);
+          this.applyFilters();
+        }
+      })
+    );
+    
     this.loadUsers();
   }
 
@@ -83,16 +101,45 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   }
 
   loadUsers() {
+    // Charger toutes les données une fois
     const filters: AdminListRequestDto = {
-      search: this.searchTerm || undefined,
-      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
+      search: undefined,
+      isActive: undefined,
       isSuperAdmin: undefined,
-      page: this.currentPage,
-      size: this.pageSize,
+      page: 0,
+      size: 10000, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
     this.storeService.dispatch(findAllAdmins({ filters }));
+  }
+
+  applyFilters(): void {
+    // Filtrer les données localement
+    this.filteredUsers = this.allUsers.filter(user => {
+      // Filtre de recherche
+      const matchesSearch = !this.searchTerm || 
+        (user.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         user.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         user.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         user.username?.toLowerCase().includes(this.searchTerm.toLowerCase()));
+
+      // Filtre de statut
+      const matchesStatus = this.isActiveFilter === null || user.isActive === this.isActiveFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+
+    // Appliquer la pagination
+    this.applyPagination();
+  }
+
+  applyPagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedUsers = this.filteredUsers.slice(startIndex, endIndex);
+    this.totalElements = this.filteredUsers.length;
+    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
   }
 
   isAdminOrSuperAdmin(user: EmployeeResponseDto): boolean {
@@ -118,28 +165,45 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
   onSearchChange(): void {
     this.currentPage = 0;
-    this.loadUsers();
+    this.applyFilters();
   }
 
   onFilterChange(): void {
     this.currentPage = 0;
-    this.loadUsers();
+    this.applyFilters();
   }
 
   changePage(page: number): void {
     this.currentPage = page;
-    this.loadUsers();
+    this.applyFilters();
   }
 
   changePageSize(size: number): void {
     this.pageSize = size;
     this.currentPage = 0;
-    this.loadUsers();
+    this.applyFilters();
   }
 
   getFilteredUsersList(state: AdminState): EmployeeResponseDto[] {
-    if (!state || !state.admins) return [];
-    return this.getFilteredUsers(state.admins);
+    // Cette méthode n'est plus utilisée, on utilise paginatedUsers maintenant
+    return this.paginatedUsers;
+  }
+
+  getPageNumbersLocal(): number[] {
+    if (this.totalPages === 0) return [];
+    const pages: number[] = [];
+    const maxPages = Math.min(5, this.totalPages);
+    let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(this.totalPages - 1, startPage + maxPages - 1);
+    
+    if (endPage - startPage < maxPages - 1) {
+      startPage = Math.max(0, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   getPageNumbers(state: AdminState): number[] {

@@ -47,6 +47,13 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   sortBy: string = 'assignedAt';
   sortDirection: string = 'desc';
 
+  // Frontend filtering
+  allWorkspaces: EmployeeResponseDto[] = [];
+  filteredWorkspaces: EmployeeResponseDto[] = [];
+  paginatedWorkspaces: EmployeeResponseDto[] = [];
+  totalElements: number = 0;
+  totalPages: number = 0;
+
   constructor(
     private modalService: BsModalService,
     private storeService: Store,
@@ -66,6 +73,16 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     this.workspaceAdminState$ = this.storeService.select(selectWorkspaceAdminState).pipe();
     this.actionWorkspaces();
     this.loadWorkspaces();
+    
+    // Écouter les changements du state pour mettre à jour les données
+    this.subscriptions.push(
+      this.workspaceAdminState$.subscribe(state => {
+        if (state && state.dataState === DataStateEnum.SUCCESS && state.workspaceAdmins) {
+          this.allWorkspaces = state.workspaceAdmins;
+          this.applyFilters();
+        }
+      })
+    );
   }
 
   actionWorkspaces() {
@@ -99,43 +116,72 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   }
 
   loadWorkspaces() {
+    // Charger toutes les données une fois
     const filters: WorkspaceAdminListRequestDto = {
-      search: this.searchTerm || undefined,
-      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined,
-      page: this.currentPage,
-      size: this.pageSize,
+      search: undefined,
+      isActive: undefined,
+      page: 0,
+      size: 10000, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
     this.storeService.dispatch(findAllWorkspaceAdmins({ filters }));
   }
 
+  applyFilters(): void {
+    // Filtrer les données localement
+    this.filteredWorkspaces = this.allWorkspaces.filter(workspace => {
+      // Filtre de recherche
+      const matchesSearch = !this.searchTerm || 
+        (workspace.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         workspace.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         workspace.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+         workspace.username?.toLowerCase().includes(this.searchTerm.toLowerCase()));
+
+      // Filtre de statut
+      const matchesStatus = this.isActiveFilter === null || workspace.isActive === this.isActiveFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+
+    // Appliquer la pagination
+    this.applyPagination();
+  }
+
+  applyPagination(): void {
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedWorkspaces = this.filteredWorkspaces.slice(startIndex, endIndex);
+    this.totalElements = this.filteredWorkspaces.length;
+    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
+  }
+
   onSearchChange(): void {
     this.currentPage = 0;
-    this.loadWorkspaces();
+    this.applyFilters();
   }
 
   onFilterChange(): void {
     this.currentPage = 0;
-    this.loadWorkspaces();
+    this.applyFilters();
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.isActiveFilter = null;
     this.currentPage = 0;
-    this.loadWorkspaces();
+    this.applyFilters();
   }
 
   changePage(page: number): void {
     this.currentPage = page;
-    this.loadWorkspaces();
+    this.applyFilters();
   }
 
   changePageSize(size: number): void {
     this.pageSize = size;
     this.currentPage = 0;
-    this.loadWorkspaces();
+    this.applyFilters();
   }
 
   getPageNumbers(state: WorkspaceAdminState): number[] {
@@ -144,6 +190,23 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     const maxPages = Math.min(5, state.totalPages);
     let startPage = Math.max(0, state.currentPage - Math.floor(maxPages / 2));
     let endPage = Math.min(state.totalPages - 1, startPage + maxPages - 1);
+    
+    if (endPage - startPage < maxPages - 1) {
+      startPage = Math.max(0, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  getPageNumbersLocal(): number[] {
+    if (this.totalPages === 0) return [];
+    const pages: number[] = [];
+    const maxPages = Math.min(5, this.totalPages);
+    let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
+    let endPage = Math.min(this.totalPages - 1, startPage + maxPages - 1);
     
     if (endPage - startPage < maxPages - 1) {
       startPage = Math.max(0, endPage - maxPages + 1);

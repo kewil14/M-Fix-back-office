@@ -18,10 +18,15 @@ const routes: Routes = [
     component: LayoutAdminComponent,
     loadChildren: () => import('./view/admin/admin.module').then(m => m.AdminModule)
   },
-  // Routes pour les pages d'erreur (accessibles depuis n'importe où)
+  // Routes pour les pages (contacts, etc.)
   {
     path: 'pages',
-    loadChildren: () => import('./pages/utility/utility.module').then(m => m.UtilityModule)
+    loadChildren: () => import('./pages/pages.module').then(m => m.PagesModule)
+  },
+  // Route pour le lock screen
+  {
+    path: 'auth',
+    loadChildren: () => import('./extrapages/extrapages.module').then(m => m.ExtrapagesModule)
   },
   // Routes directes pour les pages d'erreur
   {

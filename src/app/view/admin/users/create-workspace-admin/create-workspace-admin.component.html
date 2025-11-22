@@ -38,41 +38,78 @@
     </div>
 
     <hr class="my-4">
-    <h6 class="mb-3">{{ 'MESSAGES.ADMIN.WORKSPACE.SELECT_ADMIN' | translate }}</h6>
+    <h6 class="mb-3">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_INFO' | translate }}</h6>
     <div class="row">
       <div class="col-12">
         <div class="mb-3">
-          <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN' | translate }} <span class="text-danger">*</span></label>
-          <select class="form-control" 
-                  formControlName="adminId"
-                  (change)="onAdminChange(workspaceAdminForm.value.adminId)"
-                  [ngClass]="{'is-invalid': submitted && f.adminId.errors}"
-                  [disabled]="isLoadingAdmins">
-            <option value="">{{ 'MESSAGES.ADMIN.WORKSPACE.SELECT_ADMIN_PLACEHOLDER' | translate }}</option>
-            <option *ngFor="let admin of admins" [value]="admin.id">
-              {{ getAdminDisplayName(admin) }}
-            </option>
-          </select>
-          <div *ngIf="submitted && f.adminId.errors" class="invalid-feedback">
-            <span *ngIf="f.adminId.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_REQUIRED' | translate }}</span>
-          </div>
-          <div *ngIf="isLoadingAdmins" class="form-text">
-            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-            {{ 'MESSAGES.ADMIN.WORKSPACE.LOADING_ADMINS' | translate }}
+          <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_EMAIL' | translate }} <span class="text-danger">*</span></label>
+          <input class="form-control" 
+                 type="email" 
+                 [placeholder]="'MESSAGES.ADMIN.WORKSPACE.ADMIN_EMAIL_PLACEHOLDER' | translate"
+                 formControlName="adminEmail"
+                 [ngClass]="{'is-invalid': submitted && f.adminEmail.errors}" />
+          <div *ngIf="submitted && f.adminEmail.errors" class="invalid-feedback">
+            <span *ngIf="f.adminEmail.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.EMAIL_REQUIRED' | translate }}</span>
+            <span *ngIf="f.adminEmail.errors.email">{{ 'MESSAGES.ADMIN.WORKSPACE.EMAIL_INVALID' | translate }}</span>
           </div>
         </div>
 
-        <div *ngIf="selectedAdmin" class="alert alert-info">
-          <strong>{{ 'MESSAGES.ADMIN.WORKSPACE.SELECTED_ADMIN' | translate }}</strong><br>
-          <small>
-            <strong>{{ 'MESSAGES.ADMIN.WORKSPACE.NAME_LABEL' | translate }}</strong> {{ selectedAdmin.firstName }} {{ selectedAdmin.lastName }}<br>
-            <strong>{{ 'MESSAGES.ADMIN.WORKSPACE.EMAIL_LABEL' | translate }}</strong> {{ selectedAdmin.email }}<br>
-            <strong>{{ 'MESSAGES.ADMIN.WORKSPACE.PHONE_LABEL' | translate }}</strong> {{ selectedAdmin.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}
+        <div class="mb-3">
+          <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_FIRST_NAME' | translate }} <span class="text-danger">*</span></label>
+          <input class="form-control" 
+                 type="text" 
+                 [placeholder]="'MESSAGES.ADMIN.WORKSPACE.ADMIN_FIRST_NAME_PLACEHOLDER' | translate"
+                 formControlName="adminFirstName"
+                 [ngClass]="{'is-invalid': submitted && f.adminFirstName.errors}" />
+          <div *ngIf="submitted && f.adminFirstName.errors" class="invalid-feedback">
+            <span *ngIf="f.adminFirstName.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.FIRST_NAME_REQUIRED' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_LAST_NAME' | translate }} <span class="text-danger">*</span></label>
+          <input class="form-control" 
+                 type="text" 
+                 [placeholder]="'MESSAGES.ADMIN.WORKSPACE.ADMIN_LAST_NAME_PLACEHOLDER' | translate"
+                 formControlName="adminLastName"
+                 [ngClass]="{'is-invalid': submitted && f.adminLastName.errors}" />
+          <div *ngIf="submitted && f.adminLastName.errors" class="invalid-feedback">
+            <span *ngIf="f.adminLastName.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.LAST_NAME_REQUIRED' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_ROLES' | translate }} <span class="text-danger">*</span></label>
+          <ng-select 
+            [items]="(roleState$|async)?.rules || []" 
+            [multiple]="true" 
+            bindLabel="name" 
+            bindValue="id" 
+            formControlName="adminRoleIds"
+            [placeholder]="'MESSAGES.ADMIN.WORKSPACE.SELECT_ROLES_PLACEHOLDER' | translate"
+            [clearable]="true"
+            [searchable]="true"
+            [closeOnSelect]="false"
+            [loading]="isLoadingRoles"
+            [ngClass]="{'is-invalid': submitted && f.adminRoleIds.errors}">
+            <ng-template ng-label-tmp let-item="item">
+              <span class="badge bg-primary me-1">{{item.name || item.roleName}}</span>
+            </ng-template>
+          </ng-select>
+          <div *ngIf="submitted && f.adminRoleIds.errors" class="invalid-feedback">
+            <span *ngIf="f.adminRoleIds.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.ROLES_REQUIRED' | translate }}</span>
+          </div>
+          <small class="form-text text-muted">
+            <i class="ri-information-line me-1"></i>
+            {{ 'MESSAGES.ADMIN.WORKSPACE.ROLES_HELP' | translate }}
           </small>
         </div>
 
-        <div class="alert alert-warning">
-          <small>{{ 'MESSAGES.ADMIN.WORKSPACE.ROLLBACK_WARNING' | translate }}</small>
+        <div class="alert alert-info">
+          <small>
+            <i class="ri-information-line me-1"></i>
+            {{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_CREATE_INFO' | translate }}
+          </small>
         </div>
       </div>
     </div>

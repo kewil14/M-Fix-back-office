@@ -85,7 +85,23 @@
         "NO_WORKSPACE_FOUND": "Aucun workspace trouvé",
         "DELETE_TITLE": "Désactiver le workspace",
         "DELETE_MESSAGE": "Êtes-vous sûr de vouloir désactiver ce workspace ? Cela désactivera également tous les employés du workspace.",
-        "DELETE_BUTTON": "Désactiver"
+        "DELETE_BUTTON": "Désactiver",
+        "ADMIN_INFO": "Informations de l'administrateur",
+        "ADMIN_EMAIL": "Email",
+        "ADMIN_FIRST_NAME": "Prénom",
+        "ADMIN_LAST_NAME": "Nom",
+        "ADMIN_ROLES": "Rôles",
+        "ROLES_HELP": "Sélectionnez les rôles à assigner à cet administrateur.",
+        "ADMIN_CREATE_INFO": "Un email d'invitation sera envoyé à l'administrateur pour activer son compte.",
+        "EMAIL_REQUIRED": "Email requis",
+        "EMAIL_INVALID": "Email invalide",
+        "FIRST_NAME_REQUIRED": "Prénom requis",
+        "LAST_NAME_REQUIRED": "Nom requis",
+        "ROLES_REQUIRED": "Au moins un rôle est requis",
+        "SELECT_ROLES_PLACEHOLDER": "Sélectionner les rôles...",
+        "ADMIN_EMAIL_PLACEHOLDER": "admin@example.com",
+        "ADMIN_FIRST_NAME_PLACEHOLDER": "John",
+        "ADMIN_LAST_NAME_PLACEHOLDER": "Doe"
       },
       "SHOP": {
         "MANAGEMENT": "Gestion des Shops",
@@ -178,6 +194,16 @@
         "DEACTIVATE": "Désactiver",
         "ACTIVATE": "Activer"
       },
+      "USER_TYPES": {
+        "SUPER_ADMIN": "Super Administrateur",
+        "ADMIN": "Administrateur",
+        "WORKSPACE_ADMIN": "Administrateur Workspace",
+        "SHOP_MANAGER": "Manager de Boutique",
+        "EMPLOYEE": "Employé",
+        "TECHNICIAN": "Technicien",
+        "DELIVERER": "Livreur",
+        "CUSTOMER": "Client"
+      },
       "EMPLOYEE": {
         "MANAGEMENT": "Gestion des Employés",
         "NEW_EMPLOYEE": "Nouvel Employé",
@@ -249,7 +275,28 @@
         "VALID": "Valide",
         "USAGE": "Utilisation",
         "USED": "Utilisée",
-        "NOT_USED": "Non utilisée"
+        "NOT_USED": "Non utilisée",
+        "EMAIL_VERIFIED": "Email vérifié",
+        "ACCOUNT_INFO": "Informations du compte",
+        "CREATED_AT": "Date de création",
+        "LAST_LOGIN": "Dernière connexion",
+        "LANGUAGE": "Langue",
+        "STATISTICS": "Statistiques",
+        "ACCOUNT_STATUS": "Statut du compte",
+        "EMAIL_STATUS": "Statut email",
+        "PHONE_STATUS": "Statut téléphone",
+        "ROLES": "Rôles",
+        "USER_CODE": "Code utilisateur",
+        "PHONE": "Téléphone",
+        "NO_USER_DATA": "Aucune donnée utilisateur disponible",
+        "PLEASE_LOGIN": "Veuillez vous connecter pour voir vos informations",
+        "SYSTEM_ROLE": "Rôle système",
+        "ENTER_PASSWORD_UNLOCK": "Entrez votre mot de passe pour déverrouiller l'écran !",
+        "ENTER_PASSWORD": "Entrez le mot de passe",
+        "UNLOCK": "Déverrouiller",
+        "UNLOCKING": "Déverrouillage...",
+        "NOT_YOU": "Ce n'est pas vous ? retournez",
+        "USER": "Utilisateur"
       },
       "ADMIN": {
         "MANAGEMENT": "Gestion des Administrateurs",
@@ -283,6 +330,7 @@
     "MENU": {
       "DASHBOARD": "Dashboard",
       "DEMANDE": "Demande",
+      "INVITATION": "Invitation",
       "USERS": "Utilisateurs",
       "USERS_TITLE": "Utilisateurs",
       "ADMINISTRATEURS": "Administrateurs",
@@ -291,7 +339,19 @@
       "EMPLOYE": "Employé",
       "PERMISSIONS": "Permissions",
       "ROLE": "Role",
-      "AUTORISATION": "Autorisation"
+      "AUTORISATION": "Autorisation",
+      "PROFILE": "Profil"
+    },
+    "DASHBOARD": {
+      "WELCOME_BACK": "Bon retour",
+      "ADMINISTRATOR": "Administrateur",
+      "TOTAL_REQUESTS": "Total demandes",
+      "TOTAL_QUOTES": "Total devis",
+      "TOTAL_USERS": "Total utilisateurs",
+      "USER_STATISTICS": "Statistiques des utilisateurs",
+      "NO_STATISTICS": "Aucune statistique disponible",
+      "STATISTICS": "Statistiques",
+      "LATEST_REQUESTS": "Dernières demandes"
     },
     "HEADER": {
       "PROFILE": "Profil",
@@ -305,6 +365,10 @@
           "TITLE": "Nouvelle demande"
         }
       }
+    },
+    "MODAL": {
+      "DELETE_CONFIRM_ITEM": "Êtes-vous sûr de vouloir supprimer",
+      "DELETE_CONFIRM_MESSAGE": "Cette action est irréversible."
     }
   }
 }

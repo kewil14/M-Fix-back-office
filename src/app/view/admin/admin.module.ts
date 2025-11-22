@@ -3,6 +3,11 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 
 import { AdminRoutingModule } from './admin-routing.module';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { AdminDashboardComponent } from './dashboard/admin-dashboard/admin-dashboard.component';
+import { WorkspaceAdminDashboardComponent } from './dashboard/workspace-admin-dashboard/workspace-admin-dashboard.component';
+import { ShopManagerDashboardComponent } from './dashboard/shop-manager-dashboard/shop-manager-dashboard.component';
+import { TechnicianDashboardComponent } from './dashboard/technician-dashboard/technician-dashboard.component';
+import { DelivererDashboardComponent } from './dashboard/deliverer-dashboard/deliverer-dashboard.component';
 import { CustomersComponent } from './customers/customers.component';
 import { DemandeComponent } from './devis/demande/demande.component';
 import { CreateAdminComponent } from './users/create-admin/create-admin.component';
@@ -42,6 +47,11 @@ import { TranslateModule } from '@ngx-translate/core';
 @NgModule({
   declarations: [
     DashboardComponent,
+    AdminDashboardComponent,
+    WorkspaceAdminDashboardComponent,
+    ShopManagerDashboardComponent,
+    TechnicianDashboardComponent,
+    DelivererDashboardComponent,
     CustomersComponent,
     DemandeComponent,
     CreateAdminComponent,
