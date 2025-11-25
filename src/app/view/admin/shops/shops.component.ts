@@ -181,17 +181,16 @@ export class ShopsComponent implements OnInit, OnDestroy {
 
   // Charger toutes les données une seule fois au début
   loadAllShops() {
-    if (!this.workspaceId) {
-      console.error('Cannot load shops: workspaceId is required');
-      return;
-    }
     const filters: ShopListRequestDto = {
       page: 0,
-      size: 10000, // Charger beaucoup de données
+      size: 100, // Charger beaucoup de données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };
-    this.storeService.dispatch(findAllShops({ workspaceId: this.workspaceId, filters }));
+    if (this.workspaceId) {
+      filters.workspaceId = this.workspaceId;
+    }
+    this.storeService.dispatch(findAllShops({ workspaceId: this.workspaceId || undefined, filters }));
   }
 
   // Appliquer les filtres localement sans recharger

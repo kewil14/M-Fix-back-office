@@ -19,9 +19,11 @@ import { findAvailableRoles } from 'src/app/core/shared/stores/role/role.actions
 import { RoleState } from 'src/app/core/shared/stores/role/role.state';
 import { getTimezones } from 'src/app/core/shared/utils/timezone.util';
 import { AvatarUploadService } from 'src/app/core/shared/services/avatar-upload.service';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 import { findWorkspaceAdminById, updateWorkspaceAdmin, setWorkspaceAdmin, erreurWorkspaceAdmins } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.actions';
 import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
 import { UpdateWorkspaceAdminDto } from 'src/app/core/shared/dtos/update-workspace-admin-dto';
+import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
 
 @Component({
   selector: 'app-admin-edit',
@@ -45,6 +47,7 @@ export class AdminEditComponent implements OnInit, OnDestroy {
   avatarFile: File | null = null;
   isUploadingAvatar: boolean = false;
   isWorkspaceAdmin: boolean = false;
+  currentAdmin: EmployeeResponseDto | null = null;
 
   messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
@@ -56,7 +59,8 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     private router: Router,
     private storeService: Store,
     private actionService: Actions,
-    private avatarUploadService: AvatarUploadService
+    private avatarUploadService: AvatarUploadService,
+    private mediaUrlService: MediaUrlService
   ) {}
 
   ngOnInit(): void {
@@ -127,7 +131,8 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     });
   }
 
-  populateForm(admin: any): void {
+  populateForm(admin: EmployeeResponseDto): void {
+    this.currentAdmin = admin;
     this.adminForm.patchValue({
       email: admin.email || '',
       firstName: admin.firstName || '',
@@ -141,7 +146,7 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     });
     
     if (admin.avatar) {
-      this.avatarPreview = admin.avatar;
+      this.avatarPreview = this.mediaUrlService.getMediaUrl(admin.avatar) || admin.avatar;
     }
   }
 
@@ -265,25 +270,30 @@ export class AdminEditComponent implements OnInit, OnDestroy {
 
   uploadAvatar(file: File): void {
     this.isUploadingAvatar = true;
-    this.avatarUploadService.uploadAvatar(file).subscribe({
-      next: (response) => {
-        if (response.status === 'SUCCESS' && response.data?.url) {
-          this.adminForm.patchValue({ avatar: response.data.url });
-          this.isUploadingAvatar = false;
-          this.messages$.next(
-            {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Avatar uploadé avec succès!', dismissible: true}
-          );
-        } else {
-          this.messages$.next(
-            {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: response.message || 'Erreur lors de l\'upload de l\'avatar', dismissible: false}
-          );
-          this.isUploadingAvatar = false;
+    const workspaceId = this.currentAdmin?.workspaceId || 'system';
+    const entityId = this.adminId || undefined;
+    const altText = `${this.adminForm.value.firstName || this.currentAdmin?.firstName || ''} ${this.adminForm.value.lastName || this.currentAdmin?.lastName || ''}`.trim() || 'Admin avatar';
+
+    this.avatarUploadService.uploadAvatar(file, {
+      entityType: 'USER',
+      workspaceId,
+      entityId,
+      altText
+    }).subscribe({
+      next: (media) => {
+        const mediaUrl = media?.cdnUrl || media?.fileName || '';
+        if (mediaUrl) {
+          this.adminForm.patchValue({ avatar: mediaUrl });
         }
+        this.isUploadingAvatar = false;
+        this.messages$.next(
+          {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Avatar uploadé avec succès!', dismissible: true}
+        );
       },
       error: (error) => {
         console.error('Erreur upload avatar:', error);
         this.messages$.next(
-          {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: 'Erreur lors de l\'upload de l\'avatar', dismissible: false}
+          {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: error?.error?.message || 'Erreur lors de l\'upload de l\'avatar', dismissible: false}
         );
         this.isUploadingAvatar = false;
       }

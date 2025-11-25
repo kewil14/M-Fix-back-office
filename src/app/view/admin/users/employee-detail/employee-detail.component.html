@@ -12,8 +12,18 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start">
                 <div class="d-flex align-items-center">
-                  <div class="avatar-lg me-4">
-                    <div class="avatar-title bg-primary-subtle text-primary rounded-circle fs-2">
+                  <div class="avatar-lg me-4 position-relative" style="width: 80px; height: 80px;">
+                    <img 
+                      *ngIf="mediaUrlService.getMediaUrl(employee.avatar)" 
+                      [src]="mediaUrlService.getMediaUrl(employee.avatar)" 
+                      [alt]="employee.firstName + ' ' + employee.lastName"
+                      class="rounded-circle"
+                      style="width: 100%; height: 100%; object-fit: cover;"
+                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div 
+                      class="avatar-title bg-primary-subtle text-primary rounded-circle fs-2 d-flex align-items-center justify-content-center"
+                      [style.display]="mediaUrlService.getMediaUrl(employee.avatar) ? 'none' : 'flex'"
+                      style="width: 100%; height: 100%;">
                       {{ (employee.firstName?.[0] || '') + (employee.lastName?.[0] || '') }}
                     </div>
                   </div>

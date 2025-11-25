@@ -14,6 +14,7 @@ import { WorkspaceService } from 'src/app/core/shared/services/workspace.service
 import { ShopService } from 'src/app/core/shared/services/shop.service';
 import { WorkspaceResponseDto } from 'src/app/core/shared/dtos/workspace-response-dto';
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
 @Component({
   selector: 'app-employee-detail',
@@ -40,7 +41,8 @@ export class EmployeeDetailComponent implements OnInit, OnDestroy {
     private storeService: Store,
     private actionService: Actions,
     private workspaceService: WorkspaceService,
-    private shopService: ShopService
+    private shopService: ShopService,
+    public mediaUrlService: MediaUrlService
   ) {}
 
   ngOnInit(): void {

@@ -39,10 +39,6 @@ export class ShopEffects {
       ofType(findAllShops),
       mergeMap(({ workspaceId, filters }) => {
         console.log('ShopEffects - findAllShops called with workspaceId:', workspaceId, 'filters:', filters);
-        if (!workspaceId) {
-          console.error('ShopEffects - workspaceId is required');
-          return of(erreurShops({ messages: 'WorkspaceId is required' }));
-        }
         return this.shopService.getShops(workspaceId, filters).pipe(
           map((data: RequestResultDto<any>) => {
             console.log('ShopEffects - getShops response:', data);

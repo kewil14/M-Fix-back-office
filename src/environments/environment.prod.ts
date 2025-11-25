@@ -6,8 +6,8 @@ export const environment = {
 
   baseUrlBackend: `http://${ipAdress}:8000/auth-service/api`,
   workspaceServiceUrl: `http://${ipAdress}:8000/workspace-service`,
+  mediaServiceUrl: `http://${ipAdress}:8000/media-service`,
 
-  
   defaultauth: 'fackbackend',
   firebaseConfig: {
     apiKey: '',

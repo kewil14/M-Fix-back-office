@@ -12,6 +12,7 @@ import { findWorkspaceAdminById } from 'src/app/core/shared/stores/workspace-adm
 import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
 import { resendInvitation, resendInvitationOk, resendInvitationError } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { ResendInvitationDto } from 'src/app/core/shared/dtos/resend-invitation-dto.modal';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
 @Component({
   selector: 'app-admin-detail',
@@ -34,7 +35,8 @@ export class AdminDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private storeService: Store,
-    private actionService: Actions
+    private actionService: Actions,
+    public mediaUrlService: MediaUrlService
   ) {}
 
   ngOnInit(): void {

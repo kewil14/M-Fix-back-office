@@ -38,7 +38,7 @@ export class NotificationComponent implements OnInit {
     //       result = checkboxes[i].value;
     //     }
     //   }
-    this.toastService.success(text,'', { timeOut : 10000 });
+    this.toastService.success(text,'', { timeOut : 100 });
    }
 
 

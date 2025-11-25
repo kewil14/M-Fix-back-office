@@ -121,7 +121,7 @@ export class InvitationsComponent implements OnInit, OnDestroy {
       workspaceId: undefined,
       shopId: undefined,
       page: 0,
-      size: 10000, // Charger toutes les données
+      size: 100, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };

@@ -21,6 +21,7 @@ import {
 } from 'src/app/core/shared/stores/employee/employee.actions';
 import { EmployeeState } from 'src/app/core/shared/stores/employee/employee.state';
 import { CreateEmployeeComponent } from '../create-employee/create-employee.component';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
 @Component({
   selector: 'app-employees',
@@ -64,7 +65,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     private storeService: Store,
     private actionService: Actions,
     private router: Router,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    public mediaUrlService: MediaUrlService
   ) {}
 
   ngOnDestroy() {
@@ -117,7 +119,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   loadAllEmployees() {
     const filters: EmployeeListRequestDto = {
       page: 0,
-      size: 10000, // Charger beaucoup de données
+      size: 100, // Charger beaucoup de données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };

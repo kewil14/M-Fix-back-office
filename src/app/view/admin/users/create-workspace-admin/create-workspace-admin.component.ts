@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { selectauthentificationState, selectRoleState } from 'src/app/core/core.state';
+import { selectauthentificationState } from 'src/app/core/core.state';
 import { AuthentificationState } from 'src/app/core/shared/stores/authentification/authentification.state';
 import { 
   createWorkspaceWithAdmin, 
@@ -14,8 +14,9 @@ import {
 } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { CreateWorkspaceWithAdminDto } from 'src/app/core/shared/dtos/create-workspace-admin-dto.modal';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { findAvailableRoles } from 'src/app/core/shared/stores/role/role.actions';
-import { RoleState } from 'src/app/core/shared/stores/role/role.state';
+import { SubscriptionPlanDto } from 'src/app/core/shared/dtos/subscription-response-dto';
+import { SubscriptionService } from 'src/app/core/shared/services/subscription.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-create-workspace-admin',
@@ -38,26 +39,26 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
   modalRef?: BsModalRef;
 
   workspaceTypes = ['REPAIR_SHOP', 'RETAIL', 'SERVICE'];
-  subscriptionPlans = ['FREE', 'BASIC', 'PREMIUM'];
-  
-  roleState$!: Observable<RoleState>;
-  isLoadingRoles: boolean = false;
+  subscriptionPlans: SubscriptionPlanDto[] = [];
+  isLoadingPlans = false;
+  planLoadError: string | null = null;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
     private storeService: Store,
     private actionService: Actions,
     public modalService: BsModalService,
-    public bsModalRef: BsModalRef
+    public bsModalRef: BsModalRef,
+    private subscriptionService: SubscriptionService,
+    private translateService: TranslateService
   ) {
     this.modalRef = bsModalRef;
   }
 
   ngOnInit() {
     this.authentificationState$ = this.storeService.select(selectauthentificationState).pipe();
-    this.roleState$ = this.storeService.select(selectRoleState).pipe();
     this.initForm();
-    this.loadRoles();
+    this.loadSubscriptionPlans();
     this.actionWorkspaceAdmin();
   }
 
@@ -69,29 +70,38 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
     this.workspaceAdminForm = this.formBuilder.group({
       workspaceName: ['', [Validators.required]],
       workspaceType: ['REPAIR_SHOP', [Validators.required]],
-      subscriptionPlan: ['PREMIUM', [Validators.required]],
+      subscriptionPlan: ['', [Validators.required]],
       adminEmail: ['', [Validators.required, Validators.email]],
       adminFirstName: ['', [Validators.required]],
-      adminLastName: ['', [Validators.required]],
-      adminRoleIds: [[], [Validators.required]]
+      adminLastName: ['', [Validators.required]]
     });
   }
 
-  loadRoles() {
-    this.isLoadingRoles = true;
-    this.storeService.dispatch(findAvailableRoles({}));
-    
-    this.subscriptions.push(
-      this.roleState$.subscribe(state => {
-        if (state.dataState === DataStateEnum.SUCCESS) {
-          this.isLoadingRoles = false;
-        } else if (state.dataState === DataStateEnum.LOADING) {
-          this.isLoadingRoles = true;
-        } else if (state.dataState === DataStateEnum.ERROR) {
-          this.isLoadingRoles = false;
+  loadSubscriptionPlans() {
+    this.isLoadingPlans = true;
+    this.planLoadError = null;
+
+    const sub = this.subscriptionService.getAvailablePlans().subscribe({
+      next: (response) => {
+        this.isLoadingPlans = false;
+        if (response.status === 'SUCCESS' && Array.isArray(response.data) && response.data.length) {
+          this.subscriptionPlans = response.data;
+          const defaultPlan = this.subscriptionPlans[0]?.code || '';
+          const planControl = this.workspaceAdminForm.get('subscriptionPlan');
+          if (planControl && !planControl.value && defaultPlan) {
+            planControl.setValue(defaultPlan);
+          }
+        } else {
+          this.planLoadError = response.message || this.translateService.instant('MESSAGES.ERRORS.LOAD');
         }
-      })
-    );
+      },
+      error: (error) => {
+        this.isLoadingPlans = false;
+        this.planLoadError = error?.error?.message || this.translateService.instant('MESSAGES.ERRORS.LOAD');
+      }
+    });
+
+    this.subscriptions.push(sub);
   }
 
   get f() { return this.workspaceAdminForm.controls; }
@@ -112,8 +122,7 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
           );
           setTimeout(() => {
             this.bsModalRef.hide();
-            this.workspaceAdminForm.reset();
-            this.submitted = false;
+            this.resetForm();
           }, 2000);
         }
       )
@@ -138,7 +147,7 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
         email: this.workspaceAdminForm.value.adminEmail,
         firstName: this.workspaceAdminForm.value.adminFirstName,
         lastName: this.workspaceAdminForm.value.adminLastName,
-        roleIds: this.workspaceAdminForm.value.adminRoleIds || []
+        roleIds: []
       }
     };
 
@@ -146,10 +155,21 @@ export class CreateWorkspaceAdminComponent implements OnInit, OnDestroy {
     this.storeService.dispatch(createWorkspaceWithAdmin({createWorkspaceWithAdminDto}));
   }
 
+  resetForm() {
+    this.workspaceAdminForm.reset({
+      workspaceName: '',
+      workspaceType: 'REPAIR_SHOP',
+      subscriptionPlan: this.subscriptionPlans[0]?.code || '',
+      adminEmail: '',
+      adminFirstName: '',
+      adminLastName: ''
+    });
+    this.submitted = false;
+  }
+
   closeModal() {
     this.bsModalRef.hide();
-    this.workspaceAdminForm.reset();
-    this.submitted = false;
+    this.resetForm();
   }
 }
 

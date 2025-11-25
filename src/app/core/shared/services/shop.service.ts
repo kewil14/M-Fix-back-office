@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, share, map } from 'rxjs';
 import { API_URLS } from '../../config/app.url.config';
@@ -22,73 +22,79 @@ export class ShopService {
     return path.split('.').reduce((current, prop) => current?.[prop], obj);
   }
 
-  getShops(workspaceId: string, filters?: ShopListRequestDto): Observable<RequestResultDto<ShopResponseDto[]>> {
-    if (!workspaceId) {
-      throw new Error('workspaceId is required');
-    }
+  getShops(workspaceId?: string, filters?: ShopListRequestDto): Observable<RequestResultDto<ShopResponseDto[]>> {
+    const endpoint = workspaceId
+      ? `/api/shops/${workspaceId}/shops`
+      : `/api/shops`;
     
     return this.http.get<RequestResultDto<ShopResponseDto[]>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops`
+      API_URLS.WORKSPACE_SERVICE_URL + endpoint
     ).pipe(
       map((data: RequestResultDto<ShopResponseDto[]>) => {
-        // Filtrer et trier si nécessaire
-        if (filters && data.status === 'SUCCESS' && data.data) {
-          let shops = [...data.data]; // Créer une copie pour éviter de muter l'original
-          
-          // Filtrer par statut actif/inactif
-          if (filters.isActive !== undefined) {
-            shops = shops.filter(shop => shop.isActive === filters.isActive);
+        if (data.status === 'SUCCESS' && data.data) {
+          let shops = Array.isArray(data.data) ? [...data.data] : [];
+
+          const workspaceFilter = workspaceId || filters?.workspaceId;
+          if (workspaceFilter) {
+            shops = shops.filter(shop => shop.workspaceId === workspaceFilter);
           }
-          
-          // Filtrer par recherche
-          if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            shops = shops.filter(shop => 
-              shop.name.toLowerCase().includes(searchLower) ||
-              shop.email?.toLowerCase().includes(searchLower) ||
-              shop.city?.toLowerCase().includes(searchLower) ||
-              shop.code?.toLowerCase().includes(searchLower)
-            );
-          }
-          
-          // Trier les résultats
-          if (filters.sortBy) {
-            shops.sort((a, b) => {
-              const sortField = filters.sortBy || 'createdAt';
-              let aValue = this.getNestedValue(a, sortField);
-              let bValue = this.getNestedValue(b, sortField);
-              
-              // Gérer les valeurs null/undefined
-              if (aValue === null || aValue === undefined) return 1;
-              if (bValue === null || bValue === undefined) return -1;
-              
-              // Convertir les dates string en Date si nécessaire
-              if (sortField.includes('Date') || sortField.includes('At')) {
-                if (typeof aValue === 'string') {
-                  aValue = new Date(aValue);
+
+          if (filters) {
+            // Filtrer par statut actif/inactif
+            if (filters.isActive !== undefined) {
+              shops = shops.filter(shop => shop.isActive === filters.isActive);
+            }
+            
+            // Filtrer par recherche
+            if (filters.search) {
+              const searchLower = filters.search.toLowerCase();
+              shops = shops.filter(shop => 
+                shop.name.toLowerCase().includes(searchLower) ||
+                shop.email?.toLowerCase().includes(searchLower) ||
+                shop.city?.toLowerCase().includes(searchLower) ||
+                shop.code?.toLowerCase().includes(searchLower)
+              );
+            }
+            
+            // Trier les résultats
+            if (filters.sortBy) {
+              shops.sort((a, b) => {
+                const sortField = filters.sortBy || 'createdAt';
+                let aValue = this.getNestedValue(a, sortField);
+                let bValue = this.getNestedValue(b, sortField);
+                
+                // Gérer les valeurs null/undefined
+                if (aValue === null || aValue === undefined) return 1;
+                if (bValue === null || bValue === undefined) return -1;
+                
+                // Convertir les dates string en Date si nécessaire
+                if (sortField.includes('Date') || sortField.includes('At')) {
+                  if (typeof aValue === 'string') {
+                    aValue = new Date(aValue);
+                  }
+                  if (typeof bValue === 'string') {
+                    bValue = new Date(bValue);
+                  }
                 }
-                if (typeof bValue === 'string') {
-                  bValue = new Date(bValue);
+                
+                let comparison = 0;
+                if (aValue instanceof Date && bValue instanceof Date) {
+                  comparison = aValue.getTime() - bValue.getTime();
+                } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+                  comparison = aValue - bValue;
+                } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+                  comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+                } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+                  comparison = aValue === bValue ? 0 : (aValue ? 1 : -1);
+                } else {
+                  comparison = String(aValue).localeCompare(String(bValue), undefined, { numeric: true });
                 }
-              }
-              
-              let comparison = 0;
-              if (aValue instanceof Date && bValue instanceof Date) {
-                comparison = aValue.getTime() - bValue.getTime();
-              } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-                comparison = aValue - bValue;
-              } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-                comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
-              } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-                comparison = aValue === bValue ? 0 : (aValue ? 1 : -1);
-              } else {
-                comparison = String(aValue).localeCompare(String(bValue), undefined, { numeric: true });
-              }
-              
-              return filters.sortDirection === 'asc' ? comparison : -comparison;
-            });
+                
+                return filters.sortDirection === 'asc' ? comparison : -comparison;
+              });
+            }
           }
-          
+
           data.data = shops;
         }
         return data;

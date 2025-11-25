@@ -30,9 +30,22 @@
         <div class="mb-3">
           <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.SUBSCRIPTION_PLAN' | translate }} <span class="text-danger">*</span></label>
           <select class="form-control" formControlName="subscriptionPlan"
+                  [disabled]="isLoadingPlans || !subscriptionPlans.length"
                   [ngClass]="{'is-invalid': submitted && f.subscriptionPlan.errors}">
-            <option *ngFor="let plan of subscriptionPlans" [value]="plan">{{plan}}</option>
+            <option *ngFor="let plan of subscriptionPlans" [value]="plan.code">
+              {{ plan.name || plan.code }}
+            </option>
           </select>
+          <div *ngIf="isLoadingPlans" class="form-text text-muted d-flex align-items-center gap-2 mt-1">
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+            {{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING' | translate }}
+          </div>
+          <div *ngIf="!isLoadingPlans && !subscriptionPlans.length && !planLoadError" class="text-muted small mt-1">
+            {{ 'MESSAGES.ADMIN.COMMON.NO_DATA' | translate }}
+          </div>
+          <div *ngIf="planLoadError" class="text-danger small mt-1">
+            {{ planLoadError }}
+          </div>
         </div>
       </div>
     </div>
@@ -76,33 +89,6 @@
           <div *ngIf="submitted && f.adminLastName.errors" class="invalid-feedback">
             <span *ngIf="f.adminLastName.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.LAST_NAME_REQUIRED' | translate }}</span>
           </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="control-label">{{ 'MESSAGES.ADMIN.WORKSPACE.ADMIN_ROLES' | translate }} <span class="text-danger">*</span></label>
-          <ng-select 
-            [items]="(roleState$|async)?.rules || []" 
-            [multiple]="true" 
-            bindLabel="name" 
-            bindValue="id" 
-            formControlName="adminRoleIds"
-            [placeholder]="'MESSAGES.ADMIN.WORKSPACE.SELECT_ROLES_PLACEHOLDER' | translate"
-            [clearable]="true"
-            [searchable]="true"
-            [closeOnSelect]="false"
-            [loading]="isLoadingRoles"
-            [ngClass]="{'is-invalid': submitted && f.adminRoleIds.errors}">
-            <ng-template ng-label-tmp let-item="item">
-              <span class="badge bg-primary me-1">{{item.name || item.roleName}}</span>
-            </ng-template>
-          </ng-select>
-          <div *ngIf="submitted && f.adminRoleIds.errors" class="invalid-feedback">
-            <span *ngIf="f.adminRoleIds.errors.required">{{ 'MESSAGES.ADMIN.WORKSPACE.ROLES_REQUIRED' | translate }}</span>
-          </div>
-          <small class="form-text text-muted">
-            <i class="ri-information-line me-1"></i>
-            {{ 'MESSAGES.ADMIN.WORKSPACE.ROLES_HELP' | translate }}
-          </small>
         </div>
 
         <div class="alert alert-info">

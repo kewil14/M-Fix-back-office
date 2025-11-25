@@ -24,6 +24,7 @@ import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/
 import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-workspace-admin.component';
 import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
 @Component({
   selector: 'app-workspaces',
@@ -61,7 +62,8 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private workspaceService: WorkspaceService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    public mediaUrlService: MediaUrlService
   ) {}
 
   ngOnDestroy() {
@@ -121,7 +123,7 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
       search: undefined,
       isActive: undefined,
       page: 0,
-      size: 10000, // Charger toutes les données
+      size: 100, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };

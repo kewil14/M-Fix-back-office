@@ -94,7 +94,16 @@
                       <td>
                         <div class="d-flex align-items-center">
                           <div class="avatar-sm me-2">
-                            <div class="avatar-title bg-info-subtle text-info rounded-circle">
+                            <img 
+                              *ngIf="mediaUrlService.getMediaUrl(workspaceAdmin.avatar)" 
+                              [src]="mediaUrlService.getMediaUrl(workspaceAdmin.avatar)" 
+                              [alt]="workspaceAdmin.firstName + ' ' + workspaceAdmin.lastName"
+                              class="rounded-circle"
+                              style="width: 100%; height: 100%; object-fit: cover;"
+                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div 
+                              class="avatar-title bg-info-subtle text-info rounded-circle"
+                              [style.display]="mediaUrlService.getMediaUrl(workspaceAdmin.avatar) ? 'none' : 'flex'">
                               {{ (workspaceAdmin.firstName?.[0] || '') + (workspaceAdmin.lastName?.[0] || '') }}
                             </div>
                           </div>

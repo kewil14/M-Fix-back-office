@@ -36,7 +36,7 @@ export const removeShop = createAction(
 
 export const findAllShops = createAction(
   '[Shop] shop/findAllShops', 
-  props<{ workspaceId: string, filters?: ShopListRequestDto }>()
+  props<{ workspaceId?: string, filters?: ShopListRequestDto }>()
 );
 
 export const findShopById = createAction(

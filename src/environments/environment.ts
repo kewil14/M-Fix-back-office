@@ -2,8 +2,13 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+const ipAdress = '217.77.8.234';
+
 export const environment = {
   production: false,
+  baseUrlBackend: `http://${ipAdress}:8000/auth-service/api`,
+  workspaceServiceUrl: `http://${ipAdress}:8000/workspace-service`,
+  mediaServiceUrl: `http://${ipAdress}:8000/media-service`,
   defaultauth: 'fackbackend',
   firebaseConfig: {
     apiKey: '',

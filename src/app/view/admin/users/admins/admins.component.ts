@@ -23,6 +23,7 @@ import {
 } from 'src/app/core/shared/stores/admin/admin.actions';
 import { AdminState } from 'src/app/core/shared/stores/admin/admin.state';
 import { CreateAdminComponent } from '../create-admin/create-admin.component';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
 @Component({
   selector: 'app-admins',
@@ -59,7 +60,8 @@ export class AdminsComponent implements OnInit, OnDestroy {
     private storeService: Store,
     private actionService: Actions,
     private router: Router,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    public mediaUrlService: MediaUrlService
   ) {}
 
   ngOnDestroy() {
@@ -131,7 +133,7 @@ export class AdminsComponent implements OnInit, OnDestroy {
       isActive: undefined,
       isSuperAdmin: undefined,
       page: 0,
-      size: 10000, // Charger toutes les données
+      size: 100, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };

@@ -208,7 +208,7 @@ const donutAnimateChart: ChartType = {
             }
             __anim21278907124 = setTimeout(() => {
                 // self.donutAnimateChart.responsiveOptions = [];
-            }, 10000);
+            }, 100);
         }
     },
     type: 'Pie'

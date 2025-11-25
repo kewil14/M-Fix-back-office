@@ -107,7 +107,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       isActive: undefined,
       isSuperAdmin: undefined,
       page: 0,
-      size: 10000, // Charger toutes les données
+      size: 100, // Charger toutes les données
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
     };

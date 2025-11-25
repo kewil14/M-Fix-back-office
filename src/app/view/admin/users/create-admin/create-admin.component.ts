@@ -15,6 +15,7 @@ import {
 import { CreateAdminDto } from 'src/app/core/shared/dtos/create-admin-dto.modal';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { AvatarUploadService } from 'src/app/core/shared/services/avatar-upload.service';
+import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
 @Component({
   selector: 'app-create-admin',
@@ -45,7 +46,8 @@ export class CreateAdminComponent implements OnInit, OnDestroy {
     private actionService: Actions,
     public modalService: BsModalService,
     public bsModalRef: BsModalRef,
-    private avatarUploadService: AvatarUploadService
+    private avatarUploadService: AvatarUploadService,
+    private mediaUrlService: MediaUrlService
   ) {
     this.modalRef = bsModalRef;
   }
@@ -121,22 +123,29 @@ export class CreateAdminComponent implements OnInit, OnDestroy {
 
   uploadAvatar(file: File): void {
     this.isUploadingAvatar = true;
-    this.avatarUploadService.uploadAvatar(file).subscribe({
-      next: (response) => {
-        if (response.status === 'SUCCESS' && response.data?.url) {
-          this.adminForm.patchValue({ avatar: response.data.url });
-          this.isUploadingAvatar = false;
-        } else {
-          this.messages$.next(
-            {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: response.message || 'Erreur lors de l\'upload de l\'avatar', dismissible: false}
-          );
-          this.isUploadingAvatar = false;
+    const altText = `${this.adminForm.value.firstName || ''} ${this.adminForm.value.lastName || ''}`.trim() || 'Admin avatar';
+
+    this.avatarUploadService.uploadAvatar(file, {
+      entityType: 'USER',
+      workspaceId: 'system',
+      altText
+    }).subscribe({
+      next: (media) => {
+        const mediaUrl = media?.cdnUrl || media?.fileName || '';
+        if (mediaUrl) {
+          this.adminForm.patchValue({ avatar: mediaUrl });
+          // Mettre à jour le preview avec l'URL complète
+          const fullUrl = this.mediaUrlService.getMediaUrl(mediaUrl);
+          if (fullUrl) {
+            this.avatarPreview = fullUrl;
+          }
         }
+        this.isUploadingAvatar = false;
       },
       error: (error) => {
         console.error('Erreur upload avatar:', error);
         this.messages$.next(
-          {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: 'Erreur lors de l\'upload de l\'avatar', dismissible: false}
+          {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: error?.error?.message || 'Erreur lors de l\'upload de l\'avatar', dismissible: false}
         );
         this.isUploadingAvatar = false;
       }
@@ -160,7 +169,8 @@ export class CreateAdminComponent implements OnInit, OnDestroy {
       email: this.adminForm.value.email,
       firstName: this.adminForm.value.firstName,
       lastName: this.adminForm.value.lastName,
-      roleIds: []
+      roleIds: [],
+      avatar: this.adminForm.value.avatar || undefined
     };
 
     console.log('Création Admin:', createAdminDto);
