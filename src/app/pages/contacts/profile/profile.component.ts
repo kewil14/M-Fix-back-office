@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -7,6 +8,7 @@ import { ProfileState } from 'src/app/core/shared/stores/profile/profile.state';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { LocalStorageService } from 'src/app/core/shared/services/local-storage.service';
 import { setUserProfile } from 'src/app/core/shared/stores/profile/profile.actions';
+import { AuthentificationService } from 'src/app/core/shared/services/authentification.service';
 
 @Component({
   selector: 'app-profile',
@@ -19,9 +21,23 @@ export class ProfileComponent implements OnInit {
   user$: Observable<any>;
   dataStateEnum = DataStateEnum;
 
+  // Formulaire de changement de mot de passe
+  changePasswordForm!: FormGroup;
+  submittedChangePassword = false;
+  isChangingPassword = false;
+  changePasswordSuccess: string | null = null;
+  changePasswordError: string | null = null;
+
+  // Affichage / masquage des champs password
+  showOldPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
   constructor(
     private store: Store,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private formBuilder: UntypedFormBuilder,
+    private authentificationService: AuthentificationService
   ) {}
 
   ngOnInit() {
@@ -51,6 +67,8 @@ export class ProfileComponent implements OnInit {
         return null;
       })
     );
+
+    this.initChangePasswordForm();
   }
 
   normalizeUser(user: any): any {
@@ -89,5 +107,62 @@ export class ProfileComponent implements OnInit {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
     return first + last || 'U';
+  }
+
+  // --------- Changement de mot de passe ----------
+
+  initChangePasswordForm(): void {
+    this.changePasswordForm = this.formBuilder.group({
+      oldPassword: ['', [Validators.required]],
+      newPassword: ['', [
+        Validators.required,
+        Validators.minLength(8),
+        // Au moins une minuscule, une majuscule, un chiffre et un caractère spécial
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      ]],
+      confirmPassword: ['', [Validators.required]]
+    }, {
+      validators: this.passwordMatchValidator
+    });
+  }
+
+  passwordMatchValidator(form: FormGroup) {
+    const password = form.get('newPassword');
+    const confirmPassword = form.get('confirmPassword');
+
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+    return null;
+  }
+
+  get cp() { return this.changePasswordForm.controls; }
+
+  onSubmitChangePassword(): void {
+    this.submittedChangePassword = true;
+    this.changePasswordSuccess = null;
+    this.changePasswordError = null;
+
+    if (!this.changePasswordForm || this.changePasswordForm.invalid) {
+      return;
+    }
+
+    const { oldPassword, newPassword } = this.changePasswordForm.value;
+    this.isChangingPassword = true;
+
+    this.authentificationService.changePassword(oldPassword, newPassword).subscribe({
+      next: (res: any) => {
+        this.isChangingPassword = false;
+        const apiMessage = res?.data?.message || res?.message;
+        this.changePasswordSuccess = apiMessage || 'Mot de passe modifié avec succès.';
+        this.changePasswordForm.reset();
+        this.submittedChangePassword = false;
+      },
+      error: (error) => {
+        this.isChangingPassword = false;
+        this.changePasswordError = error?.error?.message || 'Erreur lors du changement de mot de passe.';
+      }
+    });
   }
 }

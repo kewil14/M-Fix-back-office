@@ -14,6 +14,8 @@ export class JwtInterceptor implements HttpInterceptor {
         '/api/auth/login',
         '/api/authentication/login',
         '/api/auth/invitations/activate',
+        '/api/auth/forgot-password',
+        '/api/auth/reset-password',
     ];
 
     constructor(

@@ -2,6 +2,7 @@ import { createAction, props } from "@ngrx/store";
 import { User } from "../../models/users/user.modal";
 import { LoginDto } from "../../dtos/login-dto.modal ";
 import { ResetPasswordDto } from "../../dtos/reset-password-dto.modal";
+import { ResetPasswordWithTokenDto } from "../../dtos/reset-password-with-token-dto.modal";
 import { EmailDto } from "../../dtos/email-dto";
 import { ValidateTokenResponseDto } from "../../dtos/validate-token-response-dto.modal";
 import { ActivateAccountDto } from "../../dtos/activate-account-dto.modal";
@@ -22,8 +23,8 @@ export const resetPasswordActionOk = createAction('[Authentification] authentifi
 // emittion de l'action login d'un utilisateur
 export const connexion = createAction('[Authentification] authentification/login', props<{loginDto: LoginDto}>());
 
-//reset password
-export const resetPasswordAction = createAction('[Authentification] authentification/reset-password', props<{ resetPasswordDto: ResetPasswordDto }>());
+//reset password avec token + otp
+export const resetPasswordAction = createAction('[Authentification] authentification/reset-password', props<{ resetPasswordDto: ResetPasswordWithTokenDto }>());
 
 //send token reset password
 export const sendTokenResetPassword = createAction('[Authentification] authentification/sendTokenResetPassword', props<{ emailDto: EmailDto }>());

@@ -1,5 +1,6 @@
 export class EmailDto {
-    constructor(
-        
-    ){}
+  constructor(
+    public email: string
+  ) {}
 }
+

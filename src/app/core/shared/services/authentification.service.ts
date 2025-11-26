@@ -7,6 +7,8 @@ import { LoginDto } from '../dtos/login-dto.modal ';
 import { ResponseDto } from '../dtos/response-dto.modal';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
 import { ResetPasswordDto } from '../dtos/reset-password-dto.modal';
+import { ResetPasswordWithTokenDto } from '../dtos/reset-password-with-token-dto.modal';
+import { EmailDto } from '../dtos/email-dto';
 import { User } from '../models/users/user.modal';
 import { ValidateTokenResponseDto } from '../dtos/validate-token-response-dto.modal';
 import { ActivateAccountDto } from '../dtos/activate-account-dto.modal';
@@ -30,7 +32,11 @@ export class AuthentificationService {
     return this.http.post<RequestResultDto<User>>(API_URLS.CUSTOMERS_URL + `/auth/login`, loginDto).pipe(share());
   }
   
-  resetPassword(loginDto: LoginDto): Observable<ResponseDto<LoginDto>> {
+  /**
+   * Ancien endpoint de reset password (non utilisé dans le nouveau flux)
+   * Conservé pour compatibilité potentielle.
+   */
+  resetPasswordLegacy(loginDto: LoginDto): Observable<ResponseDto<LoginDto>> {
     return this.http.post(API_URLS.CUSTOMERS_URL + `/reset-password`, loginDto).pipe(share());
   }
 
@@ -40,6 +46,30 @@ export class AuthentificationService {
   
   activateAccount(passwordDto:ResetPasswordDto):Observable<ResponseDto<User>>{
     return this.http.post(API_URLS.CUSTOMERS_URL + `/activate-account`, passwordDto).pipe(share());
+  }
+
+  /**
+   * Nouveau flux : reset password avec token + otp
+   * Swagger: POST /api/auth/reset-password
+   * body: { token, otp, newPassword }
+   */
+  resetPassword(resetPasswordDto: ResetPasswordWithTokenDto): Observable<RequestResultDto<string>> {
+    return this.http.post<RequestResultDto<string>>(
+      API_URLS.CUSTOMERS_URL + `/auth/reset-password`,
+      resetPasswordDto
+    ).pipe(share());
+  }
+
+  /**
+   * Forgot password : envoi d'un email avec OTP / lien de réinitialisation
+   * Swagger: POST /api/auth/forgot-password
+   * body: { email }
+   */
+  forgotPassword(emailDto: EmailDto): Observable<RequestResultDto<string>> {
+    return this.http.post<RequestResultDto<string>>(
+      API_URLS.CUSTOMERS_URL + `/auth/forgot-password`,
+      emailDto
+    ).pipe(share());
   }
 
   validateActivationToken(token: string): Observable<RequestResultDto<ValidateTokenResponseDto>> {
@@ -139,6 +169,23 @@ export class AuthentificationService {
     return this.http.post<RequestResultDto<any>>(
       API_URLS.CUSTOMERS_URL + `/auth/logout`,
       logoutRequestDto
+    ).pipe(share());
+  }
+
+  /**
+   * Changer le mot de passe de l'utilisateur courant
+   * Swagger: POST /api/auth/change-password
+   * Params (query): oldPassword, newPassword
+   */
+  changePassword(oldPassword: string, newPassword: string): Observable<RequestResultDto<string>> {
+    const params = new HttpParams()
+      .set('oldPassword', oldPassword)
+      .set('newPassword', newPassword);
+
+    return this.http.post<RequestResultDto<string>>(
+      API_URLS.CUSTOMERS_URL + `/auth/change-password`,
+      null,
+      { params }
     ).pipe(share());
   }
 }

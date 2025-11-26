@@ -32,7 +32,8 @@ import {
   getInvitationsError,
   getInvitationById,
   getInvitationByIdOk,
-  getInvitationByIdError
+  getInvitationByIdError,
+  sendTokenResetPassword,
 } from './authentification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthentificationService } from '../../services/authentification.service';
@@ -437,6 +438,43 @@ export class AuthenticationEffects {
               "Erreur lors du renvoi de l'invitation";
             this.notificationService.showError(errorMessage);
             return of(resendInvitationError({ messages: errorMessage }));
+          })
+        )
+      )
+    )
+  );
+
+  // Forgot password : envoi de l'email de réinitialisation
+  forgotPasswordEffect = createEffect(() =>
+    this.actions$.pipe(
+      ofType(sendTokenResetPassword),
+      mergeMap(({ emailDto }) =>
+        this.authentificationService.forgotPassword(emailDto).pipe(
+          map((data: RequestResultDto<string>) => {
+            if (data.status === 'SUCCESS') {
+              const successMsg =
+                data.message ||
+                (data.data as any)?.message ||
+                "Un email de réinitialisation vous a été envoyé.";
+              this.notificationService.showSuccess(successMsg);
+              return resetPasswordActionOk({ msg: successMsg });
+            } else {
+              const errorMsg = data.message || "Erreur lors de la demande de réinitialisation du mot de passe";
+              this.notificationService.showError(errorMsg);
+              return erreursAuthentification({ messages: errorMsg });
+            }
+          }),
+          catchError((error) => {
+            if (isCriticalHttpError(error)) {
+              throw error;
+            }
+            const errorMessage =
+              error?.error?.message ||
+              error?.message ||
+              this.translateService.instant('MESSAGES.ERRORS.LOAD') ||
+              "Erreur lors de la demande de réinitialisation du mot de passe";
+            this.notificationService.showError(errorMessage);
+            return of(erreursAuthentification({ messages: errorMessage }));
           })
         )
       )
