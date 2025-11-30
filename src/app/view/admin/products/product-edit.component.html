@@ -1,0 +1,371 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">
+        {{ isEditMode ? 'Modifier un produit' : 'Nouveau produit' }}
+      </h4>
+      <small class="text-muted">
+        {{ isEditMode ? 'Mettre à jour les informations du produit.' : 'Créer un nouveau produit dans le catalogue.' }}
+      </small>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="loading">
+    <div class="col">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && loadError">
+    <div class="col">
+      <div class="alert alert-danger">
+        {{ loadError }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && !loadError">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="mb-2" *ngIf="saveSuccess">
+            <div class="alert alert-success mb-0">
+              {{ saveSuccess }}
+            </div>
+          </div>
+          <div class="mb-2" *ngIf="saveError">
+            <div class="alert alert-danger mb-0">
+              {{ saveError }}
+            </div>
+          </div>
+
+          <form (ngSubmit)="onSubmit()" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Nom du produit</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="label"
+                name="label"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                rows="3"
+                [(ngModel)]="description"
+                name="description"
+              ></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Prix <span class="text-danger">*</span></label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    [(ngModel)]="price"
+                    name="price"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">SKU <span class="text-danger">*</span></label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="sku"
+                    name="sku"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">Code-barres</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="barcode"
+                    name="barcode"
+                  />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label class="form-label">État</label>
+                  <select class="form-select" [(ngModel)]="state" name="state">
+                    <option value="ACTIVE">Actif</option>
+                    <option value="INACTIVE">Inactif</option>
+                    <option value="ARCHIVED">Archivé</option>
+                    <option value="DELETED">Supprimé</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Poids (kg)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    [(ngModel)]="weight"
+                    name="weight"
+                  />
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label class="form-label">Dimensions (ex: 10x20x30 cm)</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="dimensions"
+                    name="dimensions"
+                    placeholder="Longueur x Largeur x Hauteur"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload image principale via Media Service -->
+            <div class="mb-3">
+              <label class="form-label">Image principale</label>
+              <div class="avatar-upload-compact">
+                <div class="d-flex align-items-center gap-3">
+                  <!-- Preview -->
+                  <div class="avatar-preview-small" *ngIf="mainImagePreview">
+                    <img [src]="mainImagePreview" alt="Image produit" class="avatar-img-small">
+                    <button type="button" class="btn btn-sm btn-danger avatar-remove-btn-small" (click)="removeMainImage()" title="Supprimer">
+                      <i class="mdi mdi-close"></i>
+                    </button>
+                  </div>
+                  <div class="avatar-placeholder-small" *ngIf="!mainImagePreview">
+                    <i class="mdi mdi-image" style="font-size: 60px; color: #dee2e6;"></i>
+                  </div>
+
+                  <!-- Zone de drag & drop compacte -->
+                  <div class="flex-grow-1">
+                    <div class="dropzone-compact"
+                         (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                         (dragenter)="$event.preventDefault(); $event.stopPropagation()"
+                         (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                         (drop)="$event.preventDefault(); $event.stopPropagation(); onMainImageFileDropped($event.dataTransfer.files)">
+                      <div *ngIf="!isUploadingMainImage" class="d-flex align-items-center gap-2">
+                        <label class="btn btn-sm btn-outline-primary mb-0">
+                          <i class="mdi mdi-upload me-1"></i>
+                          <span *ngIf="!mainImagePreview">Choisir une image</span>
+                          <span *ngIf="mainImagePreview">Remplacer</span>
+                          <input type="file"
+                                 accept="image/*"
+                                 style="display: none;"
+                                 (change)="onMainImageFileSelected($event)">
+                        </label>
+                        <span class="text-muted small" *ngIf="!mainImagePreview">ou glissez-déposez ici</span>
+                        <span class="text-success small" *ngIf="mainImagePreview && !isUploadingMainImage">
+                          <i class="mdi mdi-check-circle me-1"></i>Uploadé
+                        </span>
+                      </div>
+                      <div *ngIf="isUploadingMainImage" class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Upload...</span>
+                        </div>
+                        <span class="text-muted small">Upload en cours...</span>
+                      </div>
+                    </div>
+                    <small class="text-muted">JPG, PNG, GIF (max 5MB)</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Type de produit <span class="text-danger">*</span></label>
+                  <select class="form-select" [(ngModel)]="productTypeId" name="productTypeId" required>
+                    <option [ngValue]="''">Sélectionner un type</option>
+                    <option *ngFor="let pt of productTypes" [ngValue]="pt.id">
+                      {{ pt.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Catégorie <span class="text-danger">*</span></label>
+                  <select class="form-select" [(ngModel)]="categoryId" name="categoryId" required>
+                    <option [ngValue]="''">Sélectionner une catégorie</option>
+                    <option *ngFor="let c of categoriesFlat" [ngValue]="c.id">
+                      {{ c.labelPath }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Marque</label>
+                  <select class="form-select" [(ngModel)]="brandId" name="brandId">
+                    <option [ngValue]="''">Sélectionner une marque</option>
+                    <option *ngFor="let b of brands" [ngValue]="b.id">
+                      {{ b.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Workspace</label>
+                  <select
+                    class="form-select"
+                    [(ngModel)]="workspaceId"
+                    name="workspaceId"
+                    (ngModelChange)="loadShopsForWorkspace()">
+                    <option [ngValue]="''">Sélectionner un workspace</option>
+                    <option *ngFor="let w of workspaces" [ngValue]="w.id">
+                      {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Boutique <span class="text-danger">*</span></label>
+                  <select
+                    class="form-select"
+                    [(ngModel)]="shopId"
+                    name="shopId"
+                    [disabled]="!workspaceId"
+                    required>
+                    <option [ngValue]="''">Sélectionner une boutique</option>
+                    <option *ngFor="let s of shops" [ngValue]="s.id">
+                      {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
+                    </option>
+                  </select>
+                  <small class="text-muted" *ngIf="!workspaceId">
+                    Veuillez d'abord sélectionner un workspace
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-check mb-3">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="isFeatured"
+                [(ngModel)]="isFeatured"
+                name="isFeatured"
+              />
+              <label class="form-check-label" for="isFeatured">
+                Mettre en avant ce produit
+              </label>
+            </div>
+
+            <!-- Section SEO (optionnelle) -->
+            <div class="card mb-3">
+              <div class="card-header" style="cursor: pointer;" (click)="seoCollapsed = !seoCollapsed">
+                <h6 class="mb-0 d-flex justify-content-between align-items-center">
+                  <span>SEO (optionnel)</span>
+                  <i class="mdi" [ngClass]="seoCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"></i>
+                </h6>
+              </div>
+              <div class="card-body" [collapse]="seoCollapsed">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Meta Title</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="seoMetaTitle"
+                        name="seoMetaTitle"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Slug</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="seoSlug"
+                        name="seoSlug"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Meta Description</label>
+                  <textarea
+                    class="form-control"
+                    rows="2"
+                    [(ngModel)]="seoMetaDescription"
+                    name="seoMetaDescription"
+                  ></textarea>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Meta Keywords</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="seoMetaKeywords"
+                        name="seoMetaKeywords"
+                        placeholder="mot-clé1, mot-clé2, ..."
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Canonical URL</label>
+                      <input
+                        type="url"
+                        class="form-control"
+                        [(ngModel)]="seoCanonicalUrl"
+                        name="seoCanonicalUrl"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit" [disabled]="saving">
+              <span *ngIf="!saving">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer le produit' }}</span>
+              <span *ngIf="saving">
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Traitement...
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

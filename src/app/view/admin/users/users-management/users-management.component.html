@@ -40,9 +40,9 @@
                 </div>
                 <div class="col-md-2">
                   <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
-                    <option [value]="null">Tous les statuts</option>
-                    <option [value]="true">Actifs</option>
-                    <option [value]="false">Inactifs</option>
+                    <option [ngValue]="null">Tous les statuts</option>
+                    <option [ngValue]="true">Actifs</option>
+                    <option [ngValue]="false">Inactifs</option>
                   </select>
                 </div>
                 <div class="col-md-6 text-end">

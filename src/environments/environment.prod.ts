@@ -7,6 +7,8 @@ export const environment = {
   baseUrlBackend: `http://${ipAdress}:8000/auth-service/api`,
   workspaceServiceUrl: `http://${ipAdress}:8000/workspace-service`,
   mediaServiceUrl: `http://${ipAdress}:8000/media-service`,
+  // Base URL du Product Service (inclut déjà /api/v1)
+  productServiceUrl: `http://${ipAdress}:8088/api/v1`,
 
   defaultauth: 'fackbackend',
   firebaseConfig: {

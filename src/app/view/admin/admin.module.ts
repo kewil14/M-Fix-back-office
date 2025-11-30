@@ -27,6 +27,26 @@ import { InvitationDetailComponent } from './users/invitation-detail/invitation-
 import { ShopsComponent } from './shops/shops.component';
 import { ShopDetailComponent } from './shops/shop-detail/shop-detail.component';
 import { ShopEditComponent } from './shops/shop-edit/shop-edit.component';
+import { AdminProductsComponent } from './products/products.component';
+import { ProductBrandsComponent } from './products/product-brands.component';
+import { BrandEditComponent } from './products/brand-edit.component';
+import { BrandDetailComponent } from './products/brand-detail.component';
+import { ProductCategoriesComponent } from './products/product-categories.component';
+import { CategoryEditComponent } from './products/category-edit.component';
+import { CategoryDetailComponent } from './products/category-detail.component';
+import { ProductStockComponent } from './products/product-stock.component';
+import { ProductVariantsComponent } from './products/product-variants.component';
+import { ProductPromotionsComponent } from './products/product-promotions.component';
+import { ProductAnalyticsComponent } from './products/product-analytics.component';
+import { ProductMediaComponent } from './products/product-media.component';
+import { ProductDetailComponent } from './products/product-detail.component';
+import { ProductEditComponent } from './products/product-edit.component';
+import { ProductTypesComponent } from './products/product-types.component';
+import { ProductTypeEditComponent } from './products/product-type-edit.component';
+import { ProductTypeDetailComponent } from './products/product-type-detail.component';
+import { ProductTagsComponent } from './products/product-tags.component';
+import { TagEditComponent } from './products/tag-edit.component';
+import { TagDetailComponent } from './products/tag-detail.component';
 import { CreateShopComponent } from './shops/create-shop/create-shop.component';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -36,6 +56,7 @@ import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { TabsModule } from 'ngx-bootstrap/tabs';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
+import { CollapseModule } from 'ngx-bootstrap/collapse';
 import { SimplebarAngularModule } from 'simplebar-angular';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -66,12 +87,32 @@ import { TranslateModule } from '@ngx-translate/core';
     EmployeeEditComponent,
     AdminDetailComponent,
     AdminEditComponent,
-    InvitationsComponent,
-    InvitationDetailComponent,
-    ShopsComponent,
-    ShopDetailComponent,
-    ShopEditComponent,
-    CreateShopComponent,
+      InvitationsComponent,
+      InvitationDetailComponent,
+      ShopsComponent,
+      ShopDetailComponent,
+      ShopEditComponent,
+      CreateShopComponent,
+      AdminProductsComponent,
+      ProductBrandsComponent,
+      BrandEditComponent,
+      BrandDetailComponent,
+      ProductCategoriesComponent,
+      CategoryEditComponent,
+      CategoryDetailComponent,
+      ProductStockComponent,
+       ProductVariantsComponent,
+      ProductPromotionsComponent,
+      ProductAnalyticsComponent,
+      ProductMediaComponent,
+      ProductDetailComponent,
+      ProductEditComponent,
+      ProductTypesComponent,
+      ProductTypeEditComponent,
+      ProductTypeDetailComponent,
+      ProductTagsComponent,
+      TagEditComponent,
+      TagDetailComponent,
   ],
   imports: [
     CommonModule,
@@ -87,6 +128,7 @@ import { TranslateModule } from '@ngx-translate/core';
     TooltipModule.forRoot(),
     TabsModule.forRoot(),
     CarouselModule.forRoot(),
+    CollapseModule.forRoot(),
     WidgetModule,
     NgApexchartsModule,
     SharedModule,

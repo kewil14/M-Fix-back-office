@@ -1,0 +1,14 @@
+.product-image-wrapper {
+  width: 64px;
+  height: 64px;
+}
+
+.product-image-wrapper img,
+.product-image-wrapper .placeholder {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+

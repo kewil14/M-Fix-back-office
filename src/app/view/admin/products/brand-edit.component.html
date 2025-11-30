@@ -1,0 +1,164 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">
+        {{ isEditMode ? 'Modifier une marque' : 'Nouvelle marque' }}
+      </h4>
+      <small class="text-muted">
+        {{ isEditMode ? 'Mettre à jour les informations de la marque.' : 'Créer une nouvelle marque produit.' }}
+      </small>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="loading">
+    <div class="col">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && loadError">
+    <div class="col">
+      <div class="alert alert-danger">
+        {{ loadError }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && !loadError">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="mb-2" *ngIf="saveSuccess">
+            <div class="alert alert-success mb-0">
+              {{ saveSuccess }}
+            </div>
+          </div>
+          <div class="mb-2" *ngIf="saveError">
+            <div class="alert alert-danger mb-0">
+              {{ saveError }}
+            </div>
+          </div>
+
+          <form (ngSubmit)="onSubmit()" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Nom de la marque</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="label"
+                name="label"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                rows="3"
+                [(ngModel)]="description"
+                name="description"
+              ></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Site web</label>
+                  <input
+                    type="url"
+                    class="form-control"
+                    [(ngModel)]="website"
+                    name="website"
+                    placeholder="https://www.exemple.com"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">État</label>
+                  <select class="form-select" [(ngModel)]="state" name="state">
+                    <option value="ACTIVE">Actif</option>
+                    <option value="INACTIVE">Inactif</option>
+                    <option value="ARCHIVED">Archivé</option>
+                    <option value="DELETED">Supprimé</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload logo via Media Service (même design que produit) -->
+            <div class="mb-3">
+              <label class="form-label">Logo de la marque</label>
+              <div class="avatar-upload-compact">
+                <div class="d-flex align-items-center gap-3">
+                  <!-- Preview -->
+                  <div class="avatar-preview-small" *ngIf="logoPreview">
+                    <img [src]="logoPreview" alt="Logo marque" class="avatar-img-small">
+                    <button type="button" class="btn btn-sm btn-danger avatar-remove-btn-small" (click)="removeLogo()" title="Supprimer">
+                      <i class="mdi mdi-close"></i>
+                    </button>
+                  </div>
+                  <div class="avatar-placeholder-small" *ngIf="!logoPreview">
+                    <i class="mdi mdi-image" style="font-size: 60px; color: #dee2e6;"></i>
+                  </div>
+
+                  <!-- Zone de drag & drop compacte -->
+                  <div class="flex-grow-1">
+                    <div class="dropzone-compact"
+                         (dragover)="$event.preventDefault(); $event.stopPropagation()"
+                         (dragenter)="$event.preventDefault(); $event.stopPropagation()"
+                         (dragleave)="$event.preventDefault(); $event.stopPropagation()"
+                         (drop)="$event.preventDefault(); $event.stopPropagation(); onLogoFileDropped($event.dataTransfer.files)">
+                      <div *ngIf="!isUploadingLogo" class="d-flex align-items-center gap-2">
+                        <label class="btn btn-sm btn-outline-primary mb-0">
+                          <i class="mdi mdi-upload me-1"></i>
+                          <span *ngIf="!logoPreview">Choisir une image</span>
+                          <span *ngIf="logoPreview">Remplacer</span>
+                          <input type="file"
+                                 accept="image/*"
+                                 style="display: none;"
+                                 (change)="onLogoFileSelected($event)">
+                        </label>
+                        <span class="text-muted small" *ngIf="!logoPreview">ou glissez-déposez ici</span>
+                        <span class="text-success small" *ngIf="logoPreview && !isUploadingLogo">
+                          <i class="mdi mdi-check-circle me-1"></i>Uploadé
+                        </span>
+                      </div>
+                      <div *ngIf="isUploadingLogo" class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Upload...</span>
+                        </div>
+                        <span class="text-muted small">Upload en cours...</span>
+                      </div>
+                    </div>
+                    <small class="text-muted">JPG, PNG, GIF (max 5MB)</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit" [disabled]="saving">
+              <span *ngIf="!saving">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer la marque' }}</span>
+              <span *ngIf="saving">
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Traitement...
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

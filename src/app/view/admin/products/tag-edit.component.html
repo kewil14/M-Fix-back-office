@@ -1,0 +1,113 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">
+        {{ isEditMode ? 'Modifier un tag' : 'Nouveau tag' }}
+      </h4>
+      <small class="text-muted">
+        {{ isEditMode ? 'Mettre à jour les informations du tag.' : 'Créer un nouveau tag.' }}
+      </small>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="loading">
+    <div class="col">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && loadError">
+    <div class="col">
+      <div class="alert alert-danger">
+        {{ loadError }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && !loadError">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="mb-2" *ngIf="saveSuccess">
+            <div class="alert alert-success mb-0">
+              {{ saveSuccess }}
+            </div>
+          </div>
+          <div class="mb-2" *ngIf="saveError">
+            <div class="alert alert-danger mb-0">
+              {{ saveError }}
+            </div>
+          </div>
+
+          <form (ngSubmit)="onSubmit()" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Label <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="label"
+                name="label"
+                (ngModelChange)="onSlugChange()"
+                required
+                placeholder="Ex: Nouveauté"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Slug <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="slug"
+                name="slug"
+                required
+                placeholder="Ex: nouveaute"
+              />
+              <small class="text-muted">Le slug est généré automatiquement à partir du label si vide.</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                rows="3"
+                [(ngModel)]="description"
+                name="description"
+                placeholder="Description du tag..."
+              ></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">État</label>
+              <select class="form-select" [(ngModel)]="state" name="state">
+                <option value="ACTIVE">Actif</option>
+                <option value="INACTIVE">Inactif</option>
+                <option value="ARCHIVED">Archivé</option>
+                <option value="DELETED">Supprimé</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary" type="submit" [disabled]="saving">
+              <span *ngIf="!saving">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer le tag' }}</span>
+              <span *ngIf="saving">
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Traitement...
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

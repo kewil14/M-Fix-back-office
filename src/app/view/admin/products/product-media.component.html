@@ -1,0 +1,75 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col">
+      <h4 class="mb-0">Gestion des médias produits</h4>
+      <small class="text-muted">
+        Aperçu des images principales des produits (main_image_url).
+      </small>
+    </div>
+  </div>
+
+  <div class="row mb-2" *ngIf="errorMsg">
+    <div class="col">
+      <div class="alert alert-danger mb-0">
+        {{ errorMsg }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-2" *ngIf="loading">
+    <div class="col">
+      <div class="alert alert-info mb-0">
+        Chargement des produits...
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && !errorMsg">
+    <div class="col">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 80px;">Image</th>
+              <th>Produit</th>
+              <th>SKU</th>
+              <th>État</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="products.length === 0">
+              <td colspan="4" class="text-center text-muted py-4">
+                Aucun produit trouvé.
+              </td>
+            </tr>
+
+            <tr *ngFor="let product of products">
+              <td>
+                <div class="product-image-wrapper">
+                  <img
+                    *ngIf="product.main_image_url"
+                    #img
+                    [src]="mediaUrlService.getMediaUrl(product.main_image_url)"
+                    class="img-thumbnail"
+                    (error)="img.style.display = 'none'"
+                    alt="{{ product.label }}"
+                  />
+                  <div *ngIf="!product.main_image_url" class="placeholder bg-light text-muted d-flex align-items-center justify-content-center">
+                    N/A
+                  </div>
+                </div>
+              </td>
+              <td>
+                <strong>{{ product.label }}</strong>
+              </td>
+              <td>{{ product.sku }}</td>
+              <td>{{ product.state }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+

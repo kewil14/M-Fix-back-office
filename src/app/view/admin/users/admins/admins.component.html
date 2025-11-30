@@ -40,9 +40,9 @@
                 </div>
                 <div class="col-md-2">
                   <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
-                    <option [value]="null">{{ 'MESSAGES.ADMIN.COMMON.ALL_STATUSES' | translate }}</option>
-                    <option [value]="true">{{ 'MESSAGES.ADMIN.COMMON.ACTIVE' | translate }}</option>
-                    <option [value]="false">{{ 'MESSAGES.ADMIN.COMMON.INACTIVE' | translate }}</option>
+                    <option [ngValue]="null">{{ 'MESSAGES.ADMIN.COMMON.ALL_STATUSES' | translate }}</option>
+                    <option [ngValue]="true">{{ 'MESSAGES.ADMIN.COMMON.ACTIVE' | translate }}</option>
+                    <option [ngValue]="false">{{ 'MESSAGES.ADMIN.COMMON.INACTIVE' | translate }}</option>
                   </select>
                 </div>
                 <div class="col-md-6 text-end">

@@ -1,0 +1,81 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">Détail du tag</h4>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onEdit()">
+        <i class="mdi mdi-pencil me-1"></i> Éditer
+      </button>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="loading">
+    <div class="col">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && error">
+    <div class="col">
+      <div class="alert alert-danger">
+        {{ error }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="!loading && !error && tag">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="mb-3">{{ tag.label }}</h5>
+              <dl class="row">
+                <dt class="col-sm-4">Slug</dt>
+                <dd class="col-sm-8"><code>{{ tag.slug }}</code></dd>
+
+                <dt class="col-sm-4">Description</dt>
+                <dd class="col-sm-8">{{ tag.description || '-' }}</dd>
+
+                <dt class="col-sm-4">État</dt>
+                <dd class="col-sm-8">
+                  <span class="badge" [ngClass]="{
+                    'bg-success': tag.state === 'ACTIVE',
+                    'bg-secondary': tag.state === 'INACTIVE',
+                    'bg-warning': tag.state === 'ARCHIVED',
+                    'bg-danger': tag.state === 'DELETED'
+                  }">
+                    {{ tag.state || 'ACTIVE' }}
+                  </span>
+                </dd>
+
+                <dt class="col-sm-4">ID</dt>
+                <dd class="col-sm-8"><code>{{ tag.id }}</code></dd>
+
+                <dt class="col-sm-4">Créé le</dt>
+                <dd class="col-sm-8">
+                  {{ tag.created_at ? (tag.created_at | date: 'short') : '-' }}
+                </dd>
+
+                <dt class="col-sm-4">Modifié le</dt>
+                <dd class="col-sm-8">
+                  {{ tag.updated_at ? (tag.updated_at | date: 'short') : '-' }}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

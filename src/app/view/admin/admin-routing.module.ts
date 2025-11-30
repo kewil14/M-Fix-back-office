@@ -25,6 +25,25 @@ import { InvitationDetailComponent } from './users/invitation-detail/invitation-
 import { ShopsComponent } from './shops/shops.component';
 import { ShopDetailComponent } from './shops/shop-detail/shop-detail.component';
 import { ShopEditComponent } from './shops/shop-edit/shop-edit.component';
+import { AdminProductsComponent } from './products/products.component';
+import { ProductBrandsComponent } from './products/product-brands.component';
+import { BrandEditComponent } from './products/brand-edit.component';
+import { BrandDetailComponent } from './products/brand-detail.component';
+import { ProductCategoriesComponent } from './products/product-categories.component';
+import { CategoryEditComponent } from './products/category-edit.component';
+import { CategoryDetailComponent } from './products/category-detail.component';
+import { ProductStockComponent } from './products/product-stock.component';
+import { ProductVariantsComponent } from './products/product-variants.component';
+import { ProductPromotionsComponent } from './products/product-promotions.component';
+import { ProductAnalyticsComponent } from './products/product-analytics.component';
+import { ProductDetailComponent } from './products/product-detail.component';
+import { ProductEditComponent } from './products/product-edit.component';
+import { ProductTypesComponent } from './products/product-types.component';
+import { ProductTypeEditComponent } from './products/product-type-edit.component';
+import { ProductTypeDetailComponent } from './products/product-type-detail.component';
+import { ProductTagsComponent } from './products/product-tags.component';
+import { TagEditComponent } from './products/tag-edit.component';
+import { TagDetailComponent } from './products/tag-detail.component';
 
 const routes: Routes = [
   {
@@ -67,6 +86,162 @@ const routes: Routes = [
     component: CustomersComponent,
     canActivate: [PermissionGuard, LoadCustomerGuard],
     data: { permissions: ['customers:read'] }
+  },
+  // Marques produits
+  {
+    path: 'product-brands',
+    component: ProductBrandsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-brands/create',
+    component: BrandEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  {
+    path: 'product-brands/detail/:id',
+    component: BrandDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-brands/edit/:id',
+    component: BrandEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Catégories produits
+  {
+    path: 'product-categories',
+    component: ProductCategoriesComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-categories/create',
+    component: CategoryEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  {
+    path: 'product-categories/detail/:id',
+    component: CategoryDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-categories/edit/:id',
+    component: CategoryEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Types de produits
+  {
+    path: 'product-types',
+    component: ProductTypesComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-types/create',
+    component: ProductTypeEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  {
+    path: 'product-types/detail/:id',
+    component: ProductTypeDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-types/edit/:id',
+    component: ProductTypeEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Tags
+  {
+    path: 'product-tags',
+    component: ProductTagsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-tags/create',
+    component: TagEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  {
+    path: 'product-tags/detail/:id',
+    component: TagDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  {
+    path: 'product-tags/edit/:id',
+    component: TagEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Produits (liste)
+  {
+    path: 'products',
+    component: AdminProductsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  // Produit - création
+  {
+    path: 'products/create',
+    component: ProductEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:create'] }
+  },
+  // Produit - détail
+  {
+    path: 'products/detail/:id',
+    component: ProductDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  // Produit - édition
+  {
+    path: 'products/edit/:id',
+    component: ProductEditComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Variants
+  {
+    path: 'product-variants',
+    component: ProductVariantsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
+  // Stock & inventaire
+  {
+    path: 'product-stock',
+    component: ProductStockComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Promotions
+  {
+    path: 'product-promotions',
+    component: ProductPromotionsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:update'] }
+  },
+  // Analytics
+  {
+    path: 'product-analytics',
+    component: ProductAnalyticsComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
   },
   {
     path: 'autorisation',

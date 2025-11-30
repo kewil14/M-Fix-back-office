@@ -16,6 +16,7 @@ import { AddRoleComponent } from './forms/autorities/add-role/add-role.component
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ManageAuthorityComponent } from './forms/autorities/manage-authority/manage-authority.component';
 import { DeleteConfirmModalComponent } from './components/delete-confirm-modal/delete-confirm-modal.component';
+import { DuplicateProductModalComponent } from './components/duplicate-product-modal/duplicate-product-modal.component';
 import { ModalModule } from 'ngx-bootstrap/modal';
 
 @NgModule({
@@ -32,6 +33,7 @@ import { ModalModule } from 'ngx-bootstrap/modal';
     AddRoleComponent,
     ManageAuthorityComponent,
     DeleteConfirmModalComponent,
+    DuplicateProductModalComponent,
   ],
   imports: [
     CommonModule,
@@ -56,6 +58,7 @@ import { ModalModule } from 'ngx-bootstrap/modal';
     AddRoleComponent,
     ManageAuthorityComponent,
     DeleteConfirmModalComponent,
+    DuplicateProductModalComponent,
   ]
 })
 export class SharedModuleModule { }

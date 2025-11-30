@@ -1,0 +1,224 @@
+<div class="container-fluid" *ngIf="!loading && product; else loadingOrError">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">{{ product?.label }}</h4>
+      <small class="text-muted">Détail du produit</small>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onEdit()">
+        <i class="mdi mdi-pencil me-1"></i> Éditer
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <img
+              *ngIf="product?.main_image_url"
+              [src]="mediaUrlService.getMediaUrl(product?.main_image_url)"
+              class="img-fluid rounded"
+              alt="{{ product?.label }}"
+            />
+            <div *ngIf="!product?.main_image_url" class="bg-light text-muted py-5 rounded">
+              Aucune image principale
+            </div>
+          </div>
+          <div *ngIf="product?.brand" class="mb-1">
+            <span class="text-muted">Marque :</span>
+            <strong>{{ product?.brand?.label }}</strong>
+          </div>
+          <div *ngIf="product?.category" class="mb-1">
+            <span class="text-muted">Catégorie :</span>
+            <strong>{{ product?.category?.label }}</strong>
+          </div>
+          <div class="mb-1">
+            <span class="text-muted">SKU :</span>
+            <strong>{{ product?.sku }}</strong>
+          </div>
+          <div class="mb-1">
+            <span class="text-muted">État :</span>
+            <span class="badge bg-primary ms-1">{{ product?.state }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Statistiques</h5>
+          <p class="mb-1">
+            <span class="text-muted">Stock total :</span>
+            <strong>{{ product?.total_stock ?? 'N/A' }}</strong>
+          </p>
+          <p class="mb-1">
+            <span class="text-muted">Note moyenne :</span>
+            <strong *ngIf="product?.average_rating !== undefined; else noRating">
+              {{ product?.average_rating | number:'1.1-2' }}/5
+            </strong>
+            <ng-template #noRating>
+              <span class="text-muted">N/A</span>
+            </ng-template>
+          </p>
+          <p class="mb-0">
+            <span class="text-muted">Nombre d'avis :</span>
+            <strong>{{ product?.total_reviews ?? 'N/A' }}</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Informations générales</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Prix</dt>
+            <dd class="col-sm-9"><strong>{{ product?.price | number:'1.2-2' }} FCFA</strong></dd>
+
+            <dt class="col-sm-3" *ngIf="product?.barcode">Code-barres</dt>
+            <dd class="col-sm-9" *ngIf="product?.barcode"><code>{{ product.barcode }}</code></dd>
+
+            <dt class="col-sm-3" *ngIf="product?.weight">Poids</dt>
+            <dd class="col-sm-9" *ngIf="product?.weight">{{ product.weight }} kg</dd>
+
+            <dt class="col-sm-3" *ngIf="product?.dimensions">Dimensions</dt>
+            <dd class="col-sm-9" *ngIf="product?.dimensions">{{ product.dimensions }}</dd>
+
+            <dt class="col-sm-3" *ngIf="product?.is_featured">Mise en avant</dt>
+            <dd class="col-sm-9" *ngIf="product?.is_featured">
+              <span class="badge bg-success">Oui</span>
+            </dd>
+
+            <dt class="col-sm-3" *ngIf="product?.description">Description</dt>
+            <dd class="col-sm-9" *ngIf="product?.description">
+              <p class="mb-0">{{ product.description }}</p>
+            </dd>
+
+            <dt class="col-sm-3">Créé le</dt>
+            <dd class="col-sm-9">
+              <span *ngIf="product?.created_at">
+                {{ product.created_at | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+              <span *ngIf="!product?.created_at" class="text-muted">N/A</span>
+            </dd>
+
+            <dt class="col-sm-3" *ngIf="product?.updated_at">Mis à jour le</dt>
+            <dd class="col-sm-9" *ngIf="product?.updated_at">
+              {{ product.updated_at | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- SEO -->
+      <div class="card mb-3" *ngIf="product?.seo">
+        <div class="card-body">
+          <h5 class="card-title">SEO</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-3" *ngIf="product.seo.meta_title">Meta Title</dt>
+            <dd class="col-sm-9" *ngIf="product.seo.meta_title">{{ product.seo.meta_title }}</dd>
+
+            <dt class="col-sm-3" *ngIf="product.seo.meta_description">Meta Description</dt>
+            <dd class="col-sm-9" *ngIf="product.seo.meta_description">{{ product.seo.meta_description }}</dd>
+
+            <dt class="col-sm-3" *ngIf="product.seo.slug">Slug</dt>
+            <dd class="col-sm-9" *ngIf="product.seo.slug"><code>{{ product.seo.slug }}</code></dd>
+
+            <dt class="col-sm-3" *ngIf="product.seo.canonical_url">Canonical URL</dt>
+            <dd class="col-sm-9" *ngIf="product.seo.canonical_url">
+              <a [href]="product.seo.canonical_url" target="_blank">{{ product.seo.canonical_url }}</a>
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Attributs -->
+      <div class="card mb-3" *ngIf="product?.attributes && product.attributes.length > 0">
+        <div class="card-body">
+          <h5 class="card-title">Attributs</h5>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Valeur</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let attr of product.attributes">
+                  <td>{{ attr.name || attr.key }}</td>
+                  <td>{{ attr.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" *ngIf="product?.variants && product.variants.length">
+        <div class="card-body">
+          <h5 class="card-title">Variants</h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Libellé</th>
+                  <th>SKU</th>
+                  <th>Prix</th>
+                  <th>Stock dispo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let v of product?.variants">
+                  <td>{{ v.label }}</td>
+                  <td>{{ v.sku }}</td>
+                  <td>{{ v.price | number:'1.2-2' }} €</td>
+                  <td>{{ v.available_stock ?? 'N/A' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3" *ngIf="product?.images && product.images.length">
+        <div class="card-body">
+          <h5 class="card-title">Galerie d’images</h5>
+          <div class="d-flex flex-wrap gap-2">
+            <div *ngFor="let img of product.images" class="border rounded p-1">
+              <img
+                [src]="mediaUrlService.getMediaUrl(img.cdn_url || product?.main_image_url || '')"
+                [alt]="img.alt_text || product?.label"
+                style="width: 80px; height: 80px; object-fit: cover;"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col">
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+        <div *ngIf="!loading && errorMsg" class="alert alert-danger mt-3">
+          {{ errorMsg }}
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+

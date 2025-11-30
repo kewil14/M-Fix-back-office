@@ -4,12 +4,14 @@ import { environment } from '../../../environments/environment.prod';
 const API_BACKEND = environment.baseUrlBackend;
 const WORKSPACE_SERVICE_URL = environment.workspaceServiceUrl || 'http://217.77.8.234:8000/workspace-service';
 const MEDIA_SERVICE_URL = environment.mediaServiceUrl || 'http://217.77.8.234:8000/media-service';
+const PRODUCT_SERVICE_URL = environment.productServiceUrl || 'http://217.77.8.234:8088/product-service/api/v1';
 
 
 export const API_URLS = {
   CUSTOMERS_URL: API_BACKEND,
   WORKSPACE_SERVICE_URL: WORKSPACE_SERVICE_URL,
   MEDIA_SERVICE_URL: MEDIA_SERVICE_URL,
+  PRODUCT_SERVICE_URL: PRODUCT_SERVICE_URL,
 };
 
 

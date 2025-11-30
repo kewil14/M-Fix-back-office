@@ -1,0 +1,341 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header border-bottom">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h4 class="card-title mb-0">Produits</h4>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+              <button 
+                type="button" 
+                class="btn btn-outline-info me-2" 
+                (click)="onExportCSV()" 
+                [disabled]="isLoading"
+                title="Exporter en CSV">
+                <i class="mdi mdi-download me-1"></i> Exporter CSV
+              </button>
+              <a class="btn btn-primary" routerLink="/admin/products/create">
+                Nouveau produit
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Filtres principaux -->
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <div class="search-box">
+                <div class="position-relative">
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Rechercher (nom, description, SKU)..."
+                    [(ngModel)]="searchTerm"
+                    (ngModelChange)="onSearchChange()"
+                    (keyup.enter)="onSearchChange()">
+                  <i class="ri-search-line search-icon"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <select class="form-select" [(ngModel)]="stateFilter" (ngModelChange)="onFilterChange()">
+                <option [ngValue]="'ALL'">Tous les états</option>
+                <option [ngValue]="'ACTIVE'">Actifs</option>
+                <option [ngValue]="'INACTIVE'">Inactifs</option>
+                <option [ngValue]="'ARCHIVED'">Archivés</option>
+                <option [ngValue]="'DELETED'">Supprimés</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select class="form-select" [(ngModel)]="sortBy" (ngModelChange)="onFilterChange()">
+                <option value="created_at">Date de création</option>
+                <option value="price">Prix</option>
+                <option value="label">Nom</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select class="form-select" [(ngModel)]="sortOrder" (ngModelChange)="onFilterChange()">
+                <option value="desc">Décroissant</option>
+                <option value="asc">Croissant</option>
+              </select>
+            </div>
+            <div class="col-md-2 text-end">
+              <label class="mb-0 me-2">Par page</label>
+              <select class="form-select form-select-sm d-inline-block w-auto"
+                      [(ngModel)]="pageSize"
+                      (ngModelChange)="changePageSize(pageSize)">
+                <option [value]="10">10</option>
+                <option [value]="20">20</option>
+                <option [value]="50">50</option>
+                <option [value]="100">100</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filtres avancés (pliable) -->
+          <div class="card mb-3">
+            <div class="card-header" style="cursor: pointer;" (click)="filtersExpanded = !filtersExpanded">
+              <h6 class="mb-0 d-flex justify-content-between align-items-center">
+                <span><i class="mdi mdi-filter-variant me-1"></i> Filtres avancés</span>
+                <i class="mdi" [ngClass]="filtersExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'"></i>
+              </h6>
+            </div>
+            <div class="card-body" [collapse]="!filtersExpanded">
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label">Catégorie</label>
+                  <select class="form-select" [(ngModel)]="categoryId" (ngModelChange)="onFilterChange()">
+                    <option [ngValue]="''">Toutes les catégories</option>
+                    <option *ngFor="let c of categoriesFlat" [ngValue]="c.id">
+                      {{ c.labelPath }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Marque</label>
+                  <select class="form-select" [(ngModel)]="brandId" (ngModelChange)="onFilterChange()">
+                    <option [ngValue]="''">Toutes les marques</option>
+                    <option *ngFor="let b of brands" [ngValue]="b.id">
+                      {{ b.label }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Prix min</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="minPrice"
+                    (ngModelChange)="onFilterChange()"
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Prix max</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="maxPrice"
+                    (ngModelChange)="onFilterChange()"
+                    placeholder="∞"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div class="col-md-2">
+                  <div class="form-check mt-4">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="isFeatured"
+                      [checked]="isFeatured === true"
+                      (change)="onIsFeaturedChange($event)">
+                    <label class="form-check-label" for="isFeatured">
+                      Mis en avant
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="inStockOnly"
+                      [checked]="inStockOnly === true"
+                      (change)="onInStockChange($event)">
+                    <label class="form-check-label" for="inStockOnly">
+                      En stock uniquement
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-12">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="resetFilters()">
+                    <i class="mdi mdi-refresh me-1"></i> Réinitialiser les filtres
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading / Error -->
+          <div *ngIf="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage && !isLoading" class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+
+          <!-- Table -->
+          <div class="table-responsive" *ngIf="!isLoading && !errorMessage">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 60px;">#</th>
+                  <th>Produit</th>
+                  <th>Prix</th>
+                  <th>État</th>
+                  <th>Stock</th>
+                  <th>Note</th>
+                  <th>Date de création</th>
+                  <th style="width: 140px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of products; let index = index">
+                  <td>{{ (page - 1) * pageSize + index + 1 }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-sm me-2" *ngIf="product.main_image_url">
+                        <img
+                          [src]="product.main_image_url"
+                          [alt]="product.label"
+                          class="rounded"
+                          style="width: 100%; height: 100%; object-fit: cover;">
+                      </div>
+                      <div>
+                        <strong>{{ product.label }}</strong><br>
+                        <small class="text-muted">SKU: {{ product.sku }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span *ngIf="product.final_price && product.final_price !== product.price">
+                      <span class="text-muted text-decoration-line-through me-1">
+                        {{ product.price | number:'1.2-2' }} €
+                      </span>
+                      <span class="fw-bold text-success">
+                        {{ product.final_price | number:'1.2-2' }} €
+                      </span>
+                    </span>
+                    <span *ngIf="!product.final_price || product.final_price === product.price">
+                      {{ product.price | number:'1.2-2' }} €
+                    </span>
+                  </td>
+                  <td>
+                    <select
+                      class="form-select form-select-sm"
+                      [value]="product.state"
+                      (change)="onChangeState(product, $event)"
+                      [disabled]="isLoading"
+                      style="min-width: 120px;">
+                      <option value="ACTIVE">Actif</option>
+                      <option value="INACTIVE">Inactif</option>
+                      <option value="ARCHIVED">Archivé</option>
+                      <option value="DELETED">Supprimé</option>
+                    </select>
+                  </td>
+                  <td>
+                    <span *ngIf="product.stock_available !== undefined; else noStock">
+                      {{ product.stock_available }}
+                    </span>
+                    <ng-template #noStock>
+                      <span class="text-muted">N/A</span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <span *ngIf="product.average_rating !== undefined; else noRating">
+                      {{ product.average_rating | number:'1.1-1' }}/5
+                    </span>
+                    <ng-template #noRating>
+                      <span class="text-muted">N/A</span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <span *ngIf="product.created_at; else noDate">
+                      {{ product.created_at | date:'dd/MM/yyyy HH:mm' }}
+                    </span>
+                    <ng-template #noDate>
+                      <span class="text-muted">N/A</span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-info"
+                        [routerLink]="['/admin/products/detail', product.id]"
+                        title="Détail">
+                        <i class="mdi mdi-eye"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        [routerLink]="['/admin/products/edit', product.id]"
+                        title="Éditer">
+                        <i class="mdi mdi-pencil"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-success"
+                        (click)="onDuplicateProduct(product)"
+                        title="Dupliquer">
+                        <i class="mdi mdi-content-copy"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="onDeleteProduct(product)"
+                        title="Supprimer">
+                        <i class="mdi mdi-delete"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="products.length === 0">
+                  <td colspan="7" class="text-center py-4">
+                    <div class="text-muted">
+                      <i class="ri-inbox-line" style="font-size: 48px;"></i>
+                      <p class="mt-2 mb-0">Aucun produit trouvé</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="row align-items-center mt-3" *ngIf="getTotalPages() > 1">
+            <div class="col-md-6">
+              <div class="text-muted">
+                Affichage de
+                <strong>{{ (page - 1) * pageSize + 1 }}</strong> à
+                <strong>{{ getVisibleEnd() }}</strong>
+                sur <strong>{{ total }}</strong> résultats
+              </div>
+            </div>
+            <div class="col-md-6">
+              <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm justify-content-end mb-0">
+                  <li class="page-item" [class.disabled]="page === 1">
+                    <a class="page-link" (click)="changePage(page - 1); $event.preventDefault()">
+                      <i class="mdi mdi-chevron-left"></i>
+                    </a>
+                  </li>
+                  <li class="page-item" *ngFor="let p of getPageNumbers()" [class.active]="p === page">
+                    <a class="page-link" (click)="changePage(p); $event.preventDefault()">
+                      {{ p }}
+                    </a>
+                  </li>
+                  <li class="page-item" [class.disabled]="page >= getTotalPages()">
+                    <a class="page-link" (click)="changePage(page + 1); $event.preventDefault()">
+                      <i class="mdi mdi-chevron-right"></i>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

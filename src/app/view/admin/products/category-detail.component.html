@@ -1,0 +1,105 @@
+<div class="container-fluid" *ngIf="!loading && category; else loadingOrError">
+  <div class="row mb-3">
+    <div class="col">
+      <h4 class="mb-0">{{ category?.label }}</h4>
+      <small class="text-muted">Détail de la catégorie</small>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <img
+              *ngIf="category?.main_image_url"
+              [src]="mediaUrlService.getMediaUrl(category?.main_image_url || '')"
+              class="img-fluid rounded"
+              alt="{{ category?.label }}"
+              style="max-height: 200px; object-fit: contain;"
+            />
+            <div *ngIf="!category?.main_image_url" class="bg-light text-muted py-5 rounded">
+              Aucune image principale
+            </div>
+          </div>
+          <p class="mb-1">
+            <span class="text-muted">Slug :</span>
+            <strong>{{ category?.slug || '-' }}</strong>
+          </p>
+          <p class="mb-1">
+            <span class="text-muted">Profondeur :</span>
+            <strong>{{ category?.depth ?? 0 }}</strong>
+          </p>
+          <p class="mb-0">
+            <span class="text-muted">État :</span>
+            <span class="badge bg-primary ms-1">{{ category?.state }}</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Statistiques</h5>
+          <p class="mb-1">
+            <span class="text-muted">Nombre de produits :</span>
+            <strong>{{ category?.product_count ?? 0 }}</strong>
+          </p>
+          <p class="mb-0 text-muted small">
+            Créée le
+            <strong *ngIf="category?.created_at">
+              {{ category?.created_at | date:'dd/MM/yyyy HH:mm' }}
+            </strong>
+            <span *ngIf="category?.updated_at">
+              – Mise à jour le
+              <strong>{{ category?.updated_at | date:'dd/MM/yyyy HH:mm' }}</strong>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Description</h5>
+          <p *ngIf="category?.description; else noDesc" class="mb-0">
+            {{ category?.description }}
+          </p>
+          <ng-template #noDesc>
+            <p class="text-muted mb-0">Aucune description.</p>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="card mb-3" *ngIf="category?.breadcrumb && category.breadcrumb.length">
+        <div class="card-body">
+          <h5 class="card-title">Fil d'Ariane</h5>
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item" *ngFor="let b of category.breadcrumb">
+              {{ b.label || b.slug || b.id }}
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col">
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+        <div *ngIf="!loading && errorMsg" class="alert alert-danger mt-3">
+          {{ errorMsg }}
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+

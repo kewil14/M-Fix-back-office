@@ -1,0 +1,107 @@
+<div class="container-fluid" *ngIf="!loading && brand; else loadingOrError">
+  <div class="row mb-3">
+    <div class="col">
+      <h4 class="mb-0">{{ brand?.label }}</h4>
+      <small class="text-muted">Détail de la marque</small>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <img
+              *ngIf="brand?.logo_url"
+              [src]="mediaUrlService.getMediaUrl(brand?.logo_url || '')"
+              class="img-fluid rounded"
+              alt="{{ brand?.label }}"
+              style="max-height: 200px; object-fit: contain;"
+            />
+            <div *ngIf="!brand?.logo_url" class="bg-light text-muted py-5 rounded">
+              Aucun logo
+            </div>
+          </div>
+          <p class="mb-1">
+            <span class="text-muted">Site web :</span>
+            <a *ngIf="brand?.website"
+               [href]="brand?.website"
+               target="_blank"
+               rel="noopener noreferrer">
+              {{ brand?.website }}
+            </a>
+            <span *ngIf="!brand?.website">-</span>
+          </p>
+          <p class="mb-0">
+            <span class="text-muted">État :</span>
+            <span class="badge bg-primary ms-1">{{ brand?.state }}</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Statistiques</h5>
+          <p class="mb-1">
+            <span class="text-muted">Nombre de produits :</span>
+            <strong>{{ brand?.products_count ?? 0 }}</strong>
+          </p>
+          <p class="mb-0 text-muted small">
+            Créée le
+            <strong *ngIf="brand?.created_at">
+              {{ brand?.created_at | date:'dd/MM/yyyy HH:mm' }}
+            </strong>
+            <span *ngIf="brand?.updated_at">
+              – Mise à jour le
+              <strong>{{ brand?.updated_at | date:'dd/MM/yyyy HH:mm' }}</strong>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Description</h5>
+          <p *ngIf="brand?.description; else noDesc" class="mb-0">
+            {{ brand?.description }}
+          </p>
+          <ng-template #noDesc>
+            <p class="text-muted mb-0">Aucune description.</p>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="card" *ngIf="brand?.top_products && brand.top_products.length">
+        <div class="card-body">
+          <h5 class="card-title">Top produits</h5>
+          <ul class="mb-0">
+            <li *ngFor="let p of brand.top_products">
+              {{ p.label || p.name || p.id }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col">
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+        <div *ngIf="!loading && errorMsg" class="alert alert-danger mt-3">
+          {{ errorMsg }}
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+

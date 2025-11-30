@@ -1,0 +1,266 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col">
+      <h4 class="mb-0 d-flex align-items-center">
+        <i class="mdi mdi-format-list-bulleted-type me-2"></i>
+        Variants produits
+      </h4>
+      <small class="text-muted">
+        Sélectionne un produit puis gère ses variants (création, édition, suppression).
+      </small>
+    </div>
+  </div>
+
+  <div class="row mb-2" *ngIf="successMsg">
+    <div class="col-lg-8">
+      <div class="alert alert-success mb-0">
+        {{ successMsg }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-2" *ngIf="errorMsg">
+    <div class="col-lg-8">
+      <div class="alert alert-danger mb-0">
+        {{ errorMsg }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sélection du produit -->
+  <div class="row mb-3">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3">
+            <i class="mdi mdi-package-variant-closed me-1"></i>
+            Choisir le produit
+          </h5>
+          <div class="row">
+            <div class="col-md-7">
+              <label class="form-label">Recherche produit</label>
+              <div class="input-group mb-1">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="productSearch"
+                  name="productSearch"
+                  placeholder="Rechercher par nom ou SKU..."
+                  (keyup.enter)="loadProducts()"
+                />
+                <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
+                  <i class="ri-search-line"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Produit</label>
+              <select
+                class="form-select"
+                [(ngModel)]="selectedProductId"
+                name="selectedProductId"
+                (ngModelChange)="loadVariants()">
+                <option [ngValue]="''">Sélectionner un produit</option>
+                <option *ngFor="let p of products" [ngValue]="p.id">
+                  {{ p.label }} ({{ p.sku }})
+                </option>
+              </select>
+            </div>
+          </div>
+          <small class="text-muted">
+            Choisis un produit pour afficher et gérer tous ses variants.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="product && !loading">
+    <!-- Liste des variants -->
+    <div class="col-lg-8">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="mb-1">{{ product.label }}</h5>
+              <p class="text-muted mb-0">
+                SKU: <strong>{{ product.sku }}</strong>
+                <span *ngIf="product.price">
+                  • Prix: <strong>{{ product.price | number:'1.0-2' }} FCFA</strong>
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Label</th>
+                  <th>SKU</th>
+                  <th>Prix</th>
+                  <th>Stock dispo</th>
+                  <th>État</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="variants.length === 0">
+                  <td colspan="6" class="text-center text-muted py-4">
+                    Aucun variant trouvé pour ce produit.
+                  </td>
+                </tr>
+                <tr *ngFor="let v of variants">
+                  <td>{{ v.label }}</td>
+                  <td>{{ v.sku }}</td>
+                  <td>{{ v.price | number:'1.0-2' }} FCFA</td>
+                  <td>{{ v.available_stock ?? 'N/A' }}</td>
+                  <td>
+                    <span class="badge"
+                          [ngClass]="{
+                            'bg-success': v.state === 'ACTIVE',
+                            'bg-secondary': v.state === 'INACTIVE',
+                            'bg-warning': v.state === 'DRAFT'
+                          }">
+                      {{ v.state || 'N/A' }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <button type="button"
+                            class="btn btn-sm btn-soft-primary me-1"
+                            (click)="selectVariantForEdit(v)">
+                      <i class="mdi mdi-pencil"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-soft-danger"
+                            (click)="deleteVariant(v)">
+                      <i class="mdi mdi-delete-outline"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire création / édition -->
+    <div class="col-lg-4 mt-3 mt-lg-0">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3 d-flex align-items-center">
+            <i class="mdi" [ngClass]="editingVariantId ? 'mdi-pencil' : 'mdi-plus-circle-outline'"></i>
+            <span class="ms-2">
+              {{ editingVariantId ? 'Modifier le variant' : 'Nouveau variant' }}
+            </span>
+          </h5>
+
+          <form (ngSubmit)="saveVariant()" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Label</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="variantLabel"
+                name="variantLabel"
+                required
+                placeholder="Ex: iPhone 15 Pro 128GB Noir"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description (optionnelle)</label>
+              <textarea
+                class="form-control"
+                rows="2"
+                [(ngModel)]="variantDescription"
+                name="variantDescription"
+                placeholder="Décris rapidement ce variant"
+              ></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Prix</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="variantPrice"
+                    name="variantPrice"
+                    required
+                    placeholder="Ex: 1199.99"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">SKU</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="variantSku"
+                    name="variantSku"
+                    required
+                    placeholder="Ex: IPH15P-128-BLK"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Code-barres (optionnel)</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="variantBarcode"
+                name="variantBarcode"
+                placeholder="Code-barres / EAN"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">État</label>
+              <select class="form-select" [(ngModel)]="variantState" name="variantState">
+                <option value="ACTIVE">Actif</option>
+                <option value="INACTIVE">Inactif</option>
+                <option value="DRAFT">Brouillon</option>
+              </select>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <button type="button"
+                      class="btn btn-light"
+                      (click)="resetVariantForm()"
+                      [disabled]="loading">
+                <i class="mdi mdi-restore me-1"></i>
+                Réinitialiser
+              </button>
+              <button type="submit"
+                      class="btn btn-primary"
+                      [disabled]="loading || !selectedProductId">
+                <span *ngIf="!loading">
+                  <i class="mdi mdi-content-save-outline me-1"></i>
+                  {{ editingVariantId ? 'Mettre à jour' : 'Créer le variant' }}
+                </span>
+                <span *ngIf="loading">
+                  <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  Traitement...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

@@ -340,7 +340,19 @@
       "PERMISSIONS": "Permissions",
       "ROLE": "Role",
       "AUTORISATION": "Autorisation",
-      "PROFILE": "Profil"
+      "PROFILE": "Profil",
+      "PRODUCTS_TITLE": "Produits",
+      "PRODUCTS": "Produits",
+      "PRODUCTS_LIST": "Produits",
+      "PRODUCTS_BRANDS": "Marques",
+      "PRODUCTS_CATEGORIES": "Catégories",
+      "PRODUCTS_TYPES": "Types de produits",
+      "PRODUCTS_VARIANTS": "Variants",
+      "PRODUCTS_STOCK": "Stock & inventaire",
+      "PRODUCTS_PROMOTIONS": "Promotions",
+      "PRODUCTS_ANALYTICS": "Analytics",
+      "PRODUCTS_TAGS": "Tags",
+      "PRODUCTS_MEDIA": "Gestion des médias"
     },
     "DASHBOARD": {
       "WELCOME_BACK": "Bon retour",

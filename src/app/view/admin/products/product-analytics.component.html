@@ -1,0 +1,298 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col">
+      <h4 class="mb-0 d-flex align-items-center">
+        <i class="mdi mdi-chart-areaspline me-2"></i>
+        Génération Rapport Analytique
+      </h4>
+      <small class="text-muted">
+        Génère un rapport détaillé sur les performances de tes produits pour une boutique et une période données.
+      </small>
+    </div>
+  </div>
+
+  <div class="row mb-2" *ngIf="errorMsg">
+    <div class="col-lg-8">
+      <div class="alert alert-danger mb-0">
+        {{ errorMsg }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-2" *ngIf="successMsg">
+    <div class="col-lg-8">
+      <div class="alert alert-success mb-0">
+        {{ successMsg }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                [class.active]="activeTab === 'tag'"
+                (click)="activeTab = 'tag'; errorMsg = null; successMsg = null"
+                type="button">
+                <i class="mdi mdi-tag me-1"></i>
+                {{ 'MESSAGES.MENU.PRODUCTS_TAGS' | translate }}
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                [class.active]="activeTab === 'produit'"
+                (click)="activeTab = 'produit'; errorMsg = null; successMsg = null"
+                type="button">
+                <i class="mdi mdi-package-variant me-1"></i>
+                {{ 'MESSAGES.MENU.PRODUCTS_LIST' | translate }}
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content mt-3">
+            <!-- Onglet Produit -->
+            <div *ngIf="activeTab === 'produit'">
+              <!-- Filtres en pleine largeur -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3 d-flex align-items-center">
+            <i class="mdi mdi-filter-variant me-1"></i>
+            <span>Filtres du rapport</span>
+          </h5>
+          <form (ngSubmit)="onSubmit()" novalidate>
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-4 col-md-6">
+                <label class="form-label">Workspace</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="workspaceId"
+                  name="workspaceId"
+                  (ngModelChange)="loadShopsForWorkspace()">
+                  <option [ngValue]="''">Sélectionner un workspace</option>
+                  <option *ngFor="let w of workspaces" [ngValue]="w.id">
+                    {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                  </option>
+                </select>
+              </div>
+              <div class="col-lg-3 col-md-6">
+                <label class="form-label">Boutique <span class="text-danger">*</span></label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="shopId"
+                  name="shopId"
+                  required>
+                  <option [ngValue]="''">Sélectionner une boutique</option>
+                  <option *ngFor="let s of shops" [ngValue]="s.id">
+                    {{ s.name }} ({{ s.code || s.city }})
+                  </option>
+                </select>
+              </div>
+              <div class="col-lg-2 col-md-6">
+                <label class="form-label">Date de début <span class="text-danger">*</span></label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  [(ngModel)]="startDate"
+                  name="startDate"
+                  required
+                  [value]="getDateTimeLocalValue(startDate)"
+                  (ngModelChange)="onStartDateChange($event)"
+                />
+              </div>
+              <div class="col-lg-2 col-md-6">
+                <label class="form-label">Date de fin <span class="text-danger">*</span></label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  [(ngModel)]="endDate"
+                  name="endDate"
+                  required
+                  [value]="getDateTimeLocalValue(endDate)"
+                  (ngModelChange)="onEndDateChange($event)"
+                />
+              </div>
+              <div class="col-lg-1 col-md-6">
+                <button class="btn btn-primary w-100" type="submit" [disabled]="loading">
+                  <span *ngIf="!loading">
+                    <i class="mdi mdi-chart-line me-1"></i>
+                    Générer
+                  </span>
+                  <span *ngIf="loading">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    ...
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div class="row mt-3">
+              <div class="col-12">
+                <label class="form-label">Métriques à inclure</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <div class="form-check form-check-inline">
+                    <input
+                      id="metricViews"
+                      class="form-check-input"
+                      type="checkbox"
+                      value="views"
+                      [(ngModel)]="selectedMetrics"
+                      name="selectedMetrics"
+                      [ngModelOptions]="{standalone: true}">
+                    <label class="form-check-label" for="metricViews">Vues</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      id="metricSales"
+                      class="form-check-input"
+                      type="checkbox"
+                      value="sales"
+                      [(ngModel)]="selectedMetrics"
+                      name="selectedMetricsSales"
+                      [ngModelOptions]="{standalone: true}">
+                    <label class="form-check-label" for="metricSales">Ventes</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      id="metricStock"
+                      class="form-check-input"
+                      type="checkbox"
+                      value="stock"
+                      [(ngModel)]="selectedMetrics"
+                      name="selectedMetricsStock"
+                      [ngModelOptions]="{standalone: true}">
+                    <label class="form-check-label" for="metricStock">Stock</label>
+                  </div>
+                </div>
+                <!-- <small class="text-muted">
+                  Ces valeurs sont envoyées au paramètre <code>metrics</code> de <code>/api/v1/analytics/report</code>.
+                </small> -->
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résumé + détails sur toute la largeur -->
+  <div class="row" *ngIf="report && !loading">
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Résumé des performances</h5>
+          <div class="row g-3">
+            <div class="col-sm-6" *ngIf="report?.total_views !== undefined">
+              <div class="analytics-kpi kpi-views">
+                <div class="analytics-kpi-label">Vues totales</div>
+                <div class="analytics-kpi-value">{{ report.total_views }}</div>
+              </div>
+            </div>
+            <div class="col-sm-6" *ngIf="report?.total_sales !== undefined">
+              <div class="analytics-kpi kpi-sales">
+                <div class="analytics-kpi-label">Ventes totales</div>
+                <div class="analytics-kpi-value">{{ report.total_sales }}</div>
+              </div>
+            </div>
+            <div class="col-sm-6" *ngIf="report?.average_rating !== undefined">
+              <div class="analytics-kpi kpi-rating">
+                <div class="analytics-kpi-label">Note moyenne</div>
+                <div class="analytics-kpi-value">{{ report.average_rating | number:'1.1-2' }}</div>
+              </div>
+            </div>
+            <div class="col-sm-6" *ngIf="report?.revenue_total !== undefined">
+              <div class="analytics-kpi kpi-revenue">
+                <div class="analytics-kpi-label">CA total</div>
+                <div class="analytics-kpi-value">{{ report.revenue_total | number:'1.0-2' }} FCFA</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-6" *ngIf="report?.top_selling_products?.length">
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Top produits</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Produit</th>
+                      <th class="text-end">Ventes</th>
+                      <th class="text-end">CA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let p of report.top_selling_products">
+                      <td>{{ p.label || p.name }}</td>
+                      <td class="text-end">{{ p.sales || p.quantity }}</td>
+                      <td class="text-end">{{ p.revenue | number:'1.0-2' }} FCFA</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6" *ngIf="report?.low_stock_products?.length">
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Produits en faible stock</h5>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Produit</th>
+                      <th class="text-end">Stock dispo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let p of report.low_stock_products">
+                      <td>{{ p.label || p.name }}</td>
+                      <td class="text-end">{{ p.available_stock }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" *ngIf="report">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Données brutes</h5>
+          <pre class="bg-light p-3 rounded small mb-0">
+{{ report | json }}
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+            </div>
+
+            <!-- Onglet Tag -->
+            <div *ngIf="activeTab === 'tag'">
+              <div class="row">
+                <div class="col-12">
+                  <p class="text-muted">Contenu de l'onglet Tag - À implémenter</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

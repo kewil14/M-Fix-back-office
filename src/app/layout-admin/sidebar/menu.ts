@@ -108,6 +108,73 @@ export const MENU: MenuItem[] = [
                 visibleForSuperAdmin: true
             }
         ]
-    }
+    },
+    // Section Produits (Product Service)
+    {
+        id: 80,
+        label: 'MESSAGES.MENU.PRODUCTS_TITLE',
+        isTitle: true
+    },
+    {
+        id: 81,
+        label: 'MESSAGES.MENU.PRODUCTS',
+        icon: 'bx-package',
+        subItems: [
+            {
+                id: 83,
+                label: 'MESSAGES.MENU.PRODUCTS_BRANDS',
+                link: '/admin/product-brands',
+                parentId: 81
+            },
+            {
+                id: 84,
+                label: 'MESSAGES.MENU.PRODUCTS_CATEGORIES',
+                link: '/admin/product-categories',
+                parentId: 81
+            },
+            {
+                id: 90,
+                label: 'MESSAGES.MENU.PRODUCTS_TYPES',
+                link: '/admin/product-types',
+                parentId: 81
+            },
+            {
+                id: 89,
+                label: 'MESSAGES.MENU.PRODUCTS_VARIANTS',
+                link: '/admin/product-variants',
+                parentId: 81
+            },
+            {
+                id: 91,
+                label: 'MESSAGES.MENU.PRODUCTS_TAGS',
+                link: '/admin/product-tags',
+                parentId: 81
+            },
+            {
+                id: 82,
+                label: 'MESSAGES.MENU.PRODUCTS_LIST',
+                link: '/admin/products',
+                parentId: 81
+            },
+            {
+                id: 85,
+                label: 'MESSAGES.MENU.PRODUCTS_STOCK',
+                link: '/admin/product-stock',
+                parentId: 81
+            },
+            {
+                id: 86,
+                label: 'MESSAGES.MENU.PRODUCTS_PROMOTIONS',
+                link: '/admin/product-promotions',
+                parentId: 81
+            },
+            {
+                id: 87,
+                label: 'MESSAGES.MENU.PRODUCTS_ANALYTICS',
+                link: '/admin/product-analytics',
+                parentId: 81
+            }
+        ]
+    },
 ];
 

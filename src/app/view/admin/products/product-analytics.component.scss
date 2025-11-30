@@ -1,0 +1,48 @@
+.spinner-border {
+  vertical-align: text-bottom;
+}
+
+pre {
+  max-height: 400px;
+  overflow: auto;
+}
+
+.analytics-kpi {
+  border-radius: .75rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #f8f9fa;
+}
+
+.analytics-kpi-label {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #6c757d;
+  margin-bottom: .25rem;
+}
+
+.analytics-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.kpi-views {
+  border-left: 4px solid #3b82f6;
+}
+
+.kpi-sales {
+  border-left: 4px solid #22c55e;
+}
+
+.kpi-rating {
+  border-left: 4px solid #f97316;
+}
+
+.kpi-revenue {
+  border-left: 4px solid #a855f7;
+}
+
+
