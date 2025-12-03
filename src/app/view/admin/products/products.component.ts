@@ -4,6 +4,7 @@ import { ProductService, ProductListItem, ProductSearchParams } from 'src/app/co
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
 import { DuplicateProductModalComponent, DuplicateProductOptions } from 'src/app/shared-module/components/duplicate-product-modal/duplicate-product-modal.component';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-admin-products',
@@ -44,7 +45,8 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
 
   constructor(
     private productService: ProductService,
-    private modalService: BsModalService
+    private modalService: BsModalService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
@@ -57,19 +59,29 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
     // Charger les marques
     this.productService.getBrands().subscribe({
       next: (res) => {
+        console.log('[ProductsComponent.loadBrandsAndCategories] Brands response:', res);
         if (res && res.status === 'SUCCESS') {
           this.brands = (res.data as any[]) || [];
+          console.log('[ProductsComponent.loadBrandsAndCategories] Loaded brands:', this.brands.length);
         }
+      },
+      error: (err) => {
+        console.error('[ProductsComponent.loadBrandsAndCategories] Error loading brands:', err);
       }
     });
 
     // Charger les catégories
     this.productService.getCategoriesTree().subscribe({
       next: (res) => {
+        console.log('[ProductsComponent.loadBrandsAndCategories] Categories response:', res);
         if (res && res.status === 'SUCCESS') {
           this.categoriesFlat = [];
           (res.data as any[] || []).forEach(cat => this.flattenCategory(cat));
+          console.log('[ProductsComponent.loadBrandsAndCategories] Loaded categories:', this.categoriesFlat.length);
         }
+      },
+      error: (err) => {
+        console.error('[ProductsComponent.loadBrandsAndCategories] Error loading categories:', err);
       }
     });
   }
@@ -105,12 +117,33 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
       page_size: this.pageSize
     };
 
+    // Filtrer selon le rôle de l'utilisateur
+    if (this.permissionService.isWorkspaceAdmin()) {
+      const workspaceId = this.permissionService.getWorkspaceId();
+      if (workspaceId) {
+        (params as any).workspace_id = workspaceId;
+        console.log('[ProductsComponent] Workspace Admin - Filtering by workspace:', workspaceId);
+      }
+    } else if (this.permissionService.isShopManager()) {
+      const shopId = this.permissionService.getShopId();
+      if (shopId) {
+        (params as any).shop_id = shopId;
+        console.log('[ProductsComponent] Shop Manager - Filtering by shop:', shopId);
+      }
+    }
+
+    console.log('[ProductsComponent.loadProducts] Request params:', params);
     const sub = this.productService.getProducts(params).subscribe({
       next: (res) => {
+        console.log('[ProductsComponent.loadProducts] Response received:', res);
         this.isLoading = false;
         if (res && res.success) {
           this.products = res.data || [];
           this.total = res.total ?? this.products.length;
+          console.log('[ProductsComponent.loadProducts] Loaded products:', this.products.length);
+          if (this.products.length > 0) {
+            console.log('[ProductsComponent.loadProducts] Sample product shop_id:', (this.products[0] as any).shop_id || 'N/A');
+          }
         } else {
           this.products = [];
           this.total = 0;
@@ -118,6 +151,7 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
+        console.error('[ProductsComponent.loadProducts] Error:', err);
         this.isLoading = false;
         this.errorMessage = err?.error?.message || 'Erreur lors du chargement des produits.';
         this.products = [];

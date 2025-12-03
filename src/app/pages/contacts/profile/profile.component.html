@@ -50,6 +50,12 @@
                     </p>
                   </div>
                 </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-primary" (click)="onBack()">
+                    <i class="mdi mdi-arrow-left me-1"></i>
+                    Retour
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -57,11 +63,11 @@
       </div>
 
       <!-- Main Content -->
-      <div class="row">
+      <div class="row profile-content-row">
         <!-- Left Column - Personal Info -->
-        <div class="col-lg-8">
+        <div class="col-lg-8 d-flex flex-column">
           <!-- Personal Information -->
-          <div class="card border-0 shadow-sm mb-4">
+          <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
               <h5 class="mb-0">
                 <i class="ri-user-line me-2 text-primary"></i>
@@ -111,7 +117,7 @@
           </div>
 
           <!-- Contact Information -->
-          <div class="card border-0 shadow-sm mb-4">
+          <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
               <h5 class="mb-0">
                 <i class="ri-phone-line me-2 text-primary"></i>
@@ -153,7 +159,7 @@
           </div>
 
           <!-- Account Information -->
-          <div class="card border-0 shadow-sm mb-4">
+          <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
               <h5 class="mb-0">
                 <i class="ri-settings-3-line me-2 text-primary"></i>
@@ -208,9 +214,9 @@
         </div>
 
         <!-- Right Column - Roles & Permissions & Security -->
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-flex flex-column">
           <!-- Roles -->
-          <div class="card border-0 shadow-sm mb-4" *ngIf="user.roles && user.roles.length > 0">
+          <div class="card border-0 shadow-sm" *ngIf="hasRoles(user)">
             <div class="card-header bg-white border-bottom">
               <h5 class="mb-0">
                 <i class="ri-shield-user-line me-2 text-primary"></i>
@@ -282,7 +288,7 @@
           </div>
 
           <!-- Change Password -->
-          <div class="card border-0 shadow-sm mt-4">
+          <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
               <h5 class="mb-0">
                 <i class="ri-lock-password-line me-2 text-primary"></i>

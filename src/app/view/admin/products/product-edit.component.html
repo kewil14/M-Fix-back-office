@@ -235,7 +235,7 @@
             </div>
 
             <div class="row">
-              <div class="col-md-6">
+              <div class="col-md-6" *ngIf="!permissionService.isWorkspaceAdmin() && !permissionService.isShopManager()">
                 <div class="mb-3">
                   <label class="form-label">Workspace</label>
                   <select
@@ -250,38 +250,60 @@
                   </select>
                 </div>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-6" [ngClass]="{'col-md-12': permissionService.isWorkspaceAdmin() || permissionService.isShopManager()}">
                 <div class="mb-3">
                   <label class="form-label">Boutique <span class="text-danger">*</span></label>
                   <select
                     class="form-select"
                     [(ngModel)]="shopId"
                     name="shopId"
-                    [disabled]="!workspaceId"
+                    [disabled]="!workspaceId || permissionService.isShopManager()"
                     required>
                     <option [ngValue]="''">Sélectionner une boutique</option>
                     <option *ngFor="let s of shops" [ngValue]="s.id">
                       {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
                     </option>
                   </select>
-                  <small class="text-muted" *ngIf="!workspaceId">
+                  <small class="text-muted" *ngIf="!workspaceId && !permissionService.isShopManager()">
                     Veuillez d'abord sélectionner un workspace
                   </small>
                 </div>
               </div>
             </div>
 
-            <div class="form-check mb-3">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                id="isFeatured"
-                [(ngModel)]="isFeatured"
-                name="isFeatured"
-              />
-              <label class="form-check-label" for="isFeatured">
-                Mettre en avant ce produit
-              </label>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-check mb-3">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="isFeatured"
+                    [(ngModel)]="isFeatured"
+                    name="isFeatured"
+                  />
+                  <label class="form-check-label" for="isFeatured">
+                    Mettre en avant ce produit
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Tags</label>
+                  <ng-select
+                    [items]="tags"
+                    bindLabel="label"
+                    bindValue="id"
+                    [(ngModel)]="selectedTagIds"
+                    name="selectedTagIds"
+                    [multiple]="true"
+                    [closeOnSelect]="false"
+                    [clearable]="true"
+                    placeholder="Sélectionner des tags"
+                    [searchable]="true">
+                  </ng-select>
+                  <small class="text-muted">Sélectionnez un ou plusieurs tags pour ce produit</small>
+                </div>
+              </div>
             </div>
 
             <!-- Section SEO (optionnelle) -->

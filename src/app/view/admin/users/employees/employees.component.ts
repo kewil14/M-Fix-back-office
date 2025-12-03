@@ -22,6 +22,9 @@ import {
 import { EmployeeState } from 'src/app/core/shared/stores/employee/employee.state';
 import { CreateEmployeeComponent } from '../create-employee/create-employee.component';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
+import { ShopService } from 'src/app/core/shared/services/shop.service';
+import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-employees',
@@ -39,7 +42,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   );
 
   searchTerm: string = '';
-  departmentFilter: string = '';
+  shopFilter: string = '';
   userTypeFilter: string = '';
   isActiveFilter: boolean | null = null;
   currentPage: number = 0;
@@ -51,6 +54,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   allEmployees: EmployeeResponseDto[] = [];
   filteredEmployees: EmployeeResponseDto[] = [];
   displayedEmployees: EmployeeResponseDto[] = [];
+  
+  // Liste des shops pour le filtre
+  shops: ShopResponseDto[] = [];
 
   // Options de filtres
   userTypeOptions = [
@@ -66,7 +72,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     private actionService: Actions,
     private router: Router,
     private translateService: TranslateService,
-    public mediaUrlService: MediaUrlService
+    public mediaUrlService: MediaUrlService,
+    private shopService: ShopService,
+    private permissionService: PermissionService
   ) {}
 
   ngOnDestroy() {
@@ -77,6 +85,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Employés', active: true }];
     this.employeeState$ = this.storeService.select(selectEmployeeState).pipe();
     this.actionEmployees();
+    
+    // Charger la liste des shops
+    this.loadShops();
     
     // S'abonner au state pour récupérer toutes les données
     this.subscriptions.push(
@@ -93,6 +104,27 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     
     // Charger toutes les données au début (sans filtres, grande taille)
     this.loadAllEmployees();
+  }
+  
+  loadShops(): void {
+    const workspaceId = this.permissionService.getWorkspaceId();
+    this.shopService.getShops(workspaceId || undefined).subscribe({
+      next: (res) => {
+        if (res && res.status === 'SUCCESS' && res.data) {
+          this.shops = Array.isArray(res.data) ? res.data : [];
+          console.log('[EmployeesComponent] Loaded shops:', this.shops.length);
+        }
+      },
+      error: (err) => {
+        console.error('[EmployeesComponent] Error loading shops:', err);
+      }
+    });
+  }
+  
+  getShopName(shopId: string | undefined): string {
+    if (!shopId) return 'N/A';
+    const shop = this.shops.find(s => s.id === shopId);
+    return shop?.name || shopId;
   }
 
   actionEmployees() {
@@ -146,11 +178,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(emp => emp.type === this.userTypeFilter);
     }
     
-    // Filtre par département (workspaceId)
-    if (this.departmentFilter) {
-      filtered = filtered.filter(emp => 
-        (emp.workspaceId || '').toLowerCase().includes(this.departmentFilter.toLowerCase())
-      );
+    // Filtre par shop
+    if (this.shopFilter) {
+      filtered = filtered.filter(emp => emp.shopId === this.shopFilter);
     }
     
     // Filtre par statut actif
@@ -201,7 +231,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
   resetFilters(): void {
     this.searchTerm = '';
-    this.departmentFilter = '';
+    this.shopFilter = '';
     this.userTypeFilter = '';
     this.isActiveFilter = null;
     this.currentPage = 0;

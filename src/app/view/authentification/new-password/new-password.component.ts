@@ -40,7 +40,22 @@ export class NewPasswordComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      this.token = params['token'] || '';
+      this.token = params['token'] || params['resetToken'] || '';
+      console.log('[NewPasswordComponent] Query params:', params);
+      console.log('[NewPasswordComponent] Token extracted:', this.token ? 'Token présent' : 'Token absent');
+      
+      // Si aucun token n'est présent, rediriger vers forgot-password
+      if (!this.token) {
+        console.warn('[NewPasswordComponent] ⚠️ No token found in URL, redirecting to forgot-password');
+        this.messages = { 
+          type: 'error', 
+          text: 'Token manquant. Redirection vers la page de demande de réinitialisation...' 
+        };
+        setTimeout(() => {
+          this.router.navigate(['/auth/forgot-password'], { replaceUrl: true });
+        }, 2000);
+        return;
+      }
     });
 
     this.initForm();

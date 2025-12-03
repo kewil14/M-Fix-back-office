@@ -3,7 +3,12 @@
     <div class="col-12">
       <div class="card shadow-sm">
         <div class="card-header border-bottom">
-          <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.SHOP.EDIT_TITLE' | translate }}</h4>
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.SHOP.EDIT_TITLE' | translate }}</h4>
+            <button type="button" class="btn btn-sm btn-primary" (click)="onBack()">
+              <i class="ri-arrow-left-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.BACK' | translate }}
+            </button>
+          </div>
         </div>
         <div class="card-body">
           <form [formGroup]="shopForm" (ngSubmit)="onSubmit()">

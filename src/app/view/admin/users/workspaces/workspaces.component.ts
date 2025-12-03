@@ -55,6 +55,10 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   totalElements: number = 0;
   totalPages: number = 0;
 
+  // Permissions
+  isWorkspaceAdmin: boolean = false;
+  userWorkspaceId: string | null = null;
+
   constructor(
     private modalService: BsModalService,
     private storeService: Store,
@@ -73,6 +77,14 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Workspaces', active: true }];
     this.workspaceAdminState$ = this.storeService.select(selectWorkspaceAdminState).pipe();
+    
+    // Vérifier les permissions
+    this.isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
+    this.userWorkspaceId = this.permissionService.getWorkspaceId();
+    
+    console.log('[WorkspacesComponent] Is Workspace Admin:', this.isWorkspaceAdmin);
+    console.log('[WorkspacesComponent] User Workspace ID:', this.userWorkspaceId);
+    
     this.actionWorkspaces();
     this.loadWorkspaces();
     
@@ -125,14 +137,24 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
       page: 0,
       size: 100, // Charger toutes les données
       sortBy: this.sortBy,
-      sortDirection: this.sortDirection
+      sortDirection: this.sortDirection,
+      // Pour les Workspace Admins, filtrer par leur workspace_id
+      workspaceId: this.isWorkspaceAdmin && this.userWorkspaceId ? this.userWorkspaceId : undefined
     };
+    console.log('[WorkspacesComponent] Loading workspaces with filters:', filters);
     this.storeService.dispatch(findAllWorkspaceAdmins({ filters }));
   }
 
   applyFilters(): void {
     // Filtrer les données localement
     this.filteredWorkspaces = this.allWorkspaces.filter(workspace => {
+      // Pour les Workspace Admins, ne montrer que leur propre workspace
+      if (this.isWorkspaceAdmin && this.userWorkspaceId) {
+        if (workspace.workspaceId !== this.userWorkspaceId) {
+          return false;
+        }
+      }
+      
       // Filtre de recherche
       const matchesSearch = !this.searchTerm || 
         (workspace.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||

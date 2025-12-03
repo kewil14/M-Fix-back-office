@@ -5,16 +5,21 @@ import { ConfigService } from 'src/app/core/services/config.service';
 import { EventService } from 'src/app/core/services/event.service';
 import { ChartType } from './dashboard.model';
 import { ProfileState } from 'src/app/core/shared/stores/profile/profile.state';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { selectDemandeState, selectProfileState } from 'src/app/core/core.state';
 import { DemandeState } from 'src/app/core/shared/stores/demande/demande.state';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { DashboardService, UserStatisticsDto } from 'src/app/core/shared/services/dashboard.service';
 import { UserTypeEnum } from 'src/app/core/config/list-roles';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { LocalStorageService } from 'src/app/core/shared/services/local-storage.service';
 import { setUserProfile } from 'src/app/core/shared/stores/profile/profile.actions';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
+import { ShopService } from 'src/app/core/shared/services/shop.service';
+import { WorkspaceAdminService } from 'src/app/core/shared/services/workspace-admin.service';
+import { ProductService } from 'src/app/core/shared/services/product.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -39,6 +44,25 @@ export class DashboardComponent implements OnInit {
   isLoadingStats = false;
   statsError: string | null = null;
 
+  // Workspaces et Shops
+  workspacesCount: number = 0;
+  shopsCount: number = 0;
+  workspaceAdminsCount: number = 0;
+  shopManagersCount: number = 0;
+  isLoadingWorkspaces = false;
+  isLoadingShops = false;
+
+  // Produits
+  productsCount: number = 0;
+  activeProductsCount: number = 0;
+  isLoadingProducts = false;
+
+  // Permissions
+  isSuperAdmin: boolean = false;
+  isAdmin: boolean = false;
+  isWorkspaceAdmin: boolean = false;
+  isShopManager: boolean = false;
+
   dataStateEnum: typeof DataStateEnum = DataStateEnum;
   userTypeEnum = UserTypeEnum;
 
@@ -50,6 +74,11 @@ export class DashboardComponent implements OnInit {
     private storeService: Store,
     private dashboardService: DashboardService,
     private localStorageService: LocalStorageService,
+    private permissionService: PermissionService,
+    private workspaceService: WorkspaceService,
+    private shopService: ShopService,
+    private workspaceAdminService: WorkspaceAdminService,
+    private productService: ProductService
   ) {
   }
 
@@ -85,6 +114,9 @@ export class DashboardComponent implements OnInit {
     );
 
     this.loadUserStatistics();
+    this.loadPermissions();
+    this.loadWorkspacesAndShops();
+    this.loadProductsStatistics();
 
     const attribute = document.body.getAttribute('data-layout');
     this.isVisible = attribute || '';
@@ -142,7 +174,18 @@ export class DashboardComponent implements OnInit {
       map(response => {
         this.isLoadingStats = false;
         if (response.status === 'SUCCESS' && response.data) {
-          return response.data.userStatistics || [];
+          const stats = response.data.userStatistics || [];
+          // Extraire les compteurs de workspace admins et shop managers depuis les statistiques
+          const workspaceAdminStat = stats.find(s => s.userType === 'WORKSPACE_ADMIN');
+          const shopManagerStat = stats.find(s => s.userType === 'SHOP_MANAGER');
+          if (workspaceAdminStat) {
+            this.workspaceAdminsCount = workspaceAdminStat.count || 0;
+          }
+          if (shopManagerStat) {
+            this.shopManagersCount = shopManagerStat.count || 0;
+          }
+          console.log('[Dashboard] User statistics loaded:', { workspaceAdminsCount: this.workspaceAdminsCount, shopManagersCount: this.shopManagersCount });
+          return stats;
         } else {
           this.statsError = response.message || 'Failed to load statistics';
           return [];
@@ -161,6 +204,11 @@ export class DashboardComponent implements OnInit {
 
   canViewUserType(userType: string, currentUserType?: string): boolean {
     if (!currentUserType) return false;
+    
+    // Exclure WORKSPACE et SHOP des statistiques utilisateurs
+    if (userType === 'WORKSPACE' || userType === 'SHOP') {
+      return false;
+    }
     
     switch (currentUserType) {
       case UserTypeEnum.SUPER_ADMIN:
@@ -223,7 +271,153 @@ export class DashboardComponent implements OnInit {
     if (!stats || stats.length === 0) {
       return 0;
     }
-    return stats.reduce((sum, stat) => sum + (stat.count || 0), 0);
+    // Exclure WORKSPACE et SHOP des statistiques utilisateurs
+    return stats
+      .filter(stat => stat.userType !== 'WORKSPACE' && stat.userType !== 'SHOP')
+      .reduce((sum, stat) => sum + (stat.count || 0), 0);
+  }
+
+  loadPermissions(): void {
+    this.isSuperAdmin = this.permissionService.isSuperAdmin();
+    const userType = this.permissionService.getUserType();
+    this.isAdmin = userType === 'ADMIN';
+    this.isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
+    this.isShopManager = this.permissionService.isShopManager();
+  }
+
+  loadWorkspacesAndShops(): void {
+    // Les workspace admins et shop managers sont chargés depuis loadUserStatistics()
+    // Charger les workspaces et shops selon les permissions
+    if (this.isSuperAdmin || this.isAdmin) {
+      this.loadAllWorkspaces();
+      this.loadAllShops();
+    } else if (this.isWorkspaceAdmin) {
+      // Workspace Admin voit seulement les shops de son workspace
+      this.loadShopsForWorkspace();
+    }
+    // Shop Manager et employés ne voient ni workspaces ni shops
+  }
+
+  loadAllWorkspaces(): void {
+    this.isLoadingWorkspaces = true;
+    this.workspaceService.findAllWorkspaces().subscribe({
+      next: (res) => {
+        this.isLoadingWorkspaces = false;
+        if (res && res.status === 'SUCCESS' && res.data) {
+          this.workspacesCount = Array.isArray(res.data) ? res.data.length : 0;
+          console.log('[Dashboard] Workspaces count:', this.workspacesCount);
+        }
+      },
+      error: (err) => {
+        this.isLoadingWorkspaces = false;
+        console.error('[Dashboard] Error loading workspaces:', err);
+      }
+    });
+  }
+
+  loadAllShops(): void {
+    this.isLoadingShops = true;
+    this.shopService.getShops().subscribe({
+      next: (res) => {
+        this.isLoadingShops = false;
+        if (res && res.status === 'SUCCESS' && res.data) {
+          this.shopsCount = Array.isArray(res.data) ? res.data.length : 0;
+          console.log('[Dashboard] Shops count:', this.shopsCount);
+        }
+      },
+      error: (err) => {
+        this.isLoadingShops = false;
+        console.error('[Dashboard] Error loading shops:', err);
+      }
+    });
+  }
+
+  loadShopsForWorkspace(): void {
+    this.isLoadingShops = true;
+    const workspaceId = this.permissionService.getWorkspaceId();
+    if (workspaceId) {
+      this.shopService.getShops(workspaceId).subscribe({
+        next: (res) => {
+          this.isLoadingShops = false;
+          if (res && res.status === 'SUCCESS' && res.data) {
+            this.shopsCount = Array.isArray(res.data) ? res.data.length : 0;
+            console.log('[Dashboard] Shops count for workspace:', this.shopsCount);
+          }
+        },
+        error: (err) => {
+          this.isLoadingShops = false;
+          console.error('[Dashboard] Error loading shops for workspace:', err);
+        }
+      });
+    } else {
+      this.isLoadingShops = false;
+    }
+  }
+
+  canViewWorkspaces(): boolean {
+    return this.isSuperAdmin || this.isAdmin;
+  }
+
+  canViewShops(): boolean {
+    return this.isSuperAdmin || this.isAdmin || this.isWorkspaceAdmin;
+  }
+
+  canViewProducts(): boolean {
+    return this.isSuperAdmin || this.isAdmin || this.isWorkspaceAdmin || this.isShopManager;
+  }
+
+  loadProductsStatistics(): void {
+    if (!this.canViewProducts()) {
+      return;
+    }
+
+    this.isLoadingProducts = true;
+    const params: any = {
+      page: 1,
+      page_size: 1, // On veut juste le total
+      state: 'ACTIVE'
+    };
+
+    // Filtrer selon le rôle
+    if (this.isWorkspaceAdmin) {
+      const workspaceId = this.permissionService.getWorkspaceId();
+      if (workspaceId) {
+        params.workspace_id = workspaceId;
+      }
+    } else if (this.isShopManager) {
+      const shopId = this.permissionService.getShopId();
+      if (shopId) {
+        params.shop_id = shopId;
+      }
+    }
+
+    // Charger le total des produits actifs
+    this.productService.getProducts(params).subscribe({
+      next: (res) => {
+        if (res && res.success) {
+          this.activeProductsCount = res.total || 0;
+          // Charger aussi le total de tous les produits
+          const allParams = { ...params };
+          delete allParams.state;
+          this.productService.getProducts(allParams).subscribe({
+            next: (allRes) => {
+              if (allRes && allRes.success) {
+                this.productsCount = allRes.total || 0;
+              }
+              this.isLoadingProducts = false;
+            },
+            error: () => {
+              this.isLoadingProducts = false;
+            }
+          });
+        } else {
+          this.isLoadingProducts = false;
+        }
+      },
+      error: () => {
+        this.isLoadingProducts = false;
+      }
+    });
   }
 
   ngAfterViewInit() {

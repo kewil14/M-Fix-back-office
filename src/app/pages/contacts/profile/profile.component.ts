@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { Location } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -37,7 +38,8 @@ export class ProfileComponent implements OnInit {
     private store: Store,
     private localStorageService: LocalStorageService,
     private formBuilder: UntypedFormBuilder,
-    private authentificationService: AuthentificationService
+    private authentificationService: AuthentificationService,
+    private location: Location
   ) {}
 
   ngOnInit() {
@@ -92,7 +94,7 @@ export class ProfileComponent implements OnInit {
       userPhoneNumber: user.userPhoneNumber || user.phoneNumber,
       username: user.username,
       isActive: user.isActive,
-      roles: user.roles,
+      roles: Array.isArray(user.roles) ? user.roles : (user.roles ? [user.roles] : []),
       type: user.type,
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
@@ -107,6 +109,10 @@ export class ProfileComponent implements OnInit {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
     return first + last || 'U';
+  }
+
+  hasRoles(user: any): boolean {
+    return user?.roles && Array.isArray(user.roles) && user.roles.length > 0;
   }
 
   // --------- Changement de mot de passe ----------
@@ -138,6 +144,10 @@ export class ProfileComponent implements OnInit {
   }
 
   get cp() { return this.changePasswordForm.controls; }
+
+  onBack(): void {
+    this.location.back();
+  }
 
   onSubmitChangePassword(): void {
     this.submittedChangePassword = true;

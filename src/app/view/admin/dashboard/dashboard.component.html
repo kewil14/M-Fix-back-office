@@ -113,10 +113,11 @@
                     </div>
                     <div class="row" *ngIf="!isLoadingStats && !statsError">
                         <ng-container *ngIf="(userStatistics$ | async) as stats; else noStats">
+                            <!-- Afficher les statistiques utilisateurs (exclure WORKSPACE et SHOP) -->
                             <ng-container *ngFor="let stat of stats">
                                 <ng-container *ngIf="(currentUser$ | async) as user">
                                     <div class="col-md-6 col-lg-4 col-xl-3 mb-3" 
-                                         *ngIf="canViewUserType(stat.userType, user.type)">
+                                         *ngIf="canViewUserType(stat.userType, user.type) && stat.userType !== 'WORKSPACE' && stat.userType !== 'SHOP'">
                                         <div class="card border">
                                             <div class="card-body text-center">
                                                 <div class="mb-3">
@@ -139,12 +140,138 @@
                                     </div>
                                 </ng-container>
                             </ng-container>
+                            
+                            <!-- Workspace Admins (remplace les workspaces) -->
+                            <ng-container *ngIf="(currentUser$ | async) as user">
+                                <div class="col-md-6 col-lg-4 col-xl-3 mb-3" 
+                                     *ngIf="canViewUserType('WORKSPACE_ADMIN', user.type)">
+                                    <div class="card border">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="ri-building-line" style="font-size: 2.5rem; color: #556ee6;"></i>
+                                            </div>
+                                            <h3 class="mb-2">{{ workspaceAdminsCount }}</h3>
+                                            <p class="text-muted mb-0">{{ 'MESSAGES.ADMIN.USER_TYPES.WORKSPACE_ADMIN' | translate }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Shop Managers (remplace les shops) -->
+                                <div class="col-md-6 col-lg-4 col-xl-3 mb-3" 
+                                     *ngIf="canViewUserType('SHOP_MANAGER', user.type)">
+                                    <div class="card border">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                <i class="ri-store-line" style="font-size: 2.5rem; color: #556ee6;"></i>
+                                            </div>
+                                            <h3 class="mb-2">{{ shopManagersCount }}</h3>
+                                            <p class="text-muted mb-0">{{ 'MESSAGES.ADMIN.USER_TYPES.SHOP_MANAGER' | translate }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
                         </ng-container>
                         <ng-template #noStats>
                             <div class="col-12 text-center py-4">
                                 <p class="text-muted">Aucune statistique disponible</p>
                             </div>
                         </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workspaces and Shops Statistics -->
+    <div class="row mb-4" *ngIf="canViewWorkspaces() || canViewShops()">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Workspaces et Boutiques</h4>
+                    <div class="row">
+                        <!-- Workspaces (Admin/SuperAdmin seulement) -->
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-3" *ngIf="canViewWorkspaces()">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <div class="mb-3" *ngIf="isLoadingWorkspaces">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" *ngIf="!isLoadingWorkspaces">
+                                        <i class="ri-building-2-line" style="font-size: 2.5rem; color: #34c38f;"></i>
+                                    </div>
+                                    <h3 class="mb-2">{{ workspacesCount }}</h3>
+                                    <p class="text-muted mb-0">Workspaces</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Shops (Admin/SuperAdmin/Workspace Admin) -->
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-3" *ngIf="canViewShops()">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <div class="mb-3" *ngIf="isLoadingShops">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" *ngIf="!isLoadingShops">
+                                        <i class="ri-store-2-line" style="font-size: 2.5rem; color: #34c38f;"></i>
+                                    </div>
+                                    <h3 class="mb-2">{{ shopsCount }}</h3>
+                                    <p class="text-muted mb-0">Boutiques</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Statistics -->
+    <div class="row mb-4" *ngIf="canViewProducts()">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Statistiques des produits</h4>
+                    <div class="row">
+                        <!-- Total Products -->
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-3">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <div class="mb-3" *ngIf="isLoadingProducts">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" *ngIf="!isLoadingProducts">
+                                        <i class="ri-shopping-bag-line" style="font-size: 2.5rem; color: #556ee6;"></i>
+                                    </div>
+                                    <h3 class="mb-2">{{ productsCount }}</h3>
+                                    <p class="text-muted mb-0">Total produits</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Active Products -->
+                        <div class="col-md-6 col-lg-4 col-xl-3 mb-3">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <div class="mb-3" *ngIf="isLoadingProducts">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3" *ngIf="!isLoadingProducts">
+                                        <i class="ri-checkbox-circle-line" style="font-size: 2.5rem; color: #34c38f;"></i>
+                                    </div>
+                                    <h3 class="mb-2">{{ activeProductsCount }}</h3>
+                                    <p class="text-muted mb-0">Produits actifs</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

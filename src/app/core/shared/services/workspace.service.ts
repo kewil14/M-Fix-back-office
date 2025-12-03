@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { Observable, map, share, switchMap, of } from 'rxjs';
 import { API_URLS } from '../../config/app.url.config';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
@@ -11,6 +11,7 @@ import {
   CreateWorkspaceDto,
   UpdateWorkspaceDto
 } from '../dtos/workspace-response-dto';
+import { PermissionService } from './permission.service';
 
 export interface WorkspaceDto {
   id: string;
@@ -22,14 +23,25 @@ export interface WorkspaceDto {
 export class WorkspaceService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    @Optional() private permissionService?: PermissionService
   ) { }
 
-  findAllWorkspaces(): Observable<RequestResultDto<WorkspaceDto[]>> {
-    const params = new HttpParams()
+  findAllWorkspaces(workspaceId?: string): Observable<RequestResultDto<WorkspaceDto[]>> {
+    let params = new HttpParams()
       .set('dto.page', '0')
       .set('dto.size', '1000')
       .set('dto.isActive', 'true');
+    
+    // Si workspaceId est fourni, filtrer par ce workspace
+    // Sinon, si l'utilisateur est un Workspace Admin, utiliser son workspace_id
+    const finalWorkspaceId = workspaceId || (this.permissionService?.isWorkspaceAdmin() ? this.permissionService.getWorkspaceId() : undefined);
+    if (finalWorkspaceId) {
+      params = params.set('dto.workspaceId', finalWorkspaceId);
+      console.log('[WorkspaceService.findAllWorkspaces] Filtering by workspace_id:', finalWorkspaceId);
+    } else {
+      console.log('[WorkspaceService.findAllWorkspaces] No workspace filter - loading all workspaces');
+    }
 
     return this.http.get<RequestResultDto<any>>(
       API_URLS.CUSTOMERS_URL + `/auth/workspace-admins`,

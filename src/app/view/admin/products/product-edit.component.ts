@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService, ProductDetail, BrandListItem, CategoryTreeItem, ProductTypeListItem } from 'src/app/core/shared/services/product.service';
+import { ProductService, ProductDetail, BrandListItem, CategoryTreeItem, ProductTypeListItem, TagListItem } from 'src/app/core/shared/services/product.service';
 import { AvatarUploadService, MediaResponse } from 'src/app/core/shared/services/avatar-upload.service';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 import { ShopService } from 'src/app/core/shared/services/shop.service';
@@ -58,6 +58,8 @@ export class ProductEditComponent implements OnInit {
   productTypes: ProductTypeListItem[] = [];
   workspaces: WorkspaceDto[] = [];
   shops: ShopResponseDto[] = [];
+  tags: TagListItem[] = [];
+  selectedTagIds: string[] = []; // Array pour ng-select multiple
 
   // upload image principale
   mainImagePreview: string | null = null;
@@ -70,13 +72,15 @@ export class ProductEditComponent implements OnInit {
     private avatarUploadService: AvatarUploadService,
     private mediaUrlService: MediaUrlService,
     private shopService: ShopService,
-    private permissionService: PermissionService,
+    public permissionService: PermissionService,
     private workspaceService: WorkspaceService,
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.loadBrandsAndCategories();
+    this.loadTags();
+    this.initializeWorkspaceAndShop();
     if (id) {
       this.productId = id;
       this.isEditMode = true;
@@ -113,6 +117,12 @@ export class ProductEditComponent implements OnInit {
           this.productTypeId = p.product_type_id || '';
           this.shopId = p.shop_id || '';
           this.isFeatured = p.is_featured || false;
+          // Charger les tags du produit si disponibles
+          if ((p as any).tags && Array.isArray((p as any).tags)) {
+            this.selectedTagIds = ((p as any).tags as any[]).map((tag: any) => tag.id || tag);
+          } else if ((p as any).tag_ids && Array.isArray((p as any).tag_ids)) {
+            this.selectedTagIds = (p as any).tag_ids;
+          }
           if (p.seo) {
             this.seoMetaTitle = p.seo.meta_title || '';
             this.seoMetaDescription = p.seo.meta_description || '';
@@ -171,24 +181,76 @@ export class ProductEditComponent implements OnInit {
     this.loadWorkspaces();
   }
 
-  loadWorkspaces(): void {
-    this.workspaceService.findAllWorkspaces().subscribe({
+  loadTags(): void {
+    this.productService.getTags({ state: 'ACTIVE' }).subscribe({
       next: (res) => {
-        if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
-          this.workspaces = res.data;
-
-          // Pré-sélectionner le workspace du token si présent
-          const tokenWorkspaceId = this.permissionService.getWorkspaceId();
-          if (tokenWorkspaceId && this.workspaces.some(w => w.id === tokenWorkspaceId)) {
-            this.workspaceId = tokenWorkspaceId;
-            this.loadShopsForWorkspace();
-          }
+        if (res && res.status === 'SUCCESS') {
+          this.tags = (res.data as TagListItem[]) || [];
         }
-      },
-      error: () => {
-        // silencieux
       }
     });
+  }
+
+  initializeWorkspaceAndShop(): void {
+    // Si Workspace Admin, pré-sélectionner son workspace
+    if (this.permissionService.isWorkspaceAdmin()) {
+      const workspaceId = this.permissionService.getWorkspaceId();
+      if (workspaceId) {
+        this.workspaceId = workspaceId;
+        this.loadShopsForWorkspace();
+      }
+    }
+    // Si Shop Manager, pré-sélectionner son shop
+    else if (this.permissionService.isShopManager()) {
+      const shopId = this.permissionService.getShopId();
+      const workspaceId = this.permissionService.getWorkspaceId();
+      if (workspaceId) {
+        this.workspaceId = workspaceId;
+        this.loadShopsForWorkspace();
+        // Attendre que les shops soient chargés avant de sélectionner
+        setTimeout(() => {
+          if (shopId) {
+            this.shopId = shopId;
+          }
+        }, 500);
+      }
+    }
+  }
+
+  loadWorkspaces(): void {
+    // Si Workspace Admin, charger uniquement son workspace
+    if (this.permissionService.isWorkspaceAdmin()) {
+      const workspaceId = this.permissionService.getWorkspaceId();
+      if (workspaceId) {
+        this.workspaceService.getWorkspaceById(workspaceId).subscribe({
+          next: (res) => {
+            if (res && res.status === 'SUCCESS' && res.data) {
+              this.workspaces = [res.data];
+              this.workspaceId = workspaceId;
+              this.loadShopsForWorkspace();
+            }
+          }
+        });
+      }
+    } else if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      // Super Admin et Admin voient tous les workspaces
+      this.workspaceService.findAllWorkspaces().subscribe({
+        next: (res) => {
+          if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
+            this.workspaces = res.data;
+            // Pré-sélectionner le workspace du token si présent
+            const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+            if (tokenWorkspaceId && this.workspaces.some(w => w.id === tokenWorkspaceId)) {
+              this.workspaceId = tokenWorkspaceId;
+              this.loadShopsForWorkspace();
+            }
+          }
+        },
+        error: () => {
+          // silencieux
+        }
+      });
+    }
   }
 
   loadShopsForWorkspace(): void {
@@ -291,6 +353,7 @@ export class ProductEditComponent implements OnInit {
       product_type_id: this.productTypeId.trim(),
       product_category_id: this.categoryId.trim(),
       brand_id: this.brandId?.trim() || undefined,
+      tag_ids: this.selectedTagIds && this.selectedTagIds.length > 0 ? this.selectedTagIds : [],
       variants: [],
       attributes: [],
       seo: (this.seoMetaTitle || this.seoMetaDescription || this.seoMetaKeywords || this.seoSlug || this.seoCanonicalUrl) ? {
@@ -304,10 +367,25 @@ export class ProductEditComponent implements OnInit {
 
     this.saving = true;
     this.productService.createProduct(body).subscribe({
-      next: () => {
-        this.saving = false;
-        this.saveSuccess = 'Produit créé avec succès.';
-        this.router.navigate(['/admin/products']);
+      next: (res) => {
+        // Si des tags sont sélectionnés, les ajouter au produit
+        if (this.selectedTagIds && this.selectedTagIds.length > 0 && res?.data?.id) {
+          this.productService.addTagsToProduct(res.data.id, this.selectedTagIds).subscribe({
+            next: () => {
+              this.saving = false;
+              this.saveSuccess = 'Produit créé avec succès.';
+              this.router.navigate(['/admin/products']);
+            },
+            error: (err) => {
+              this.saving = false;
+              this.saveError = err?.error?.message || 'Produit créé mais erreur lors de l\'ajout des tags.';
+            }
+          });
+        } else {
+          this.saving = false;
+          this.saveSuccess = 'Produit créé avec succès.';
+          this.router.navigate(['/admin/products']);
+        }
       },
       error: (err) => {
         this.saving = false;
@@ -353,11 +431,27 @@ export class ProductEditComponent implements OnInit {
     this.saving = true;
     this.productService.updateProduct(this.productId!, body).subscribe({
       next: (res) => {
-        this.saving = false;
-        if (res && res.status === 'SUCCESS') {
-          this.saveSuccess = 'Produit mis à jour avec succès.';
+        // Mettre à jour les tags si des tags sont sélectionnés
+        if (this.selectedTagIds && this.selectedTagIds.length > 0) {
+          this.productService.addTagsToProduct(this.productId!, this.selectedTagIds).subscribe({
+            next: () => {
+              this.saving = false;
+              this.saveSuccess = 'Produit mis à jour avec succès.';
+              setTimeout(() => {
+                this.router.navigate(['/admin/products']);
+              }, 1500);
+            },
+            error: (err) => {
+              this.saving = false;
+              this.saveError = err?.error?.message || 'Produit mis à jour mais erreur lors de la mise à jour des tags.';
+            }
+          });
         } else {
+          this.saving = false;
           this.saveSuccess = 'Produit mis à jour avec succès.';
+          setTimeout(() => {
+            this.router.navigate(['/admin/products']);
+          }, 1500);
         }
       },
       error: (err) => {

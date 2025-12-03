@@ -44,6 +44,16 @@ export class PermissionGuard implements CanActivate {
 
     // Vérifier les permissions
     if (requiredPermissions && requiredPermissions.length > 0) {
+      // Workspace Admins et Shop Managers ont automatiquement accès aux produits
+      const isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
+      const isShopManager = this.permissionService.isShopManager();
+      const isProductPermission = requiredPermissions.some(p => p.startsWith('products:'));
+      
+      if (isProductPermission && (isWorkspaceAdmin || isShopManager)) {
+        console.log('Accès autorisé pour Workspace Admin ou Shop Manager aux routes produits');
+        return true;
+      }
+      
       const hasPermission = requireAnyPermission
         ? this.permissionService.hasAnyPermission(requiredPermissions)
         : this.permissionService.hasAllPermissions(requiredPermissions);

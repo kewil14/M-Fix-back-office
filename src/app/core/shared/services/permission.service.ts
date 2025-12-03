@@ -121,6 +121,14 @@ export class PermissionService {
   }
 
   /**
+   * Vérifie si l'utilisateur est un Shop Manager
+   */
+  isShopManager(): boolean {
+    const decoded = this.getDecodedToken();
+    return decoded?.type === 'SHOP_MANAGER';
+  }
+
+  /**
    * Retourne le type d'utilisateur
    */
   getUserType(): string | null {
@@ -151,6 +159,27 @@ export class PermissionService {
     console.log('PermissionService - Token keys:', Object.keys(decoded || {}));
     console.log('PermissionService - Full decoded token:', decoded);
     
+    return null;
+  }
+
+  /**
+   * Récupère l'ID de la boutique (shop) du Shop Manager si présent dans le token
+   */
+  getShopId(): string | null {
+    const decoded = this.getDecodedToken();
+    if (!decoded) {
+      return null;
+    }
+
+    const shopId = (decoded as any)?.shopId || (decoded as any)?.shop_id || (decoded as any)?.shop;
+
+    if (shopId) {
+      return String(shopId);
+    }
+
+    console.log('PermissionService - Aucun shopId trouvé dans le token. Token keys:', Object.keys(decoded || {}));
+    console.log('PermissionService - Full decoded token (shopId):', decoded);
+
     return null;
   }
 

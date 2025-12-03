@@ -18,10 +18,15 @@
                       type="button" 
                       class="btn btn-sm btn-outline-info" 
                       (click)="onExportWorkspaces()"
+                      *ngIf="!isWorkspaceAdmin"
                       title="{{ 'MESSAGES.ADMIN.WORKSPACE.EXPORT' | translate }}">
                       <i class="mdi mdi-download"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-success" (click)="openCreateModal()">
+                    <button 
+                      type="button" 
+                      class="btn btn-sm btn-success" 
+                      (click)="openCreateModal()"
+                      *ngIf="!isWorkspaceAdmin">
                       <i class="mdi mdi-plus me-1"></i> {{ 'MESSAGES.ADMIN.WORKSPACE.NEW_WORKSPACE' | translate }}
                     </button>
                   </div>

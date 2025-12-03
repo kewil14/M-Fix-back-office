@@ -45,12 +45,10 @@
                   </select>
                 </div>
                 <div class="col-md-2">
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [placeholder]="'MESSAGES.ADMIN.COMMON.DEPARTMENT' | translate" 
-                    [(ngModel)]="departmentFilter"
-                    (ngModelChange)="onFilterChange()">
+                  <select class="form-select" [(ngModel)]="shopFilter" (ngModelChange)="onFilterChange()">
+                    <option [value]="">Tous les shops</option>
+                    <option *ngFor="let shop of shops" [value]="shop.id">{{ shop.name }}</option>
+                  </select>
                 </div>
                 <div class="col-md-2">
                   <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
@@ -65,7 +63,7 @@
                       type="button" 
                       class="btn btn-sm btn-outline-secondary" 
                       (click)="resetFilters()"
-                      *ngIf="searchTerm || departmentFilter || userTypeFilter || isActiveFilter !== null"
+                      *ngIf="searchTerm || shopFilter || userTypeFilter || isActiveFilter !== null"
                       [title]="'MESSAGES.ADMIN.COMMON.RESET_FILTERS' | translate">
                       <i class="ri-refresh-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.RESET' | translate }}
                     </button>
@@ -81,8 +79,8 @@
                 </div>
               </div>
 
-              <!-- Table -->
-              <div class="table-responsive">
+              <!-- Table Desktop -->
+              <div class="table-responsive d-none d-md-block">
                 <table class="table table-bordered table-hover align-middle">
                   <thead class="table-light">
                     <tr>
@@ -90,7 +88,7 @@
                       <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.FULL_NAME' | translate }}</th>
                       <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.EMAIL' | translate }}</th>
                       <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.TYPE' | translate }}</th>
-                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.DEPARTMENT' | translate }}</th>
+                      <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.SHOP' | translate }}</th>
                       <th scope="col" class="text-center">{{ 'MESSAGES.ADMIN.COMMON.STATUS' | translate }}</th>
                       <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</th>
                       <th scope="col" class="text-center" style="width: 150px;">{{ 'MESSAGES.ADMIN.COMMON.ACTIONS' | translate }}</th>
@@ -126,7 +124,7 @@
                         <span class="badge bg-info">{{ employee.type || 'EMPLOYEE' }}</span>
                       </td>
                       <td>
-                        <span class="text-muted">{{ employee.workspaceId || 'N/A' }}</span>
+                        <span class="text-muted">{{ getShopName(employee.shopId) }}</span>
                       </td>
                       <td class="text-center">
                         <span class="badge" [ngClass]="employee.isActive ? 'bg-success' : 'bg-danger'">
@@ -175,6 +173,91 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Cards Mobile -->
+              <div class="d-md-none">
+                <div *ngIf="displayedEmployees.length === 0" class="text-center py-4">
+                  <div class="text-muted">
+                    <i class="ri-inbox-line" style="font-size: 48px;"></i>
+                    <p class="mt-2 mb-0">{{ 'MESSAGES.ADMIN.EMPLOYEE.NO_EMPLOYEE_FOUND' | translate }}</p>
+                  </div>
+                </div>
+                <div *ngFor="let employee of displayedEmployees; let index = index" class="card mb-3">
+                  <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-sm me-2">
+                          <img 
+                            *ngIf="mediaUrlService.getMediaUrl(employee.avatar)" 
+                            [src]="mediaUrlService.getMediaUrl(employee.avatar)" 
+                            [alt]="employee.firstName + ' ' + employee.lastName"
+                            class="rounded-circle"
+                            style="width: 100%; height: 100%; object-fit: cover;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                          <div 
+                            class="avatar-title bg-primary-subtle text-primary rounded-circle"
+                            [style.display]="mediaUrlService.getMediaUrl(employee.avatar) ? 'none' : 'flex'">
+                            {{ (employee.firstName?.[0] || '') + (employee.lastName?.[0] || '') }}
+                          </div>
+                        </div>
+                        <div>
+                          <h6 class="mb-0">{{ employee.firstName }} {{ employee.lastName }}</h6>
+                          <small class="text-muted">{{ employee.username }}</small>
+                        </div>
+                      </div>
+                      <span class="badge" [ngClass]="employee.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ employee.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-6">
+                        <small class="text-muted d-block">{{ 'MESSAGES.ADMIN.COMMON.EMAIL' | translate }}</small>
+                        <span class="small">{{ employee.email }}</span>
+                      </div>
+                      <div class="col-6">
+                        <small class="text-muted d-block">{{ 'MESSAGES.ADMIN.COMMON.TYPE' | translate }}</small>
+                        <span class="badge bg-info">{{ employee.type || 'EMPLOYEE' }}</span>
+                      </div>
+                      <div class="col-6">
+                        <small class="text-muted d-block">{{ 'MESSAGES.ADMIN.SHOP.SHOP' | translate }}</small>
+                        <span class="small">{{ getShopName(employee.shopId) }}</span>
+                      </div>
+                      <div class="col-6">
+                        <small class="text-muted d-block">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</small>
+                        <span class="small">{{ employee.createdAt ? (employee.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</span>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end">
+                      <button 
+                        class="btn btn-sm btn-info" 
+                        (click)="onView(employee)"
+                        [title]="'MESSAGES.ADMIN.COMMON.VIEW_DETAILS' | translate">
+                        <i class="mdi mdi-eye-outline"></i>
+                      </button>
+                      <button 
+                        class="btn btn-sm btn-warning" 
+                        (click)="onEdit(employee)"
+                        [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
+                        <i class="mdi mdi-pencil"></i>
+                      </button>
+                      <button 
+                        *ngIf="employee.isActive"
+                        class="btn btn-sm btn-danger" 
+                        (click)="onDelete(employee)"
+                        [title]="'MESSAGES.ADMIN.COMMON.DEACTIVATE' | translate">
+                        <i class="mdi mdi-delete-outline"></i>
+                      </button>
+                      <button 
+                        *ngIf="!employee.isActive"
+                        class="btn btn-sm btn-success" 
+                        (click)="onReactivate(employee)"
+                        [title]="'MESSAGES.ADMIN.COMMON.REACTIVATE' | translate">
+                        <i class="mdi mdi-restore"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Pagination -->

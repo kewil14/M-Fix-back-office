@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, share } from 'rxjs';
+import { Injectable, Inject, Optional } from '@angular/core';
+import { Observable, share, tap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_URLS } from 'src/app/core/config/app.url.config';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
+import { PermissionService } from './permission.service';
 
 export interface ProductListItem {
   id: string;
@@ -44,6 +45,8 @@ export interface ProductSearchParams {
   sort_order?: 'asc' | 'desc';
   page?: number;
   page_size?: number;
+  workspace_id?: string;
+  shop_id?: string;
 }
 
 export interface BrandListItem {
@@ -144,12 +147,33 @@ export interface TagListItem {
 export class ProductService {
   private baseUrl = API_URLS.PRODUCT_SERVICE_URL;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Optional() private permissionService?: PermissionService
+  ) {}
 
   // --------- Produits ----------
 
   getProducts(params: ProductSearchParams = {}): Observable<ProductListResponse> {
     let httpParams = new HttpParams();
+
+    // Ajouter automatiquement workspace_id et shop_id selon le rôle de l'utilisateur
+    if (this.permissionService) {
+      const workspaceId = this.permissionService.getWorkspaceId();
+      const userType = this.permissionService.getUserType();
+      
+      console.log('[ProductService.getProducts] User type:', userType);
+      console.log('[ProductService.getProducts] Workspace ID from token:', workspaceId);
+      
+      // Si workspace_id n'est pas déjà fourni, l'ajouter automatiquement pour les Workspace Admins
+      if (!params.workspace_id && workspaceId && (userType === 'WORKSPACE_ADMIN' || userType === 'ADMIN')) {
+        params.workspace_id = workspaceId;
+        console.log('[ProductService.getProducts] Auto-adding workspace_id:', workspaceId);
+      }
+      
+      // Pour les Shop Managers, on devrait avoir shop_id dans le token (à vérifier avec le backend)
+      // Pour l'instant, on laisse shop_id être passé manuellement si nécessaire
+    }
 
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -176,9 +200,26 @@ export class ProductService {
       httpParams = httpParams.set('sort_order', 'desc');
     }
 
+    console.log('[ProductService.getProducts] Request params:', httpParams.toString());
+    console.log('[ProductService.getProducts] Full params object:', params);
+
     return this.http
       .get<RequestResultDto<ProductListItem[]>>(`${this.baseUrl}/products/products`, { params: httpParams })
       .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.getProducts] ✅ Response received:', response);
+            console.log('[ProductService.getProducts] Products count:', response?.data?.length || 0);
+            if (response?.data) {
+              console.log('[ProductService.getProducts] First product sample:', response.data[0]);
+            }
+          },
+          error: (error) => {
+            console.error('[ProductService.getProducts] ❌ Error:', error);
+            console.error('[ProductService.getProducts] Error details:', error?.error);
+            console.error('[ProductService.getProducts] Error status:', error?.status);
+          }
+        }),
         map((res: RequestResultDto<ProductListItem[]>) => {
           // Adapter la réponse au format ProductListResponse attendu par le composant
           if (res && res.status === 'SUCCESS') {
@@ -204,27 +245,82 @@ export class ProductService {
   }
 
   getProductById(productId: string): Observable<RequestResultDto<ProductDetail>> {
+    console.log('[ProductService.getProductById] Requesting product:', productId);
     return this.http
       .get<RequestResultDto<ProductDetail>>(`${this.baseUrl}/products/products/${productId}`)
-      .pipe(share());
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.getProductById] ✅ Response received:', response);
+            if (response?.data) {
+              console.log('[ProductService.getProductById] Product shop_id:', response.data.shop_id);
+              console.log('[ProductService.getProductById] Product workspace (if available):', (response.data as any)?.workspace_id);
+            }
+          },
+          error: (error) => {
+            console.error('[ProductService.getProductById] ❌ Error:', error);
+            console.error('[ProductService.getProductById] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   createProduct(body: any): Observable<any> {
+    console.log('[ProductService.createProduct] Creating product with body:', body);
+    console.log('[ProductService.createProduct] Body shop_id:', body.shop_id);
+    console.log('[ProductService.createProduct] Body workspace_id:', body.workspace_id);
     return this.http
       .post<any>(`${this.baseUrl}/products/products`, body)
-      .pipe(share());
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.createProduct] ✅ Response received:', response);
+          },
+          error: (error) => {
+            console.error('[ProductService.createProduct] ❌ Error:', error);
+            console.error('[ProductService.createProduct] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   updateProduct(productId: string, body: any): Observable<RequestResultDto<any>> {
+    console.log('[ProductService.updateProduct] Updating product:', productId);
+    console.log('[ProductService.updateProduct] Body:', body);
     return this.http
       .put<RequestResultDto<any>>(`${this.baseUrl}/products/products/${productId}`, body)
-      .pipe(share());
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.updateProduct] ✅ Response received:', response);
+          },
+          error: (error) => {
+            console.error('[ProductService.updateProduct] ❌ Error:', error);
+            console.error('[ProductService.updateProduct] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   deleteProduct(productId: string): Observable<RequestResultDto<any>> {
+    console.log('[ProductService.deleteProduct] Deleting product:', productId);
     return this.http
       .delete<RequestResultDto<any>>(`${this.baseUrl}/products/products/${productId}`)
-      .pipe(share());
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.deleteProduct] ✅ Response received:', response);
+          },
+          error: (error) => {
+            console.error('[ProductService.deleteProduct] ❌ Error:', error);
+            console.error('[ProductService.deleteProduct] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   updateProductState(productId: string, state: string, reason?: string): Observable<RequestResultDto<any>> {
@@ -287,11 +383,36 @@ export class ProductService {
 
   // --------- Marques ----------
 
-  getBrands(): Observable<RequestResultDto<BrandListItem[]>> {
+  getBrands(workspaceId?: string): Observable<RequestResultDto<BrandListItem[]>> {
+    let httpParams = new HttpParams();
+    
+    // Ajouter workspace_id automatiquement si disponible
+    const finalWorkspaceId = workspaceId || (this.permissionService?.getWorkspaceId() || undefined);
+    if (finalWorkspaceId) {
+      httpParams = httpParams.set('workspace_id', finalWorkspaceId);
+      console.log('[ProductService.getBrands] Adding workspace_id filter:', finalWorkspaceId);
+    } else {
+      console.warn('[ProductService.getBrands] ⚠️ No workspace_id available - may return brands from all workspaces');
+    }
+    
+    console.log('[ProductService.getBrands] Request params:', httpParams.toString());
+    
     return this.http
       // Selon la doc Product Service: endpoint GET /brands/brands
-      .get<RequestResultDto<BrandListItem[]>>(`${this.baseUrl}/brands/brands`)
-      .pipe(share());
+      .get<RequestResultDto<BrandListItem[]>>(`${this.baseUrl}/brands/brands`, { params: httpParams })
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.getBrands] ✅ Response received:', response);
+            console.log('[ProductService.getBrands] Brands count:', response?.data?.length || 0);
+          },
+          error: (error) => {
+            console.error('[ProductService.getBrands] ❌ Error:', error);
+            console.error('[ProductService.getBrands] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   createBrand(body: {
@@ -335,11 +456,36 @@ export class ProductService {
 
   // --------- Catégories ----------
 
-  getCategoriesTree(): Observable<RequestResultDto<CategoryTreeItem[]>> {
+  getCategoriesTree(workspaceId?: string): Observable<RequestResultDto<CategoryTreeItem[]>> {
+    let httpParams = new HttpParams();
+    
+    // Ajouter workspace_id automatiquement si disponible
+    const finalWorkspaceId = workspaceId || (this.permissionService?.getWorkspaceId() || undefined);
+    if (finalWorkspaceId) {
+      httpParams = httpParams.set('workspace_id', finalWorkspaceId);
+      console.log('[ProductService.getCategoriesTree] Adding workspace_id filter:', finalWorkspaceId);
+    } else {
+      console.warn('[ProductService.getCategoriesTree] ⚠️ No workspace_id available - may return categories from all workspaces');
+    }
+    
+    console.log('[ProductService.getCategoriesTree] Request params:', httpParams.toString());
+    
     return this.http
       // Selon la doc: GET /categories/categories (arbre hiérarchique)
-      .get<RequestResultDto<CategoryTreeItem[]>>(`${this.baseUrl}/categories/categories`)
-      .pipe(share());
+      .get<RequestResultDto<CategoryTreeItem[]>>(`${this.baseUrl}/categories/categories`, { params: httpParams })
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.getCategoriesTree] ✅ Response received:', response);
+            console.log('[ProductService.getCategoriesTree] Categories count:', response?.data?.length || 0);
+          },
+          error: (error) => {
+            console.error('[ProductService.getCategoriesTree] ❌ Error:', error);
+            console.error('[ProductService.getCategoriesTree] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   createCategory(body: {
@@ -502,15 +648,38 @@ export class ProductService {
 
   // --------- Product Types ----------
 
-  getProductTypes(params?: { state?: string; page?: number; page_size?: number }): Observable<RequestResultDto<any>> {
+  getProductTypes(params?: { state?: string; page?: number; page_size?: number; workspace_id?: string }): Observable<RequestResultDto<any>> {
     let httpParams = new HttpParams();
     if (params?.state) httpParams = httpParams.set('state', params.state);
     if (params?.page) httpParams = httpParams.set('page', params.page.toString());
     if (params?.page_size) httpParams = httpParams.set('page_size', params.page_size.toString());
+    
+    // Ajouter workspace_id automatiquement si disponible
+    const finalWorkspaceId = params?.workspace_id || (this.permissionService?.getWorkspaceId() || undefined);
+    if (finalWorkspaceId) {
+      httpParams = httpParams.set('workspace_id', finalWorkspaceId);
+      console.log('[ProductService.getProductTypes] Adding workspace_id filter:', finalWorkspaceId);
+    } else {
+      console.warn('[ProductService.getProductTypes] ⚠️ No workspace_id available - may return product types from all workspaces');
+    }
+    
+    console.log('[ProductService.getProductTypes] Request params:', httpParams.toString());
 
     return this.http
       .get<RequestResultDto<any>>(`${this.baseUrl}/product-types`, { params: httpParams })
-      .pipe(share());
+      .pipe(
+        tap({
+          next: (response) => {
+            console.log('[ProductService.getProductTypes] ✅ Response received:', response);
+            console.log('[ProductService.getProductTypes] Product types count:', response?.data?.length || 0);
+          },
+          error: (error) => {
+            console.error('[ProductService.getProductTypes] ❌ Error:', error);
+            console.error('[ProductService.getProductTypes] Error details:', error?.error);
+          }
+        }),
+        share()
+      );
   }
 
   createProductType(body: {

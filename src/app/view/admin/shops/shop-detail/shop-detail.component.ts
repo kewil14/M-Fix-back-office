@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -30,6 +31,7 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     public router: Router,
+    private location: Location,
     private storeService: Store,
     private translateService: TranslateService,
     private permissionService: PermissionService,
@@ -196,6 +198,10 @@ export class ShopDetailComponent implements OnInit, OnDestroy {
         queryParams: { workspaceId: this.workspaceId }
       });
     }
+  }
+
+  onBack(): void {
+    this.location.back();
   }
 
   hasOpeningHours(): boolean {

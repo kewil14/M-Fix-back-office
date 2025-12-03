@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { sendTokenResetPassword } from 'src/app/core/shared/stores/authentification/authentification.actions';
 import { EmailDto } from 'src/app/core/shared/dtos/email-dto';
@@ -10,7 +10,7 @@ import { EmailDto } from 'src/app/core/shared/dtos/email-dto';
   templateUrl: './forgot-password.component.html',
   styleUrls: ['./forgot-password.component.scss']
 })
-export class ForgotPasswordComponent {
+export class ForgotPasswordComponent implements OnInit {
   forgotForm: FormGroup;
   submitted = false;
   isSubmitting = false;
@@ -20,10 +20,29 @@ export class ForgotPasswordComponent {
   constructor(
     private formBuilder: UntypedFormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private storeService: Store
   ) {
     this.forgotForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]]
+    });
+  }
+
+  ngOnInit(): void {
+    // Vérifier si un token est présent dans l'URL (lien depuis l'email)
+    this.route.queryParams.subscribe(params => {
+      const token = params['token'] || params['resetToken'] || '';
+      console.log('[ForgotPasswordComponent] Query params:', params);
+      console.log('[ForgotPasswordComponent] Token found:', token);
+      
+      if (token) {
+        // Si un token est présent, rediriger vers la page new-password avec le token
+        console.log('[ForgotPasswordComponent] Redirecting to new-password with token');
+        this.router.navigate(['/auth/new-password'], { 
+          queryParams: { token: token },
+          replaceUrl: true 
+        });
+      }
     });
   }
 
