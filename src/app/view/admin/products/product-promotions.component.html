@@ -37,183 +37,210 @@
           </h5>
 
           <form (ngSubmit)="onSubmit()" novalidate>
-            <!-- Informations générales -->
-            <div class="row">
-              <div class="col-md-7">
-                <div class="mb-3">
-                  <label class="form-label">Nom de la promotion</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    [(ngModel)]="name"
-                    name="name"
-                    required
-                    placeholder="Ex: Soldes d'hiver -20%"
-                  />
-                </div>
-              </div>
-              <div class="col-md-5">
-                <div class="mb-3">
-                  <label class="form-label">Type & valeur</label>
-                  <div class="d-flex gap-2">
-                    <select class="form-select" [(ngModel)]="type" name="type">
-                      <option value="PERCENTAGE">%</option>
-                      <option value="FIXED">Montant fixe</option>
-                    </select>
-                    <input
-                      type="number"
-                      class="form-control"
-                      [(ngModel)]="value"
-                      name="value"
-                      required
-                      placeholder="Ex: 20"
-                    />
+            <!-- Workspace Selector -->
+            <div class="mb-3" *ngIf="permissionService.isSuperAdmin() || permissionService.isAdmin()">
+              <label class="form-label">Workspace <span class="text-danger">*</span></label>
+              <select
+                class="form-select"
+                [(ngModel)]="selectedWorkspaceId"
+                name="workspace"
+                (ngModelChange)="onWorkspaceChange()">
+                <option [ngValue]="''" disabled>Sélectionner un workspace</option>
+                <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">{{ ws.name }}</option>
+              </select>
+            </div>
+
+            <!-- Form Content -->
+            <ng-container *ngIf="!showWorkspaceSelectionMessage; else pleaseSelectWorkspace">
+              <fieldset [disabled]="loading">
+                <!-- Informations générales -->
+                <div class="row">
+                  <div class="col-md-7">
+                    <div class="mb-3">
+                      <label class="form-label">Nom de la promotion</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="name"
+                        name="name"
+                        required
+                        placeholder="Ex: Soldes d'hiver -20%"
+                      />
+                    </div>
                   </div>
-                  <small class="text-muted">
-                    Pourcentage ou montant fixe appliqué sur le prix.
-                  </small>
-                </div>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Description (optionnelle)</label>
-              <textarea
-                class="form-control"
-                rows="2"
-                [(ngModel)]="description"
-                name="description"
-                placeholder="Phrase marketing visible dans tes campagnes internes"
-              ></textarea>
-            </div>
-
-            <!-- Période -->
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Date de début</label>
-                  <input
-                    type="datetime-local"
-                    class="form-control"
-                    [(ngModel)]="startDate"
-                    name="startDate"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Date de fin</label>
-                  <input
-                    type="datetime-local"
-                    class="form-control"
-                    [(ngModel)]="endDate"
-                    name="endDate"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Ciblage produits / catégories -->
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label d-flex align-items-center">
-                    <i class="mdi mdi-package-variant-closed me-1"></i>
-                    Produits ciblés
-                  </label>
-                  <ng-select
-                    [items]="products"
-                    bindLabel="label"
-                    bindValue="id"
-                    [multiple]="true"
-                    [closeOnSelect]="false"
-                    [searchable]="true"
-                    [(ngModel)]="selectedProductIds"
-                    name="selectedProductIds"
-                    placeholder="Sélectionne un ou plusieurs produits"
-                  >
-                    <ng-template ng-option-tmp let-item="item">
-                      <div class="d-flex flex-column">
-                        <span>{{ item.label }}</span>
-                        <small class="text-muted">
-                          SKU: {{ item.sku }} • Prix: {{ item.price | number:'1.0-2' }} FCFA
-                        </small>
+                  <div class="col-md-5">
+                    <div class="mb-3">
+                      <label class="form-label">Type & valeur</label>
+                      <div class="d-flex gap-2">
+                        <select class="form-select" [(ngModel)]="type" name="type">
+                          <option value="PERCENTAGE">%</option>
+                          <option value="FIXED">Montant fixe</option>
+                        </select>
+                        <input
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="value"
+                          name="value"
+                          required
+                          placeholder="Ex: 20"
+                        />
                       </div>
-                    </ng-template>
-                  </ng-select>
-                  <small class="text-muted">
-                    Laisse vide pour appliquer la promotion à toutes les catégories sélectionnées.
-                  </small>
+                      <small class="text-muted">
+                        Pourcentage ou montant fixe appliqué sur le prix.
+                      </small>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div class="col-md-6">
                 <div class="mb-3">
-                  <label class="form-label d-flex align-items-center">
-                    <i class="mdi mdi-shape-outline me-1"></i>
-                    Catégories ciblées
-                  </label>
-                  <ng-select
-                    [items]="categoriesFlat"
-                    bindLabel="labelPath"
-                    bindValue="id"
-                    [multiple]="true"
-                    [closeOnSelect]="false"
-                    [searchable]="true"
-                    [(ngModel)]="selectedCategoryIds"
-                    name="selectedCategoryIds"
-                    placeholder="Sélectionne une ou plusieurs catégories"
-                  >
-                  </ng-select>
-                  <small class="text-muted">
-                    Tu peux combiner produits précis et catégories complètes.
-                  </small>
-                </div>
-              </div>
-            </div>
-
-            <!-- Contraintes -->
-            <div class="row">
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label class="form-label">Quantité minimale (optionnel)</label>
-                  <input
-                    type="number"
+                  <label class="form-label">Description (optionnelle)</label>
+                  <textarea
                     class="form-control"
-                    [(ngModel)]="minQuantity"
-                    name="minQuantity"
-                    placeholder="Ex: 2"
-                  />
+                    rows="2"
+                    [(ngModel)]="description"
+                    name="description"
+                    placeholder="Phrase marketing visible dans tes campagnes internes"
+                  ></textarea>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label class="form-label">Nb d'utilisations max (optionnel)</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    [(ngModel)]="maxUses"
-                    name="maxUses"
-                    placeholder="Ex: 1000"
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div class="d-flex justify-content-end">
-              <button class="btn btn-primary" type="submit" [disabled]="loading">
-                <span *ngIf="!loading">
-                  <i class="mdi mdi-content-save-outline me-1"></i>
-                  Créer la promotion
-                </span>
-                <span *ngIf="loading">
-                  <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                  Traitement...
-                </span>
-              </button>
-            </div>
+                <!-- Période -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Date de début</label>
+                      <input
+                        type="datetime-local"
+                        class="form-control"
+                        [(ngModel)]="startDate"
+                        name="startDate"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Date de fin</label>
+                      <input
+                        type="datetime-local"
+                        class="form-control"
+                        [(ngModel)]="endDate"
+                        name="endDate"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ciblage produits / catégories -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label d-flex align-items-center">
+                        <i class="mdi mdi-package-variant-closed me-1"></i>
+                        Produits ciblés
+                      </label>
+                      <ng-select
+                        [items]="products"
+                        bindLabel="label"
+                        bindValue="id"
+                        [multiple]="true"
+                        [closeOnSelect]="false"
+                        [searchable]="true"
+                        [(ngModel)]="selectedProductIds"
+                        name="selectedProductIds"
+                        placeholder="Sélectionne un ou plusieurs produits"
+                      >
+                        <ng-template ng-option-tmp let-item="item">
+                          <div class="d-flex flex-column">
+                            <span>{{ item.label }}</span>
+                            <small class="text-muted">
+                              SKU: {{ item.sku }} • Prix: {{ item.price | number:'1.0-2' }} FCFA
+                            </small>
+                          </div>
+                        </ng-template>
+                      </ng-select>
+                      <small class="text-muted">
+                        Laisse vide pour appliquer la promotion à toutes les catégories sélectionnées.
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label d-flex align-items-center">
+                        <i class="mdi mdi-shape-outline me-1"></i>
+                        Catégories ciblées
+                      </label>
+                      <ng-select
+                        [items]="categoriesFlat"
+                        bindLabel="labelPath"
+                        bindValue="id"
+                        [multiple]="true"
+                        [closeOnSelect]="false"
+                        [searchable]="true"
+                        [(ngModel)]="selectedCategoryIds"
+                        name="selectedCategoryIds"
+                        placeholder="Sélectionne une ou plusieurs catégories"
+                      >
+                      </ng-select>
+                      <small class="text-muted">
+                        Tu peux combiner produits précis et catégories complètes.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Contraintes -->
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Quantité minimale (optionnel)</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="minQuantity"
+                        name="minQuantity"
+                        placeholder="Ex: 2"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Nb d'utilisations max (optionnel)</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="maxUses"
+                        name="maxUses"
+                        placeholder="Ex: 1000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-primary" type="submit" [disabled]="loading">
+                    <span *ngIf="!loading">
+                      <i class="mdi mdi-content-save-outline me-1"></i>
+                      Créer la promotion
+                    </span>
+                    <span *ngIf="loading">
+                      <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                      Traitement...
+                    </span>
+                  </button>
+                </div>
+              </fieldset>
+            </ng-container>
+
+            <ng-template #pleaseSelectWorkspace>
+              <div class="text-center py-4">
+                <div class="alert alert-info d-inline-block">
+                  <i class="mdi mdi-information-outline me-2"></i>
+                  Veuillez sélectionner un workspace pour continuer.
+                </div>
+              </div>
+            </ng-template>
           </form>
         </div>
       </div>

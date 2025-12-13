@@ -56,6 +56,8 @@ export class ShopsComponent implements OnInit, OnDestroy {
   workspaceId: string | null = null;
   workspaces: WorkspaceDto[] = [];
   isSuperAdmin: boolean = false;
+  isAdmin: boolean = false;
+  isAdminOrSuperAdmin: boolean = false;
   isLoadingWorkspaces: boolean = false;
 
   constructor(
@@ -79,8 +81,10 @@ export class ShopsComponent implements OnInit, OnDestroy {
       { label: this.translateService.instant('MESSAGES.ADMIN.COMMON.SHOPS'), active: true }
     ];
     
-    // Vérifier si c'est un super admin
+    // Vérifier si c'est un super admin ou admin
     this.isSuperAdmin = this.permissionService.isSuperAdmin();
+    this.isAdmin = this.permissionService.isAdmin();
+    this.isAdminOrSuperAdmin = this.isSuperAdmin || this.isAdmin;
     
     // Récupérer workspaceId depuis le token
     this.workspaceId = this.permissionService.getWorkspaceId();
@@ -90,6 +94,8 @@ export class ShopsComponent implements OnInit, OnDestroy {
     console.log('ShopsComponent - Decoded token:', decoded);
     console.log('ShopsComponent - WorkspaceId from token:', this.workspaceId);
     console.log('ShopsComponent - Is Super Admin:', this.isSuperAdmin);
+    console.log('ShopsComponent - Is Admin:', this.isAdmin);
+    console.log('ShopsComponent - Is Admin or Super Admin:', this.isAdminOrSuperAdmin);
     
     this.shopState$ = this.storeService.select(selectShopState).pipe();
     this.actionShops();
@@ -107,31 +113,43 @@ export class ShopsComponent implements OnInit, OnDestroy {
       })
     );
     
-    // Si super admin et pas de workspaceId, charger la liste des workspaces
-    if (this.isSuperAdmin && !this.workspaceId) {
-      this.loadWorkspacesForSuperAdmin();
+    // Si admin/super admin, toujours charger la liste des workspaces pour permettre la sélection
+    // Les shops seront chargés dans loadWorkspacesForAdminOrSuperAdmin après le chargement des workspaces
+    if (this.isAdminOrSuperAdmin) {
+      this.loadWorkspacesForAdminOrSuperAdmin();
     } else if (this.workspaceId) {
-      // Workspace admin ou workspaceId trouvé, charger directement les shops
+      // Workspace admin avec workspaceId trouvé, charger directement les shops
       this.loadAllShops();
     } else {
-      console.warn('ShopsComponent - Cannot load shops: workspaceId is missing and user is not super admin');
+      console.warn('ShopsComponent - Cannot load shops: workspaceId is missing and user is not admin or super admin');
       this.storeService.dispatch(erreurShops({ 
         messages: 'WorkspaceId est requis pour charger les shops. Veuillez vérifier votre connexion.' 
       }));
     }
   }
 
-  loadWorkspacesForSuperAdmin() {
+  loadWorkspacesForAdminOrSuperAdmin() {
     this.isLoadingWorkspaces = true;
     this.workspaceService.findAllWorkspaces().subscribe({
       next: (result) => {
         this.isLoadingWorkspaces = false;
         if (result.status === 'SUCCESS' && result.data && result.data.length > 0) {
           this.workspaces = result.data;
-          // Utiliser le premier workspace par défaut
-          this.workspaceId = this.workspaces[0].id;
-          console.log('ShopsComponent - Using first workspace:', this.workspaceId);
-          this.loadAllShops();
+          // Utiliser le workspaceId du token s'il existe, sinon le premier workspace
+          const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+          if (tokenWorkspaceId && this.workspaces.some(ws => ws.id === tokenWorkspaceId)) {
+            // Le workspaceId du token existe dans la liste, l'utiliser
+            this.workspaceId = tokenWorkspaceId;
+            console.log('ShopsComponent - Using workspaceId from token:', this.workspaceId);
+          } else {
+            // Utiliser le premier workspace par défaut
+            this.workspaceId = this.workspaces[0].id;
+            console.log('ShopsComponent - Using first workspace:', this.workspaceId);
+          }
+          // Charger les shops si workspaceId est défini
+          if (this.workspaceId) {
+            this.loadAllShops();
+          }
         } else {
           console.error('ShopsComponent - No workspaces found');
           this.storeService.dispatch(erreurShops({ 
@@ -151,6 +169,7 @@ export class ShopsComponent implements OnInit, OnDestroy {
 
   onWorkspaceChange(workspaceId: string) {
     this.workspaceId = workspaceId;
+    console.log('[ShopsComponent] Workspace changed, loading shops for workspaceId:', workspaceId);
     // Réinitialiser les filtres et la pagination lors du changement de workspace
     this.currentPage = 0;
     this.searchTerm = '';

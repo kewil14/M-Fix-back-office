@@ -9,7 +9,10 @@
               <small class="text-muted">Catégories hiérarchiques du catalogue produits.</small>
             </div>
             <div class="col-md-6 text-md-end mt-3 mt-md-0">
-              <a class="btn btn-primary" routerLink="/admin/product-categories/create">
+              <a 
+                *ngIf="permissionService.canCreate('category')"
+                class="btn btn-primary" 
+                routerLink="/admin/product-categories/create">
                 Nouvelle catégorie
               </a>
             </div>
@@ -18,7 +21,7 @@
         <div class="card-body">
           <!-- Filtres -->
           <div class="row mb-3">
-            <div class="col-md-5">
+            <div class="col-md-3">
               <div class="search-box">
                 <div class="position-relative">
                   <input
@@ -41,7 +44,13 @@
                 <option [ngValue]="'DELETED'">Supprimées</option>
               </select>
             </div>
-            <div class="col-md-4 text-end">
+            <div class="col-md-3">
+              <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
+                <option [ngValue]="''">Tous les workspaces</option>
+                <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">{{ ws.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-3 text-end">
               <label class="mb-0 me-2">Afficher</label>
               <select class="form-select form-select-sm d-inline-block w-auto"
                       [(ngModel)]="pageSize"
@@ -54,19 +63,25 @@
             </div>
           </div>
 
-          <!-- Loading / Error -->
-          <div *ngIf="loading" class="text-center py-5">
+          <!-- Loading / Error / Workspace Selection Message -->
+          <div *ngIf="showWorkspaceSelectionMessage" class="text-center py-5">
+            <div class="alert alert-info d-inline-block">
+              <i class="mdi mdi-information-outline me-2"></i> Veuillez sélectionner un workspace pour afficher les données.
+            </div>
+          </div>
+
+          <div *ngIf="loading && !showWorkspaceSelectionMessage" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Chargement...</span>
             </div>
           </div>
 
-          <div *ngIf="error && !loading" class="alert alert-danger">
+          <div *ngIf="error && !loading && !showWorkspaceSelectionMessage" class="alert alert-danger">
             {{ error }}
           </div>
 
           <!-- Table -->
-          <div class="table-responsive" *ngIf="!loading && !error">
+          <div class="table-responsive" *ngIf="!loading && !error && !showWorkspaceSelectionMessage">
             <table class="table table-hover align-middle">
               <thead class="table-light">
                 <tr>
@@ -108,12 +123,14 @@
                       <i class="mdi mdi-eye"></i>
                     </a>
                     <a
+                      *ngIf="permissionService.canEdit('category')"
                       class="btn btn-sm btn-outline-primary me-1"
                       [routerLink]="['/admin/product-categories/edit', cat.id]"
                       title="Éditer">
                       <i class="mdi mdi-pencil"></i>
                     </a>
                     <button
+                      *ngIf="permissionService.canDelete('category')"
                       type="button"
                       class="btn btn-sm btn-outline-danger"
                       (click)="onDeleteCategory(cat)"

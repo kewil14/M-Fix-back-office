@@ -7,7 +7,7 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 import { RequestResultDto } from '../../dtos/request-result-dto.modal';
 import { WorkspaceAdminService } from '../../services/workspace-admin.service';
 import { NotificationService } from '../../services/notification.service';
-import { isCriticalHttpError } from '../../utils/error-handler.util';
+import { isCriticalHttpError } from '../../utils/error-handler.util'; // Keep this import for now, but it won't be used in catchError
 import {
   findAllWorkspaceAdmins,
   findWorkspaceAdminById,
@@ -52,13 +52,17 @@ export class WorkspaceAdminEffects {
             }
           }),
           catchError((error) => {
-            if (isCriticalHttpError(error)) {
-              throw error;
+            let errorMessage = this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            if (error.status === 403) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.FORBIDDEN_ACCESS');
+            } else if (error.status === 401) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.UNAUTHORIZED_ACCESS');
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
             }
-            const errorMessage =
-              error?.error?.message ||
-              error?.message ||
-              this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            this.notificationService.showError(errorMessage);
             return of(erreurWorkspaceAdmins({ messages: errorMessage }));
           })
         )
@@ -81,13 +85,17 @@ export class WorkspaceAdminEffects {
             }
           }),
           catchError((error) => {
-            if (isCriticalHttpError(error)) {
-              throw error;
+            let errorMessage = this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            if (error.status === 403) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.FORBIDDEN_ACCESS');
+            } else if (error.status === 401) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.UNAUTHORIZED_ACCESS');
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
             }
-            const errorMessage =
-              error?.error?.message ||
-              error?.message ||
-              this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            this.notificationService.showError(errorMessage);
             return of(erreurWorkspaceAdmins({ messages: errorMessage }));
           })
         )
@@ -113,13 +121,16 @@ export class WorkspaceAdminEffects {
             }
           }),
           catchError((error) => {
-            if (isCriticalHttpError(error)) {
-              throw error;
+            let errorMessage = this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            if (error.status === 403) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.FORBIDDEN_ACCESS');
+            } else if (error.status === 401) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.UNAUTHORIZED_ACCESS');
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
             }
-            const errorMessage =
-              error?.error?.message ||
-              error?.message ||
-              this.translateService.instant('MESSAGES.ERRORS.LOAD');
             this.notificationService.showError(errorMessage);
             return of(erreurWorkspaceAdmins({ messages: errorMessage }));
           })
@@ -146,13 +157,16 @@ export class WorkspaceAdminEffects {
             }
           }),
           catchError((error) => {
-            if (isCriticalHttpError(error)) {
-              throw error;
+            let errorMessage = this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            if (error.status === 403) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.FORBIDDEN_ACCESS');
+            } else if (error.status === 401) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.UNAUTHORIZED_ACCESS');
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
             }
-            const errorMessage =
-              error?.error?.message ||
-              error?.message ||
-              this.translateService.instant('MESSAGES.ERRORS.LOAD');
             this.notificationService.showError(errorMessage);
             return of(erreurWorkspaceAdmins({ messages: errorMessage }));
           })
@@ -179,13 +193,16 @@ export class WorkspaceAdminEffects {
             }
           }),
           catchError((error) => {
-            if (isCriticalHttpError(error)) {
-              throw error;
+            let errorMessage = this.translateService.instant('MESSAGES.ERRORS.LOAD');
+            if (error.status === 403) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.FORBIDDEN_ACCESS');
+            } else if (error.status === 401) {
+              errorMessage = this.translateService.instant('MESSAGES.ERRORS.UNAUTHORIZED_ACCESS');
+            } else if (error?.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error?.message) {
+              errorMessage = error.message;
             }
-            const errorMessage =
-              error?.error?.message ||
-              error?.message ||
-              this.translateService.instant('MESSAGES.ERRORS.LOAD');
             this.notificationService.showError(errorMessage);
             return of(erreurWorkspaceAdmins({ messages: errorMessage }));
           })
@@ -194,4 +211,3 @@ export class WorkspaceAdminEffects {
     )
   );
 }
-

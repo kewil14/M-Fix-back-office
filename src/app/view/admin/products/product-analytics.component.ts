@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ProductService } from 'src/app/core/shared/services/product.service';
 import { ShopService } from 'src/app/core/shared/services/shop.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { ChartComponent } from 'ng-apexcharts';
 
 @Component({
   selector: 'app-product-analytics',
@@ -11,6 +12,7 @@ import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/wor
   styleUrls: ['./product-analytics.component.scss']
 })
 export class ProductAnalyticsComponent implements OnInit {
+  @ViewChild('analyticsChart') chart!: ChartComponent;
 
   loading = false;
   errorMsg: string | null = null;
@@ -29,6 +31,9 @@ export class ProductAnalyticsComponent implements OnInit {
   shops: ShopResponseDto[] = [];
 
   report: any = null;
+
+  // Configuration du diagramme en bande
+  chartOptions: any = {};
 
   constructor(
     private productService: ProductService,
@@ -182,9 +187,11 @@ export class ProductAnalyticsComponent implements OnInit {
         if (data && data.status === 'SUCCESS') {
           this.report = data.data || data;
           this.successMsg = 'Rapport généré avec succès.';
+          this.updateChart();
         } else {
           this.report = data?.data || data;
           this.successMsg = 'Rapport généré avec succès.';
+          this.updateChart();
         }
         this.loading = false;
       },
@@ -193,6 +200,148 @@ export class ProductAnalyticsComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private updateChart(): void {
+    if (!this.report) {
+      return;
+    }
+
+    // Préparer les données pour le diagramme en bande
+    const categories: string[] = [];
+    const viewsData: number[] = [];
+    const salesData: number[] = [];
+    const stockData: number[] = [];
+
+    // Si on a des produits dans le rapport
+    if (this.report.top_selling_products && Array.isArray(this.report.top_selling_products)) {
+      this.report.top_selling_products.forEach((product: any) => {
+        const productName = product.label || product.name || 'Produit inconnu';
+        categories.push(productName.length > 20 ? productName.substring(0, 20) + '...' : productName);
+        
+        if (this.selectedMetrics.includes('views')) {
+          viewsData.push(product.views || 0);
+        }
+        if (this.selectedMetrics.includes('sales')) {
+          salesData.push(product.sales || product.quantity || 0);
+        }
+        if (this.selectedMetrics.includes('stock')) {
+          stockData.push(product.available_stock || product.stock || 0);
+        }
+      });
+    }
+
+    // Si on n'a pas de produits mais qu'on a des données agrégées, créer un graphique avec les totaux
+    if (categories.length === 0) {
+      categories.push('Total');
+      if (this.selectedMetrics.includes('views')) {
+        viewsData.push(this.report.total_views || 0);
+      }
+      if (this.selectedMetrics.includes('sales')) {
+        salesData.push(this.report.total_sales || 0);
+      }
+      if (this.selectedMetrics.includes('stock')) {
+        stockData.push(0); // Pas de stock total dans le résumé
+      }
+    }
+
+    // Préparer les séries pour le graphique
+    const series: any[] = [];
+    const seriesNames: string[] = [];
+
+    if (this.selectedMetrics.includes('views') && viewsData.length > 0) {
+      series.push({
+        name: 'Vues',
+        data: viewsData
+      });
+      seriesNames.push('Vues');
+    }
+
+    if (this.selectedMetrics.includes('sales') && salesData.length > 0) {
+      series.push({
+        name: 'Ventes',
+        data: salesData
+      });
+      seriesNames.push('Ventes');
+    }
+
+    if (this.selectedMetrics.includes('stock') && stockData.length > 0) {
+      series.push({
+        name: 'Stock',
+        data: stockData
+      });
+      seriesNames.push('Stock');
+    }
+
+    // Configuration du diagramme en bande
+    this.chartOptions = {
+      series: series,
+      chart: {
+        type: 'bar',
+        height: 400,
+        toolbar: {
+          show: true
+        },
+        zoom: {
+          enabled: false
+        }
+      },
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          columnWidth: '55%',
+          dataLabels: {
+            position: 'top'
+          }
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        offsetY: -20,
+        style: {
+          fontSize: '12px',
+          colors: ['#304758']
+        }
+      },
+      xaxis: {
+        categories: categories,
+        labels: {
+          rotate: -45,
+          rotateAlways: true,
+          style: {
+            fontSize: '12px'
+          }
+        }
+      },
+      yaxis: {
+        title: {
+          text: 'Valeurs'
+        }
+      },
+      title: {
+        text: 'Analyse des performances des produits',
+        align: 'left',
+        style: {
+          fontSize: '16px',
+          fontWeight: 'bold'
+        }
+      },
+      legend: {
+        position: 'top',
+        horizontalAlign: 'right'
+      },
+      fill: {
+        opacity: 1
+      },
+      tooltip: {
+        y: {
+          formatter: function (val: number) {
+            return val.toLocaleString('fr-FR');
+          }
+        }
+      },
+      colors: ['#556ee6', '#34c38f', '#f1b44c']
+    };
   }
 }
 

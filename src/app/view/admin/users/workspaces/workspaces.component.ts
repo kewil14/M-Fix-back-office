@@ -66,7 +66,7 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     private router: Router,
     private translateService: TranslateService,
     private workspaceService: WorkspaceService,
-    private permissionService: PermissionService,
+    public permissionService: PermissionService, // Public pour l'utiliser dans le template
     public mediaUrlService: MediaUrlService
   ) {}
 

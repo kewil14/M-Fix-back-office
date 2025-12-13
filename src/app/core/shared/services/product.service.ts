@@ -98,6 +98,7 @@ export interface ProductDetail {
   brand?: { id: string; label: string; logo_url?: string };
   product_type_id?: string;
   shop_id?: string;
+  workspace_id?: string; // Added workspace_id
   seo?: {
     id?: string;
     meta_title?: string;
@@ -157,22 +158,19 @@ export class ProductService {
   getProducts(params: ProductSearchParams = {}): Observable<ProductListResponse> {
     let httpParams = new HttpParams();
 
-    // Ajouter automatiquement workspace_id et shop_id selon le rôle de l'utilisateur
+    // Ne passer workspace_id dans les requêtes que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
     if (this.permissionService) {
-      const workspaceId = this.permissionService.getWorkspaceId();
-      const userType = this.permissionService.getUserType();
+      const isSuperAdmin = this.permissionService.isSuperAdmin();
+      const isAdmin = this.permissionService.isAdmin();
       
-      console.log('[ProductService.getProducts] User type:', userType);
-      console.log('[ProductService.getProducts] Workspace ID from token:', workspaceId);
-      
-      // Si workspace_id n'est pas déjà fourni, l'ajouter automatiquement pour les Workspace Admins
-      if (!params.workspace_id && workspaceId && (userType === 'WORKSPACE_ADMIN' || userType === 'ADMIN')) {
-        params.workspace_id = workspaceId;
-        console.log('[ProductService.getProducts] Auto-adding workspace_id:', workspaceId);
+      // Si l'utilisateur n'est ni super admin ni admin, ne pas passer workspace_id
+      // Le backend utilisera automatiquement le workspace_id du token
+      if (!isSuperAdmin && !isAdmin && params.workspace_id) {
+        // Retirer workspace_id des params pour les non-admin
+        delete params.workspace_id;
+        console.log('[ProductService.getProducts] Removed workspace_id - user is not super admin/admin, backend will use token workspace_id');
       }
-      
-      // Pour les Shop Managers, on devrait avoir shop_id dans le token (à vérifier avec le backend)
-      // Pour l'instant, on laisse shop_id être passé manuellement si nécessaire
     }
 
     Object.entries(params).forEach(([key, value]) => {
@@ -358,6 +356,7 @@ export class ProductService {
     category_id?: string;
     brand_id?: string;
     state?: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'DELETED';
+    workspace_id?: string; // Ajouter le filtre workspace
   } = {}): Observable<Blob> {
     let httpParams = new HttpParams();
     
@@ -369,6 +368,19 @@ export class ProductService {
     }
     if (params.state) {
       httpParams = httpParams.set('state', params.state);
+    }
+    
+    // Ne passer workspace_id que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? params.workspace_id : undefined;
+    
+    if (finalWorkspaceId) {
+      httpParams = httpParams.set('workspace_id', finalWorkspaceId);
+      console.log('[ProductService.exportProducts] Adding workspace_id filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin && params.workspace_id) {
+      console.log('[ProductService.exportProducts] Not passing workspace_id - backend will use token workspace_id');
     }
     
     return this.http.get(
@@ -383,16 +395,26 @@ export class ProductService {
 
   // --------- Marques ----------
 
-  getBrands(workspaceId?: string): Observable<RequestResultDto<BrandListItem[]>> {
+  getBrands(params?: { workspaceId?: string; state?: string }): Observable<RequestResultDto<BrandListItem[]>> {
     let httpParams = new HttpParams();
     
-    // Ajouter workspace_id automatiquement si disponible
-    const finalWorkspaceId = workspaceId || (this.permissionService?.getWorkspaceId() || undefined);
+    // Ne passer workspace_id que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? (params?.workspaceId || undefined) : undefined;
+    
     if (finalWorkspaceId) {
       httpParams = httpParams.set('workspace_id', finalWorkspaceId);
-      console.log('[ProductService.getBrands] Adding workspace_id filter:', finalWorkspaceId);
+      console.log('[ProductService.getBrands] Adding workspace_id filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin) {
+      console.log('[ProductService.getBrands] Not passing workspace_id - backend will use token workspace_id');
     } else {
-      console.warn('[ProductService.getBrands] ⚠️ No workspace_id available - may return brands from all workspaces');
+      console.warn('[ProductService.getBrands] ⚠️ No workspace_id provided - may return brands from all workspaces');
+    }
+
+    if (params?.state) {
+      httpParams = httpParams.set('state', params.state);
     }
     
     console.log('[ProductService.getBrands] Request params:', httpParams.toString());
@@ -456,16 +478,26 @@ export class ProductService {
 
   // --------- Catégories ----------
 
-  getCategoriesTree(workspaceId?: string): Observable<RequestResultDto<CategoryTreeItem[]>> {
+  getCategoriesTree(params?: { workspaceId?: string; state?: string }): Observable<RequestResultDto<CategoryTreeItem[]>> {
     let httpParams = new HttpParams();
     
-    // Ajouter workspace_id automatiquement si disponible
-    const finalWorkspaceId = workspaceId || (this.permissionService?.getWorkspaceId() || undefined);
+    // Ne passer workspace_id que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? (params?.workspaceId || undefined) : undefined;
+    
     if (finalWorkspaceId) {
       httpParams = httpParams.set('workspace_id', finalWorkspaceId);
-      console.log('[ProductService.getCategoriesTree] Adding workspace_id filter:', finalWorkspaceId);
+      console.log('[ProductService.getCategoriesTree] Adding workspace_id filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin) {
+      console.log('[ProductService.getCategoriesTree] Not passing workspace_id - backend will use token workspace_id');
     } else {
-      console.warn('[ProductService.getCategoriesTree] ⚠️ No workspace_id available - may return categories from all workspaces');
+      console.warn('[ProductService.getCategoriesTree] ⚠️ No workspace_id provided - may return categories from all workspaces');
+    }
+
+    if (params?.state) {
+      httpParams = httpParams.set('state', params.state);
     }
     
     console.log('[ProductService.getCategoriesTree] Request params:', httpParams.toString());
@@ -574,12 +606,25 @@ export class ProductService {
       .pipe(share());
   }
 
-  getStockList(params?: { shop_id?: string; variant_id?: string; page?: number; page_size?: number }): Observable<RequestResultDto<any>> {
+  getStockList(params?: { shop_id?: string; variant_id?: string; page?: number; page_size?: number; workspace_id?: string }): Observable<RequestResultDto<any>> {
     let httpParams = new HttpParams();
     if (params?.shop_id) httpParams = httpParams.set('shop_id', params.shop_id);
     if (params?.variant_id) httpParams = httpParams.set('variant_id', params.variant_id);
     if (params?.page) httpParams = httpParams.set('page', params.page.toString());
     if (params?.page_size) httpParams = httpParams.set('page_size', params.page_size.toString());
+    
+    // Ne passer workspace_id que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? (params?.workspace_id || undefined) : undefined;
+    
+    if (finalWorkspaceId) {
+      httpParams = httpParams.set('workspace_id', finalWorkspaceId);
+      console.log('[ProductService.getStockList] Adding workspace_id filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin && params?.workspace_id) {
+      console.log('[ProductService.getStockList] Not passing workspace_id - backend will use token workspace_id');
+    }
 
     return this.http
       .get<RequestResultDto<any>>(`${this.baseUrl}/stock`, { params: httpParams })
@@ -654,13 +699,19 @@ export class ProductService {
     if (params?.page) httpParams = httpParams.set('page', params.page.toString());
     if (params?.page_size) httpParams = httpParams.set('page_size', params.page_size.toString());
     
-    // Ajouter workspace_id automatiquement si disponible
-    const finalWorkspaceId = params?.workspace_id || (this.permissionService?.getWorkspaceId() || undefined);
+    // Ne passer workspace_id que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? (params?.workspace_id || undefined) : undefined;
+    
     if (finalWorkspaceId) {
       httpParams = httpParams.set('workspace_id', finalWorkspaceId);
-      console.log('[ProductService.getProductTypes] Adding workspace_id filter:', finalWorkspaceId);
+      console.log('[ProductService.getProductTypes] Adding workspace_id filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin) {
+      console.log('[ProductService.getProductTypes] Not passing workspace_id - backend will use token workspace_id');
     } else {
-      console.warn('[ProductService.getProductTypes] ⚠️ No workspace_id available - may return product types from all workspaces');
+      console.warn('[ProductService.getProductTypes] ⚠️ No workspace_id provided - may return product types from all workspaces');
     }
     
     console.log('[ProductService.getProductTypes] Request params:', httpParams.toString());
@@ -716,9 +767,24 @@ export class ProductService {
 
   // --------- Tags ----------
 
-  getTags(params?: { state?: string }): Observable<RequestResultDto<TagListItem[]>> {
+  getTags(params?: { state?: string; workspaceId?: string }): Observable<RequestResultDto<TagListItem[]>> {
     let httpParams = new HttpParams();
     if (params?.state) httpParams = httpParams.set('state', params.state);
+    
+    // Ne passer workspace_id que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? (params?.workspaceId || undefined) : undefined;
+    
+    if (finalWorkspaceId) {
+      httpParams = httpParams.set('workspace_id', finalWorkspaceId);
+      console.log('[ProductService.getTags] Adding workspace_id filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin) {
+      console.log('[ProductService.getTags] Not passing workspace_id - backend will use token workspace_id');
+    } else {
+      console.warn('[ProductService.getTags] ⚠️ No workspace_id provided - may return tags from all workspaces');
+    }
 
     return this.http
       .get<RequestResultDto<TagListItem[]>>(`${this.baseUrl}/tags`, { params: httpParams })

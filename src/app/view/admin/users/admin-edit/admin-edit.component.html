@@ -74,6 +74,42 @@
                       </div>
                     </div>
                   </div>
+                  <!-- Champs workspace et shop commentés selon les spécifications -->
+                  <!-- 
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Workspace <span class="text-danger">*</span></label>
+                      <select
+                        class="form-select"
+                        formControlName="workspaceId"
+                        [class.is-invalid]="submitted && f['workspaceId'].errors">
+                        <option value="">Sélectionnez un workspace</option>
+                        <option *ngFor="let ws of workspaces$ | async" [value]="ws.id">{{ ws.name }}</option>
+                      </select>
+                      <div class="invalid-feedback" *ngIf="submitted && f['workspaceId'].errors">
+                        Le workspace est requis
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Shop <span class="text-danger">*</span></label>
+                      <select
+                        class="form-select"
+                        formControlName="shopId"
+                        [class.is-invalid]="submitted && f['shopId'].errors">
+                        <option value="">Sélectionnez un shop</option>
+                        <option *ngFor="let shop of shops$ | async" [value]="shop.id">{{ shop.name }}</option>
+                      </select>
+                      <div class="invalid-feedback" *ngIf="submitted && f['shopId'].errors">
+                        Le shop est requis
+                      </div>
+                      <small class="text-muted" *ngIf="!f.workspaceId.value && f.shopId.disabled">
+                        Veuillez d'abord sélectionner un workspace
+                      </small>
+                    </div>
+                  </div>
+                  -->
                   <div class="col-md-6">
                     <div class="mb-3">
                       <label class="form-label">Date de naissance</label>

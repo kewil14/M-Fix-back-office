@@ -27,8 +27,51 @@
     </div>
   </div>
 
+  <!-- Sélection du workspace pour admin/super admin -->
+  <div class="row mb-3" *ngIf="isAdminOrSuperAdmin">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3">
+            <i class="mdi mdi-office-building me-1"></i>
+            Sélectionner le workspace
+          </h5>
+          <div class="row">
+            <div class="col-md-12">
+              <label class="form-label">Workspace</label>
+              <select
+                class="form-select"
+                [(ngModel)]="selectedWorkspaceId"
+                name="selectedWorkspaceId"
+                (ngModelChange)="onWorkspaceChange()"
+                [disabled]="isLoadingWorkspaces">
+                <option [ngValue]="''">Sélectionner un workspace</option>
+                <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">
+                  {{ ws.name }} ({{ ws.adminName || 'N/A' }})
+                </option>
+              </select>
+              <small class="text-muted" *ngIf="showWorkspaceSelectionMessage">
+                Veuillez sélectionner un workspace pour gérer les variants.
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message si workspaceId manquant et chargement des workspaces -->
+  <div class="row mb-3" *ngIf="!selectedWorkspaceId && isAdminOrSuperAdmin && isLoadingWorkspaces">
+    <div class="col-lg-8">
+      <div class="alert alert-info mb-0">
+        <h5>Chargement des workspaces...</h5>
+        <p>Veuillez patienter pendant le chargement des workspaces.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Sélection du produit -->
-  <div class="row mb-3">
+  <div class="row mb-3" *ngIf="selectedWorkspaceId || !isAdminOrSuperAdmin">
     <div class="col-lg-8">
       <div class="card">
         <div class="card-body">
@@ -81,7 +124,7 @@
     </div>
   </div>
 
-  <div class="row" *ngIf="product && !loading">
+  <div class="row" *ngIf="product && !loading && (selectedWorkspaceId || !isAdminOrSuperAdmin)">
     <!-- Liste des variants -->
     <div class="col-lg-8">
       <div class="card h-100">
@@ -132,14 +175,18 @@
                     </span>
                   </td>
                   <td class="text-end">
-                    <button type="button"
-                            class="btn btn-sm btn-soft-primary me-1"
-                            (click)="selectVariantForEdit(v)">
+                    <button 
+                      *ngIf="permissionService.canEdit('variant')"
+                      type="button"
+                      class="btn btn-sm btn-soft-primary me-1"
+                      (click)="selectVariantForEdit(v)">
                       <i class="mdi mdi-pencil"></i>
                     </button>
-                    <button type="button"
-                            class="btn btn-sm btn-soft-danger"
-                            (click)="deleteVariant(v)">
+                    <button 
+                      *ngIf="permissionService.canDelete('variant')"
+                      type="button"
+                      class="btn btn-sm btn-soft-danger"
+                      (click)="deleteVariant(v)">
                       <i class="mdi mdi-delete-outline"></i>
                     </button>
                   </td>

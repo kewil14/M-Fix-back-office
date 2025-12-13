@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, map, of } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectUserState } from 'src/app/core/core.state';
 import { UserState } from 'src/app/core/shared/stores/user/user.state';
-import { 
+import {
   createUser,
   addUser,
   erreurUsers
@@ -15,6 +15,9 @@ import {
 import { UserRequestDto } from 'src/app/core/shared/dtos/user-request-dto.modal';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { UserTypeEnum, CountryEnum } from 'src/app/core/config/list-roles';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { ShopService } from 'src/app/core/shared/services/shop.service';
+import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 
 @Component({
   selector: 'app-create-user',
@@ -30,27 +33,31 @@ export class CreateUserComponent implements OnInit, OnDestroy {
   
   subscriptions: Subscription[] = [];
   
-  messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
+  messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>( 
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
   );
 
-  modalRef?: BsModalRef;
   CountryEnum = CountryEnum;
   UserTypeEnum = UserTypeEnum;
+
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  shops$ = new BehaviorSubject<ShopResponseDto[]>([]);
 
   constructor(
     private formBuilder: UntypedFormBuilder,
     private storeService: Store,
     private actionService: Actions,
     public modalService: BsModalService,
-    public bsModalRef: BsModalRef
+    public bsModalRef: BsModalRef,
+    private workspaceService: WorkspaceService,
+    private shopService: ShopService
   ) {
-    this.modalRef = bsModalRef;
   }
 
   ngOnInit() {
     this.userState$ = this.storeService.select(selectUserState).pipe();
     this.initForm();
+    this.loadWorkspaces();
     this.actionUser();
   }
 
@@ -65,11 +72,38 @@ export class CreateUserComponent implements OnInit, OnDestroy {
       userEmail: ['', [Validators.required, Validators.email]],
       userPhoneNumber: ['', [Validators.required]],
       country: [CountryEnum.FRANCE, [Validators.required]],
-      userType: [UserTypeEnum.CUSTOMER, [Validators.required]]
+      userType: [UserTypeEnum.CUSTOMER, [Validators.required]],
+      workspaceId: ['', [Validators.required]],
+      shopId: [{value: '', disabled: true}, [Validators.required]]
     });
   }
 
   get f() { return this.userForm.controls; }
+
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+  }
+
+  onWorkspaceChange(): void {
+    const workspaceId = this.f.workspaceId.value;
+    const shopControl = this.f.shopId;
+    
+    this.shops$.next([]);
+    shopControl.reset({value: '', disabled: true});
+
+    if (workspaceId) {
+      shopControl.enable();
+      this.subscriptions.push(
+        this.shopService.getShopsByWorkspace(workspaceId).subscribe(response => {
+          if (response.status === 'SUCCESS') {
+            this.shops$.next(response.data);
+          }
+        })
+      );
+    }
+  }
 
   actionUser(): void {
     this.subscriptions.push(
@@ -100,22 +134,25 @@ export class CreateUserComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const formValue = this.userForm.getRawValue();
     const userRequestDto = new UserRequestDto(
       undefined,
-      this.userForm.value.userFirstName,
-      this.userForm.value.userLastName,
+      formValue.userFirstName,
+      formValue.userLastName,
       undefined,
       undefined,
-      this.userForm.value.userEmail,
-      this.userForm.value.country,
-      this.userForm.value.userPhoneNumber,
+      formValue.userEmail,
+      formValue.country,
+      formValue.userPhoneNumber,
       'TempPassword123!',
       undefined,
       undefined,
       '',
       undefined,
-      this.userForm.value.userType,
-      undefined
+      formValue.userType,
+      undefined,
+      formValue.workspaceId,
+      formValue.shopId
     );
 
     console.log('Création utilisateur - DTO envoyé:', JSON.stringify(userRequestDto, null, 2));
@@ -130,4 +167,3 @@ export class CreateUserComponent implements OnInit, OnDestroy {
     this.submitted = false;
   }
 }
-

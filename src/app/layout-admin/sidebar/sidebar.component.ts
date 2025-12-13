@@ -136,101 +136,18 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   private filterMenuByPermissions(menu: MenuItem[]): MenuItem[] {
-    const isSuperAdmin = this.permissionService.isSuperAdmin();
-    const isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
-    const isShopManager = this.permissionService.isShopManager();
-    const userType = this.permissionService.getUserType();
-    const isEmployee = ['EMPLOYEE', 'TECHNICIAN', 'DELIVERER'].includes(userType || '');
-    
-    // Vérifier si l'utilisateur a la permission products:read pour accéder à la section produits
-    const hasProductPermission = this.permissionService.hasPermission('products:read') || 
-                                 this.permissionService.hasPermission('products:create') ||
-                                 this.permissionService.hasPermission('products:update') ||
-                                 isWorkspaceAdmin || 
-                                 isShopManager;
-    
     return menu.filter(item => {
+      // Les titres et layouts sont toujours affichés
       if (item.isTitle || item.isLayout) {
         return true;
       }
 
-      if (isSuperAdmin) {
-        if (item.subItems && item.subItems.length > 0) {
-          item.subItems = item.subItems.filter((subItem: MenuItem) => {
-            if (subItem.visibleForSuperAdmin) {
-              return true;
-            }
-            if (subItem.requiredRole) {
-              const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
-              return this.permissionService.hasAnyRole(requiredRoles);
-            }
-            return true;
-          });
-        }
+      // Super Admin et Admin ont accès à TOUS les menus et sous-menus sans restriction
+      if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
         return true;
       }
 
-      if (item.visibleForSuperAdmin) {
-        return false;
-      }
-
-      // Permettre l'accès à la section produits pour Workspace Admin, Shop Manager et employés avec permissions
-      if (item.label === 'MESSAGES.MENU.PRODUCTS_TITLE' || item.label === 'MESSAGES.MENU.PRODUCTS') {
-        // Workspace Admin, Shop Manager et employés avec permissions produits peuvent accéder
-        const canAccessProducts = isWorkspaceAdmin || isShopManager || (isEmployee && hasProductPermission);
-        if (canAccessProducts) {
-          console.log('[Sidebar] Autorisation d\'accès à la section produits pour:', { isWorkspaceAdmin, isShopManager, isEmployee, hasProductPermission, userType });
-          // Garder tous les sous-menus produits - ne pas filtrer
-          return true;
-        }
-        console.log('[Sidebar] Accès refusé à la section produits');
-        return false;
-      }
-
-      if (isWorkspaceAdmin || isShopManager || (isEmployee && hasProductPermission)) {
-        if (item.link === '/admin' || (item.subItems && item.subItems.some(sub => sub.link === '/admin'))) {
-          return true;
-        }
-        
-        if (item.subItems && item.subItems.length > 0) {
-          item.subItems = item.subItems.filter((subItem: MenuItem) => {
-            // Pour Workspace Admin, permettre workspaces, employees, shops, et produits
-            if (isWorkspaceAdmin) {
-              return subItem.link === '/admin/workspaces' || 
-                     subItem.link === '/admin/employees' || 
-                     subItem.link === '/admin/shops' ||
-                     (subItem.link?.includes('/admin/product') && hasProductPermission);
-            }
-            // Pour Shop Manager, permettre shops, employees, et produits
-            if (isShopManager) {
-              return subItem.link === '/admin/shops' || 
-                     subItem.link === '/admin/employees' ||
-                     (subItem.link?.includes('/admin/product') && hasProductPermission);
-            }
-            // Pour les employés avec permissions produits
-            if (isEmployee && hasProductPermission) {
-              return subItem.link?.includes('/admin/product') || true;
-            }
-            return false;
-          });
-          
-          if (item.subItems.length === 0) {
-            return false;
-          }
-          return true;
-        }
-        
-        if (item.link && item.link !== '/admin') {
-          // Permettre l'accès aux routes produits si l'utilisateur a les permissions
-          if (item.link.includes('/admin/product') && hasProductPermission) {
-            return true;
-          }
-          return false;
-        }
-        
-        return false;
-      }
-
+      // Vérifier si l'item a un requiredRole
       if (item.requiredRole) {
         const requiredRoles = Array.isArray(item.requiredRole) ? item.requiredRole : [item.requiredRole];
         const hasRole = this.permissionService.hasAnyRole(requiredRoles);
@@ -240,18 +157,37 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
         }
       }
 
+      // Vérifier l'accès à la page via canAccessPage si un link est défini
+      if (item.link) {
+        const canAccess = this.permissionService.canAccessPage(item.link);
+        if (!canAccess) {
+          return false;
+        }
+      }
+
+      // Filtrer les sous-items
       if (item.subItems && item.subItems.length > 0) {
         item.subItems = item.subItems.filter((subItem: MenuItem) => {
-          if (subItem.visibleForSuperAdmin) {
-            return false;
-          }
+          // Vérifier requiredRole pour le sous-item
           if (subItem.requiredRole) {
             const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
-            return this.permissionService.hasAnyRole(requiredRoles);
+            if (!this.permissionService.hasAnyRole(requiredRoles)) {
+              return false;
+            }
           }
+
+          // Vérifier l'accès à la page via canAccessPage si un link est défini
+          if (subItem.link) {
+            const canAccess = this.permissionService.canAccessPage(subItem.link);
+            if (!canAccess) {
+              return false;
+            }
+          }
+
           return true;
         });
         
+        // Si aucun sous-item n'est accessible, masquer l'item parent
         if (item.subItems.length === 0) {
           return false;
         }

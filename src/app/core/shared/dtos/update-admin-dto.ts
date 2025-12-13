@@ -8,5 +8,7 @@ export interface UpdateAdminDto {
   preferredLanguage?: string;
   timezone?: string;
   roleIds?: string[];
+  workspaceId?: string;
+  shopId?: string;
 }
 

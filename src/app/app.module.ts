@@ -35,7 +35,7 @@ import { CoreModule } from './core/core.module';
 import { RegisterComponent } from './view/authentification/register/register.component';
 import { AdminRegisterComponent } from './view/authentification/admin-register/admin-register.component';
 import { ActivateAccountComponent } from './view/authentification/activate-account/activate-account.component';
-import { NewPasswordComponent } from './view/authentification/new-password/new-password.component';
+import { ResetPasswordComponent } from './view/authentification/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './view/authentification/forgot-password/forgot-password.component';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 // import { DemandeDevisComponent } from './view/demande-devis/demande-devis.component';
@@ -69,7 +69,7 @@ export function createTranslateLoader(http: HttpClient): any {
     RegisterComponent,
     AdminRegisterComponent,
     ActivateAccountComponent,
-    NewPasswordComponent,
+    ResetPasswordComponent,
     ForgotPasswordComponent,
     // DemandeDevisComponent,
     // ContacterNousComponent,

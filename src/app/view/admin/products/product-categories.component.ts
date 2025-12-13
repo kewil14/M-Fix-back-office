@@ -3,6 +3,10 @@ import { Router } from '@angular/router';
 import { ProductService, CategoryTreeItem } from 'src/app/core/shared/services/product.service';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-categories',
@@ -25,6 +29,10 @@ export class ProductCategoriesComponent implements OnInit {
   stateFilter: 'ALL' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'DELETED' = 'ALL';
   currentPage: number = 1;
   pageSize: number = 10;
+  selectedWorkspaceId: string = ''; // Nouveau filtre workspace
+  showWorkspaceSelectionMessage: boolean = false; // Nouveau
+
+  workspaces$: Observable<WorkspaceDto[]> = of([]); // Liste des workspaces
 
   get filteredCategories(): { id: string; labelPath: string; raw: CategoryTreeItem }[] {
     let result = [...this.flatCategories];
@@ -50,17 +58,46 @@ export class ProductCategoriesComponent implements OnInit {
     private router: Router,
     private productService: ProductService,
     private modalService: BsModalService,
+    public permissionService: PermissionService, // Public pour l'utiliser dans le template
+    private workspaceService: WorkspaceService, // Injecter WorkspaceService
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkspaces(); // Charger les workspaces
+
+    // Déterminer si le message de sélection de workspace doit être affiché
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
+    
     this.loadCategories();
   }
 
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+  }
+
   loadCategories(): void {
+    // Si l'utilisateur est SuperAdmin/Admin et qu'aucun workspace n'est sélectionné, ne pas charger les catégories
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !this.selectedWorkspaceId) {
+      this.categories = [];
+      this.flatCategories = [];
+      this.showWorkspaceSelectionMessage = true;
+      this.loading = false; // Assurez-vous que le loading est à false
+      return;
+    }
+    this.showWorkspaceSelectionMessage = false; // Cacher le message si un workspace est sélectionné ou si l'utilisateur n'est pas SuperAdmin/Admin
+
     this.loading = true;
     this.error = null;
 
-    this.productService.getCategoriesTree().subscribe({
+    // Passer le workspaceId au service
+    const finalWorkspaceId = this.selectedWorkspaceId || 
+                             (this.permissionService.isWorkspaceAdmin() ? this.permissionService.getWorkspaceId() : undefined);
+
+    this.productService.getCategoriesTree({ workspaceId: finalWorkspaceId }).subscribe({
       next: (response) => {
         if (response && response.status === 'SUCCESS') {
           this.categories = (response.data as CategoryTreeItem[]) || [];
@@ -127,6 +164,26 @@ export class ProductCategoriesComponent implements OnInit {
 
   onFilterChange(): void {
     this.currentPage = 1;
+  }
+
+  onWorkspaceChange(): void {
+    this.currentPage = 1;
+    this.showWorkspaceSelectionMessage = false; // Cacher le message dès qu'un workspace est sélectionné
+    console.log('[ProductCategoriesComponent] Workspace changed, loading categories for workspaceId:', this.selectedWorkspaceId);
+    this.loadCategories();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.stateFilter = 'ALL';
+    this.selectedWorkspaceId = ''; // Réinitialiser le filtre workspace
+    this.currentPage = 1;
+    
+    // Si l'utilisateur est SuperAdmin/Admin, réafficher le message après réinitialisation
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
+    this.loadCategories();
   }
 
   changePage(page: number): void {

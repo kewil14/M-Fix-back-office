@@ -14,7 +14,11 @@
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-success" (click)="openCreateModal()">
+                    <button 
+                      *ngIf="permissionService.canCreate('employee')"
+                      type="button" 
+                      class="btn btn-success" 
+                      (click)="openCreateModal()">
                       <i class="mdi mdi-plus me-1"></i> Nouvel Employé
                     </button>
                   </div>
@@ -141,20 +145,21 @@
                             <i class="mdi mdi-eye-outline"></i>
                           </button>
                           <button 
+                            *ngIf="permissionService.canEdit('employee')"
                             class="btn btn-sm btn-warning btn-icon" 
                             (click)="onEdit(employee)"
                             [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
                             <i class="mdi mdi-pencil"></i>
                           </button>
                           <button 
-                            *ngIf="employee.isActive"
+                            *ngIf="employee.isActive && permissionService.canDelete('employee')"
                             class="btn btn-sm btn-danger btn-icon" 
                             (click)="onDelete(employee)"
                             [title]="'MESSAGES.ADMIN.COMMON.DEACTIVATE' | translate">
                             <i class="mdi mdi-delete-outline"></i>
                           </button>
                           <button 
-                            *ngIf="!employee.isActive"
+                            *ngIf="!employee.isActive && permissionService.canEdit('employee')"
                             class="btn btn-sm btn-success btn-icon" 
                             (click)="onReactivate(employee)"
                             [title]="'MESSAGES.ADMIN.COMMON.REACTIVATE' | translate">

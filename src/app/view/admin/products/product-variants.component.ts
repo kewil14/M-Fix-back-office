@@ -1,12 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ProductService, ProductDetail, ProductListItem, ProductSearchParams } from 'src/app/core/shared/services/product.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-variants',
   templateUrl: './product-variants.component.html',
   styleUrls: ['./product-variants.component.scss']
 })
-export class ProductVariantsComponent {
+export class ProductVariantsComponent implements OnInit {
 
   loading = false;
   errorMsg: string | null = null;
@@ -17,6 +21,15 @@ export class ProductVariantsComponent {
   selectedProductId: string = '';
   product: ProductDetail | null = null;
   variants: any[] = [];
+
+  // Workspace selection
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  selectedWorkspaceId: string = '';
+  showWorkspaceSelectionMessage: boolean = false;
+  isSuperAdmin: boolean = false;
+  isAdmin: boolean = false;
+  isAdminOrSuperAdmin: boolean = false;
+  isLoadingWorkspaces: boolean = false;
 
   // Formulaire variant
   editingVariantId: string | null = null;
@@ -29,20 +42,105 @@ export class ProductVariantsComponent {
 
   constructor(
     private productService: ProductService,
-  ) {
-    this.loadProducts();
+    public permissionService: PermissionService,
+    private workspaceService: WorkspaceService,
+  ) {}
+
+  ngOnInit(): void {
+    // Vérifier si c'est un super admin ou admin
+    this.isSuperAdmin = this.permissionService.isSuperAdmin();
+    this.isAdmin = this.permissionService.isAdmin();
+    this.isAdminOrSuperAdmin = this.isSuperAdmin || this.isAdmin;
+    
+    // Récupérer workspaceId depuis le token
+    this.selectedWorkspaceId = this.permissionService.getWorkspaceId() || '';
+    
+    this.loadWorkspaces();
+    
+    // Si admin/super admin, charger les workspaces puis charger les produits
+    // Si non-admin et workspaceId existe, charger directement les produits
+    if (this.isAdminOrSuperAdmin) {
+      if (!this.selectedWorkspaceId) {
+        this.showWorkspaceSelectionMessage = true;
+      }
+    } else if (this.selectedWorkspaceId) {
+      this.loadProducts();
+    }
+  }
+
+  loadWorkspaces(): void {
+    // Si admin/super admin, charger la liste des workspaces
+    if (this.isAdminOrSuperAdmin) {
+      this.isLoadingWorkspaces = true;
+      this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+        map(response => {
+          this.isLoadingWorkspaces = false;
+          if (response.status === 'SUCCESS' && response.data && response.data.length > 0) {
+            const workspaces = response.data;
+            // Utiliser le workspaceId du token s'il existe, sinon le premier workspace
+            const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+            if (tokenWorkspaceId && workspaces.some(ws => ws.id === tokenWorkspaceId)) {
+              this.selectedWorkspaceId = tokenWorkspaceId;
+              this.showWorkspaceSelectionMessage = false;
+              this.loadProducts();
+            } else if (workspaces.length > 0 && !this.selectedWorkspaceId) {
+              this.selectedWorkspaceId = workspaces[0].id;
+              this.showWorkspaceSelectionMessage = false;
+              this.loadProducts();
+            }
+            return workspaces;
+          }
+          return [];
+        })
+      );
+    }
+  }
+
+  onWorkspaceChange(): void {
+    if (this.selectedWorkspaceId) {
+      this.showWorkspaceSelectionMessage = false;
+      // Réinitialiser les sélections précédentes
+      this.productSearch = '';
+      this.selectedProductId = '';
+      this.product = null;
+      this.variants = [];
+      this.resetVariantForm();
+      // Recharger les produits pour le nouveau workspace
+      this.loadProducts();
+    } else {
+      this.productSearch = '';
+      this.products = [];
+      this.selectedProductId = '';
+      this.product = null;
+      this.variants = [];
+      this.resetVariantForm();
+    }
   }
 
   loadProducts(): void {
+    // Si l'utilisateur est SuperAdmin/Admin et qu'aucun workspace n'est sélectionné, ne pas charger les produits
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !this.selectedWorkspaceId) {
+      this.products = [];
+      this.showWorkspaceSelectionMessage = true;
+      return;
+    }
+    this.showWorkspaceSelectionMessage = false;
+
     const params: ProductSearchParams = {
       q: this.productSearch || undefined,
       state: 'ACTIVE',
       page: 1,
-      page_size: 50
+      page_size: 50,
+      workspace_id: this.selectedWorkspaceId || undefined
     };
+    
     this.productService.getProducts(params).subscribe({
       next: (res) => {
         this.products = res.data || [];
+      },
+      error: (err) => {
+        console.error('[ProductVariantsComponent] Error loading products:', err);
+        this.errorMsg = 'Erreur lors du chargement des produits.';
       }
     });
   }

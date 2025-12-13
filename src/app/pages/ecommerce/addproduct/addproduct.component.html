@@ -53,6 +53,31 @@
 
               <div class="col-sm-6">
                 <div class="mb-3">
+                  <label class="control-label">Workspace</label>
+                  <select class="form-control" formControlName="workspaceId"
+                    [ngClass]="{'is-invalid': submit && form['workspaceId'].errors}">
+                    <option value="">Select Workspace</option>
+                    <option *ngFor="let ws of workspaces$ | async" [value]="ws.id">{{ ws.name }}</option>
+                  </select>
+                  <div *ngIf="submit && form['workspaceId'].errors" class="invalid-feedback">
+                    <span *ngIf="form['workspaceId'].errors['required']">Workspace is required.</span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="control-label">Shop</label>
+                  <select class="form-control" formControlName="shopId"
+                    [ngClass]="{'is-invalid': submit && form['shopId'].errors}">
+                    <option value="">Select Shop</option>
+                    <option *ngFor="let shop of shops$ | async" [value]="shop.id">{{ shop.name }}</option>
+                  </select>
+                  <div *ngIf="submit && form['shopId'].errors" class="invalid-feedback">
+                    <span *ngIf="form['shopId'].errors['required']">Shop is required.</span>
+                  </div>
+                  <small class="text-muted" *ngIf="!form.workspaceId.value && form.shopId.disabled">
+                    Veuillez d'abord sélectionner un workspace
+                  </small>
+                </div>
+                <div class="mb-3">
                   <label class="control-label">Category</label>
                   <ng-select [items]="['Alaska','Hawaii']"></ng-select>
                 </div>

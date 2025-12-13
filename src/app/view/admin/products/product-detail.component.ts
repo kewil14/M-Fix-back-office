@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService, ProductDetail } from 'src/app/core/shared/services/product.service';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -19,7 +20,8 @@ export class ProductDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
-    public mediaUrlService: MediaUrlService
+    public mediaUrlService: MediaUrlService,
+    public permissionService: PermissionService
   ) {}
 
   onBack(): void {

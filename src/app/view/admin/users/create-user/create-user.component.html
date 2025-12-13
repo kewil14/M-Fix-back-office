@@ -72,6 +72,43 @@
     <div class="row">
       <div class="col-md-6">
         <div class="mb-3">
+          <label class="form-label">Workspace <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="workspaceId"
+            (change)="onWorkspaceChange()"
+            [ngClass]="{'is-invalid': submitted && f.workspaceId.errors}">
+            <option value="">Sélectionnez un workspace</option>
+            <option *ngFor="let ws of workspaces$ | async" [value]="ws.id">{{ ws.name }}</option>
+          </select>
+          <div *ngIf="submitted && f.workspaceId.errors" class="invalid-feedback">
+            <span *ngIf="f.workspaceId.errors.required">Workspace requis</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Shop <span class="text-danger">*</span></label>
+          <select
+            class="form-select"
+            formControlName="shopId"
+            [ngClass]="{'is-invalid': submitted && f.shopId.errors}">
+            <option value="">Sélectionnez un shop</option>
+            <option *ngFor="let shop of shops$ | async" [value]="shop.id">{{ shop.name }}</option>
+          </select>
+          <div *ngIf="submitted && f.shopId.errors" class="invalid-feedback">
+            <span *ngIf="f.shopId.errors.required">Shop requis</span>
+          </div>
+          <small class="text-muted" *ngIf="!f.workspaceId.value && f.shopId.disabled">
+            Veuillez d'abord sélectionner un workspace
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
           <label class="form-label">Pays <span class="text-danger">*</span></label>
           <select
             class="form-select"

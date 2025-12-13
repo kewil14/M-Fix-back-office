@@ -3,7 +3,7 @@ import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, of, map } from 'rxjs';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
 import { selectAdminState, selectRoleState, selectWorkspaceAdminState } from 'src/app/core/core.state';
@@ -24,6 +24,9 @@ import { findWorkspaceAdminById, updateWorkspaceAdmin, setWorkspaceAdmin, erreur
 import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
 import { UpdateWorkspaceAdminDto } from 'src/app/core/shared/dtos/update-workspace-admin-dto';
 import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { ShopService } from 'src/app/core/shared/services/shop.service';
+import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 
 @Component({
   selector: 'app-admin-edit',
@@ -49,9 +52,13 @@ export class AdminEditComponent implements OnInit, OnDestroy {
   isWorkspaceAdmin: boolean = false;
   currentAdmin: EmployeeResponseDto | null = null;
 
-  messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
+  messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>( 
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
   );
+
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+
+  shops$: BehaviorSubject<ShopResponseDto[]> = new BehaviorSubject([]);
 
   constructor(
     private formBuilder: UntypedFormBuilder,
@@ -60,13 +67,18 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     private storeService: Store,
     private actionService: Actions,
     private avatarUploadService: AvatarUploadService,
-    private mediaUrlService: MediaUrlService
+    private mediaUrlService: MediaUrlService,
+    private workspaceService: WorkspaceService,
+    private shopService: ShopService
   ) {}
 
   ngOnInit(): void {
     const url = this.router.url;
     this.isWorkspaceAdmin = url.includes('/workspaces/');
     
+    this.initForm(); // Initialise le formulaire avant les souscriptions
+    // this.loadWorkspaces(); // COMMENTÉ - Charge les workspaces (non utilisé car champs workspace/shop commentés)
+
     if (this.isWorkspaceAdmin) {
       this.breadCrumbItems = [
         { label: 'Admin' },
@@ -76,7 +88,9 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       this.workspaceAdminState$ = this.storeService.select(selectWorkspaceAdminState).pipe();
       this.subscriptions.push(
         this.workspaceAdminState$.subscribe(state => {
+          console.log('WorkspaceAdminState update:', state);
           if (state.dataState === DataStateEnum.SUCCESS && state.workspaceAdmin && !this.formPopulated) {
+            console.log('Populating form with workspace admin:', state.workspaceAdmin);
             this.populateForm(state.workspaceAdmin);
             this.formPopulated = true;
           }
@@ -91,7 +105,9 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       this.adminState$ = this.storeService.select(selectAdminState).pipe();
       this.subscriptions.push(
         this.adminState$.subscribe(state => {
+          console.log('AdminState update:', state);
           if (state.dataState === DataStateEnum.SUCCESS && state.admin && !this.formPopulated) {
+            console.log('Populating form with admin:', state.admin);
             this.populateForm(state.admin);
             this.formPopulated = true;
           }
@@ -100,17 +116,24 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     }
 
     this.roleState$ = this.storeService.select(selectRoleState).pipe();
-    this.initForm();
     this.actionAdmin();
     
     this.storeService.dispatch(findAvailableRoles({}));
 
     this.route.paramMap.subscribe(params => {
       this.adminId = params.get('id');
+      console.log('Admin ID from route:', this.adminId);
       if (this.adminId) {
         this.loadAdmin();
       }
     });
+
+    // Subscribe to workspaceId changes to load shops - COMMENTÉ car les champs workspace et shop sont commentés
+    // this.subscriptions.push(
+    //   this.adminForm.get('workspaceId')?.valueChanges.subscribe(() => {
+    //     this.onWorkspaceChange();
+    //   })
+    // );
   }
 
   ngOnDestroy(): void {
@@ -127,11 +150,18 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       birthDate: [''],
       preferredLanguage: [''],
       timezone: [''],
-      roleIds: [[]]
+      roleIds: [[]],
+      // Champs workspace et shop commentés selon les spécifications
+      // workspaceId: ['', [Validators.required]],
+      // shopId: [{value: '', disabled: true}, [Validators.required]]
+      workspaceId: [''],
+      shopId: [{value: '', disabled: true}]
     });
+    console.log('Admin form initialized:', this.adminForm);
   }
 
   populateForm(admin: EmployeeResponseDto): void {
+    console.log('Entering populateForm with admin:', admin);
     this.currentAdmin = admin;
     this.adminForm.patchValue({
       email: admin.email || '',
@@ -142,12 +172,20 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       birthDate: admin.birthDate ? new Date(admin.birthDate).toISOString().split('T')[0] : '',
       preferredLanguage: admin.preferredLanguage || '',
       timezone: admin.timezone || '',
-      roleIds: admin.roles ? admin.roles.map((r: any) => r.id) : []
+      roleIds: admin.roles ? admin.roles.map((r: any) => r.id) : [],
+      workspaceId: admin.workspaceId || '',
+      shopId: admin.shopId || ''
     });
     
     if (admin.avatar) {
       this.avatarPreview = this.mediaUrlService.getMediaUrl(admin.avatar) || admin.avatar;
     }
+
+    // If a workspaceId is present, load the shops for it - COMMENTÉ car les champs workspace et shop sont commentés
+    // if (admin.workspaceId) {
+    //   this.onWorkspaceChange(admin.workspaceId);
+    // }
+    console.log('Admin form after patchValue:', this.adminForm.value);
   }
 
   loadAdmin(): void {
@@ -157,6 +195,35 @@ export class AdminEditComponent implements OnInit, OnDestroy {
       } else {
         this.storeService.dispatch(findAdminById({ adminId: this.adminId }));
       }
+    }
+  }
+
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+  }
+
+  onWorkspaceChange(preselectedWorkspaceId?: string): void {
+    const workspaceId = preselectedWorkspaceId || this.f.workspaceId.value;
+    const shopControl = this.f.shopId;
+    
+    this.shops$.next([]);
+    shopControl.reset({value: '', disabled: true});
+
+    if (workspaceId) {
+      shopControl.enable();
+      this.subscriptions.push(
+        this.shopService.getShopsByWorkspace(workspaceId).subscribe(response => {
+          if (response.status === 'SUCCESS') {
+            this.shops$.next(response.data);
+            // If a shop was preselected, patch its value after shops are loaded
+            if (preselectedWorkspaceId && this.currentAdmin?.shopId) {
+              shopControl.patchValue(this.currentAdmin.shopId);
+            }
+          }
+        })
+      );
     }
   }
 
@@ -227,7 +294,12 @@ export class AdminEditComponent implements OnInit, OnDestroy {
         birthDate: this.adminForm.value.birthDate ? new Date(this.adminForm.value.birthDate).toISOString() : undefined,
         preferredLanguage: this.adminForm.value.preferredLanguage || undefined,
         timezone: this.adminForm.value.timezone || undefined,
-        roleIds: this.adminForm.value.roleIds || []
+        roleIds: this.adminForm.value.roleIds || [],
+        // Champs workspace et shop commentés selon les spécifications
+        // workspaceId: this.adminForm.value.workspaceId,
+        // shopId: this.adminForm.value.shopId
+        workspaceId: undefined,
+        shopId: undefined
       };
       this.storeService.dispatch(updateWorkspaceAdmin({ workspaceAdminId: this.adminId, updateWorkspaceAdminDto }));
     } else {
@@ -240,7 +312,12 @@ export class AdminEditComponent implements OnInit, OnDestroy {
         birthDate: this.adminForm.value.birthDate ? new Date(this.adminForm.value.birthDate).toISOString() : undefined,
         preferredLanguage: this.adminForm.value.preferredLanguage || undefined,
         timezone: this.adminForm.value.timezone || undefined,
-        roleIds: this.adminForm.value.roleIds || []
+        roleIds: this.adminForm.value.roleIds || [],
+        // Champs workspace et shop commentés selon les spécifications
+        // workspaceId: this.adminForm.value.workspaceId,
+        // shopId: this.adminForm.value.shopId
+        workspaceId: undefined,
+        shopId: undefined
       };
       this.storeService.dispatch(updateAdmin({ adminId: this.adminId, updateAdminDto }));
     }
@@ -310,4 +387,3 @@ export class AdminEditComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin/admins']);
   }
 }
-

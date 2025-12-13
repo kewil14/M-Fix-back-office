@@ -24,6 +24,7 @@ import {
 import { AdminState } from 'src/app/core/shared/stores/admin/admin.state';
 import { CreateAdminComponent } from '../create-admin/create-admin.component';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-admins',
@@ -61,7 +62,8 @@ export class AdminsComponent implements OnInit, OnDestroy {
     private actionService: Actions,
     private router: Router,
     private translateService: TranslateService,
-    public mediaUrlService: MediaUrlService
+    public mediaUrlService: MediaUrlService,
+    public permissionService: PermissionService
   ) {}
 
   ngOnDestroy() {
@@ -87,7 +89,13 @@ export class AdminsComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.adminState$.subscribe(state => {
         if (state && state.dataState === DataStateEnum.SUCCESS && state.admins) {
+          // Filtrer pour ne garder que les Admin et Super Admin
           this.allAdmins = state.admins.filter(user => this.isAdminOrSuperAdmin(user));
+          console.log('[AdminsComponent] Filtered admins (admin/super admin only):', {
+            total: state.admins.length,
+            filtered: this.allAdmins.length,
+            excluded: state.admins.length - this.allAdmins.length
+          });
           this.applyFilters();
         }
       })
@@ -168,21 +176,43 @@ export class AdminsComponent implements OnInit, OnDestroy {
     this.totalPages = Math.ceil(this.totalElements / this.pageSize);
   }
 
+  /**
+   * Vérifie si un utilisateur est Admin ou Super Admin basé sur ses rôles
+   * Un utilisateur est considéré comme Admin/Super Admin si :
+   * - Son type est 'ADMIN' ou 'SUPER_ADMIN' ET il a au moins un rôle ADMIN ou SUPER_ADMIN
+   * 
+   * Si roles est null ou vide, l'utilisateur va dans le menu "Users"
+   * Si un utilisateur a type='ADMIN' mais un rôle autre que ADMIN/SUPER_ADMIN (ex: TECHNICIAN),
+   * il est considéré comme un utilisateur normal et n'apparaît PAS dans le menu "Administrateurs"
+   */
   isAdminOrSuperAdmin(user: EmployeeResponseDto): boolean {
-    if (user.type === 'ADMIN' || user.type === 'SUPER_ADMIN') {
-      return true;
+    // Si le type n'est pas ADMIN ou SUPER_ADMIN, ce n'est pas un admin
+    if (user.type !== 'ADMIN' && user.type !== 'SUPER_ADMIN') {
+      return false;
     }
     
-    if (user.roles && user.roles.length > 0) {
-      return user.roles.some(role => {
-        const roleName = role.name?.toLowerCase() || role.roleName?.toLowerCase() || '';
-        const roleCode = role.code?.toLowerCase() || role.roleCode?.toLowerCase() || '';
-        return roleName.includes('admin') || roleName.includes('super') ||
-               roleCode.includes('admin') || roleCode.includes('super');
-      });
+    // Si l'utilisateur n'a pas de rôles (null ou vide), il va dans le menu "Users"
+    if (!user.roles || user.roles.length === 0) {
+      return false;
     }
     
-    return false;
+    // Vérifier si l'utilisateur a au moins un rôle ADMIN ou SUPER_ADMIN
+    return user.roles.some(role => {
+      // Vérifier les codes de rôles (exacts)
+      const roleCode = (role.code?.toUpperCase() || role.roleCode?.toUpperCase() || '').trim();
+      if (roleCode === 'ADMIN' || roleCode === 'SUPER_ADMIN' || roleCode === 'SUPERADMIN') {
+        return true;
+      }
+      
+      // Vérifier les noms de rôles (exacts ou contient)
+      const roleName = (role.name?.toLowerCase() || role.roleName?.toLowerCase() || '').trim();
+      if (roleName === 'admin' || roleName === 'super admin' || roleName === 'superadmin' ||
+          roleName.includes('admin') || roleName.includes('super')) {
+        return true;
+      }
+      
+      return false;
+    });
   }
 
   getFilteredAdmins(state: AdminState): EmployeeResponseDto[] {
@@ -268,6 +298,9 @@ export class AdminsComponent implements OnInit, OnDestroy {
   }
 
   openCreateModal() {
+    if (!this.permissionService.isSuperAdmin()) {
+      return;
+    }
     this.modalRef = this.modalService.show(CreateAdminComponent, { 
       class: 'modal-lg',
       backdrop: true,

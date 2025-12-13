@@ -14,7 +14,11 @@
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-success" (click)="openCreateModal()">
+                    <button 
+                      *ngIf="permissionService.canCreate('user')"
+                      type="button" 
+                      class="btn btn-success" 
+                      (click)="openCreateModal()">
                       <i class="mdi mdi-plus me-1"></i> Nouvel Utilisateur
                     </button>
                   </div>
@@ -108,20 +112,21 @@
                             <i class="mdi mdi-eye-outline"></i>
                           </button>
                           <button 
+                            *ngIf="permissionService.canEdit('user')"
                             class="btn btn-sm btn-warning btn-icon" 
                             (click)="onEdit(user)"
                             title="Modifier">
                             <i class="mdi mdi-pencil"></i>
                           </button>
                           <button 
-                            *ngIf="user.isActive"
+                            *ngIf="user.isActive && permissionService.canDelete('user')"
                             class="btn btn-sm btn-danger btn-icon" 
                             (click)="onDelete(user)"
                             title="Désactiver">
                             <i class="mdi mdi-delete-outline"></i>
                           </button>
                           <button 
-                            *ngIf="!user.isActive"
+                            *ngIf="!user.isActive && permissionService.canEdit('user')"
                             class="btn btn-sm btn-success btn-icon" 
                             (click)="onReactivate(user)"
                             title="Réactiver">

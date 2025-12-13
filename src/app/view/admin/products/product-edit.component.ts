@@ -7,6 +7,8 @@ import { ShopService } from 'src/app/core/shared/services/shop.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
 import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-edit',
@@ -24,6 +26,11 @@ export class ProductEditComponent implements OnInit {
   saveError: string | null = null;
   saveSuccess: string | null = null;
 
+  // Workspace selection
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  selectedWorkspaceId: string = '';
+  showWorkspaceSelectionMessage: boolean = false;
+
   // Champs principaux du produit
   label = '';
   description = '';
@@ -38,7 +45,6 @@ export class ProductEditComponent implements OnInit {
   brandId = '';
   categoryId = '';
   productTypeId = '';
-  workspaceId = '';
   shopId = '';
   
   // SEO
@@ -47,28 +53,24 @@ export class ProductEditComponent implements OnInit {
   seoMetaKeywords = '';
   seoSlug = '';
   seoCanonicalUrl = '';
-  seoCollapsed = true; // Section SEO pliée par défaut
+  seoCollapsed = true;
   
-  // Media IDs (pour les images supplémentaires)
   mediaIds: string[] = [];
 
-  // listes pour sélection
   brands: BrandListItem[] = [];
   categoriesFlat: { id: string; labelPath: string }[] = [];
   productTypes: ProductTypeListItem[] = [];
-  workspaces: WorkspaceDto[] = [];
   shops: ShopResponseDto[] = [];
   tags: TagListItem[] = [];
-  selectedTagIds: string[] = []; // Array pour ng-select multiple
+  selectedTagIds: string[] = [];
 
-  // upload image principale
   mainImagePreview: string | null = null;
   isUploadingMainImage = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private productService: ProductService,
+    public productService: ProductService,
     private avatarUploadService: AvatarUploadService,
     private mediaUrlService: MediaUrlService,
     private shopService: ShopService,
@@ -77,14 +79,64 @@ export class ProductEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadInitialData();
     const id = this.route.snapshot.paramMap.get('id');
-    this.loadBrandsAndCategories();
-    this.loadTags();
-    this.initializeWorkspaceAndShop();
     if (id) {
       this.productId = id;
       this.isEditMode = true;
       this.loadProduct(id);
+    }
+  }
+
+  loadInitialData(): void {
+    this.loadWorkspaces();
+    // Ne charger les données que si on a un workspaceId (pour non-admin) ou attendre la sélection (pour admin)
+    const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+    if (tokenWorkspaceId && !this.permissionService.isSuperAdmin() && !this.permissionService.isAdmin()) {
+      this.selectedWorkspaceId = tokenWorkspaceId;
+      this.loadBrandsAndCategories(tokenWorkspaceId);
+      this.loadTags(tokenWorkspaceId);
+    }
+  }
+
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    } else {
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+        this.showWorkspaceSelectionMessage = false;
+        this.loadShopsForWorkspace();
+      } else {
+        this.showWorkspaceSelectionMessage = true;
+      }
+    }
+  }
+
+  onWorkspaceChange(): void {
+    if (this.selectedWorkspaceId) {
+      this.showWorkspaceSelectionMessage = false;
+      this.loadShopsForWorkspace();
+      // Recharger product types, categories, brands et tags avec le workspaceId sélectionné
+      this.loadBrandsAndCategories(this.selectedWorkspaceId);
+      this.loadTags(this.selectedWorkspaceId);
+    } else {
+      // Si aucun workspace n'est sélectionné, réinitialiser les listes
+      this.brands = [];
+      this.categoriesFlat = [];
+      this.productTypes = [];
+      this.tags = [];
+      this.shops = [];
+      this.brandId = '';
+      this.categoryId = '';
+      this.productTypeId = '';
+      this.shopId = '';
+      this.selectedTagIds = [];
     }
   }
 
@@ -109,15 +161,22 @@ export class ProductEditComponent implements OnInit {
           this.dimensions = p.dimensions || '';
           this.state = (p.state as any) || 'ACTIVE';
           this.mainImageUrl = p.main_image_url || '';
-          this.mainImagePreview = p.main_image_url
-            ? this.mediaUrlService.getMediaUrl(p.main_image_url)
-            : null;
+          this.mainImagePreview = p.main_image_url ? this.mediaUrlService.getMediaUrl(p.main_image_url) : null;
           this.brandId = p.brand?.id || '';
           this.categoryId = p.category?.id || '';
           this.productTypeId = p.product_type_id || '';
           this.shopId = p.shop_id || '';
+          this.selectedWorkspaceId = p.workspace_id || '';
           this.isFeatured = p.is_featured || false;
-          // Charger les tags du produit si disponibles
+
+          if (this.selectedWorkspaceId) {
+            this.showWorkspaceSelectionMessage = false;
+            this.loadShopsForWorkspace();
+            // Recharger les données liées au workspace (brands, categories, product types, tags)
+            this.loadBrandsAndCategories(this.selectedWorkspaceId);
+            this.loadTags(this.selectedWorkspaceId);
+          }
+
           if ((p as any).tags && Array.isArray((p as any).tags)) {
             this.selectedTagIds = ((p as any).tags as any[]).map((tag: any) => tag.id || tag);
           } else if ((p as any).tag_ids && Array.isArray((p as any).tag_ids)) {
@@ -142,133 +201,98 @@ export class ProductEditComponent implements OnInit {
     });
   }
 
-  loadBrandsAndCategories(): void {
-    this.productService.getBrands().subscribe({
+  loadBrandsAndCategories(workspaceId?: string): void {
+    // Utiliser le workspaceId passé en paramètre, sinon celui sélectionné, sinon undefined
+    // Pour Super Admin et Admin, le workspaceId doit être fourni explicitement
+    const effectiveWorkspaceId = workspaceId || this.selectedWorkspaceId || undefined;
+    
+    // Si on est Super Admin ou Admin et qu'aucun workspace n'est sélectionné, ne pas charger
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !effectiveWorkspaceId) {
+      console.log('[ProductEditComponent] Workspace ID requis pour Super Admin/Admin - données non chargées');
+      this.brands = [];
+      this.categoriesFlat = [];
+      this.productTypes = [];
+      return;
+    }
+    
+    console.log('[ProductEditComponent] Loading brands, categories and product types for workspace:', effectiveWorkspaceId);
+    
+    // Charger les brands avec le workspaceId
+    this.productService.getBrands({ workspaceId: effectiveWorkspaceId, state: 'ACTIVE' }).subscribe({
       next: (res) => {
-        if (res && res.status === 'SUCCESS') {
-          this.brands = (res.data as BrandListItem[]) || [];
-        }
+        this.brands = (res.data as BrandListItem[]) || [];
+        console.log('[ProductEditComponent] ✅ Brands loaded for workspace:', effectiveWorkspaceId, '- Count:', this.brands.length);
+      },
+      error: (err) => {
+        console.error('[ProductEditComponent] ❌ Error loading brands:', err);
+        this.brands = [];
       }
     });
 
-    this.productService.getCategoriesTree().subscribe({
+    // Charger les categories avec le workspaceId
+    this.productService.getCategoriesTree({ workspaceId: effectiveWorkspaceId, state: 'ACTIVE' }).subscribe({
       next: (res) => {
-        if (res && res.status === 'SUCCESS') {
-          this.categoriesFlat = [];
-          (res.data as CategoryTreeItem[] || []).forEach(cat => this.flattenCategory(cat));
-        }
+        this.categoriesFlat = [];
+        (res.data as CategoryTreeItem[] || []).forEach(cat => this.flattenCategory(cat));
+        console.log('[ProductEditComponent] ✅ Categories loaded for workspace:', effectiveWorkspaceId, '- Count:', this.categoriesFlat.length);
+      },
+      error: (err) => {
+        console.error('[ProductEditComponent] ❌ Error loading categories:', err);
+        this.categoriesFlat = [];
       }
     });
 
-    // Charger les types de produits
-    this.productService.getProductTypes().subscribe({
+    // Charger les product types avec le workspaceId
+    this.productService.getProductTypes({ state: 'ACTIVE', workspace_id: effectiveWorkspaceId }).subscribe({
       next: (res) => {
         if (res && res.status === 'SUCCESS') {
-          if (Array.isArray(res.data)) {
-            this.productTypes = res.data;
-          } else if (res.data?.content) {
-            this.productTypes = res.data.content;
-          } else if (res.data?.data) {
-            this.productTypes = res.data.data;
-          } else {
-            this.productTypes = [];
-          }
+          this.productTypes = (Array.isArray(res.data) ? res.data : res.data?.content || res.data?.data || []);
+          console.log('[ProductEditComponent] ✅ Product types loaded for workspace:', effectiveWorkspaceId, '- Count:', this.productTypes.length);
         }
+      },
+      error: (err) => {
+        console.error('[ProductEditComponent] ❌ Error loading product types:', err);
+        this.productTypes = [];
       }
     });
-
-    // Charger les workspaces
-    this.loadWorkspaces();
   }
 
-  loadTags(): void {
-    this.productService.getTags({ state: 'ACTIVE' }).subscribe({
+  loadTags(workspaceId?: string): void {
+    // Utiliser le workspaceId passé en paramètre, sinon celui sélectionné, sinon undefined
+    const effectiveWorkspaceId = workspaceId || this.selectedWorkspaceId || undefined;
+    
+    // Si on est Super Admin ou Admin et qu'aucun workspace n'est sélectionné, ne pas charger
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !effectiveWorkspaceId) {
+      console.log('[ProductEditComponent] Workspace ID requis pour Super Admin/Admin - tags non chargés');
+      this.tags = [];
+      return;
+    }
+    
+    console.log('[ProductEditComponent] Loading tags for workspace:', effectiveWorkspaceId);
+    
+    this.productService.getTags({ state: 'ACTIVE', workspaceId: effectiveWorkspaceId }).subscribe({
       next: (res) => {
-        if (res && res.status === 'SUCCESS') {
-          this.tags = (res.data as TagListItem[]) || [];
-        }
+        this.tags = (res.data as TagListItem[]) || [];
+        console.log('[ProductEditComponent] ✅ Tags loaded for workspace:', effectiveWorkspaceId, '- Count:', this.tags.length);
+      },
+      error: (err) => {
+        console.error('[ProductEditComponent] ❌ Error loading tags:', err);
+        this.tags = [];
       }
     });
-  }
-
-  initializeWorkspaceAndShop(): void {
-    // Si Workspace Admin, pré-sélectionner son workspace
-    if (this.permissionService.isWorkspaceAdmin()) {
-      const workspaceId = this.permissionService.getWorkspaceId();
-      if (workspaceId) {
-        this.workspaceId = workspaceId;
-        this.loadShopsForWorkspace();
-      }
-    }
-    // Si Shop Manager, pré-sélectionner son shop
-    else if (this.permissionService.isShopManager()) {
-      const shopId = this.permissionService.getShopId();
-      const workspaceId = this.permissionService.getWorkspaceId();
-      if (workspaceId) {
-        this.workspaceId = workspaceId;
-        this.loadShopsForWorkspace();
-        // Attendre que les shops soient chargés avant de sélectionner
-        setTimeout(() => {
-          if (shopId) {
-            this.shopId = shopId;
-          }
-        }, 500);
-      }
-    }
-  }
-
-  loadWorkspaces(): void {
-    // Si Workspace Admin, charger uniquement son workspace
-    if (this.permissionService.isWorkspaceAdmin()) {
-      const workspaceId = this.permissionService.getWorkspaceId();
-      if (workspaceId) {
-        this.workspaceService.getWorkspaceById(workspaceId).subscribe({
-          next: (res) => {
-            if (res && res.status === 'SUCCESS' && res.data) {
-              this.workspaces = [res.data];
-              this.workspaceId = workspaceId;
-              this.loadShopsForWorkspace();
-            }
-          }
-        });
-      }
-    } else if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
-      // Super Admin et Admin voient tous les workspaces
-      this.workspaceService.findAllWorkspaces().subscribe({
-        next: (res) => {
-          if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
-            this.workspaces = res.data;
-            // Pré-sélectionner le workspace du token si présent
-            const tokenWorkspaceId = this.permissionService.getWorkspaceId();
-            if (tokenWorkspaceId && this.workspaces.some(w => w.id === tokenWorkspaceId)) {
-              this.workspaceId = tokenWorkspaceId;
-              this.loadShopsForWorkspace();
-            }
-          }
-        },
-        error: () => {
-          // silencieux
-        }
-      });
-    }
   }
 
   loadShopsForWorkspace(): void {
     this.shops = [];
     this.shopId = '';
 
-    if (!this.workspaceId) {
-      return;
-    }
+    if (!this.selectedWorkspaceId) return;
 
-    this.shopService.getShopsByWorkspace(this.workspaceId).subscribe({
+    this.shopService.getShopsByWorkspace(this.selectedWorkspaceId).subscribe({
       next: (res) => {
         if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
           this.shops = res.data;
         }
-      },
-      error: () => {
-        // silencieux
       }
     });
   }
@@ -284,14 +308,12 @@ export class ProductEditComponent implements OnInit {
   onMainImageFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
-    this.uploadMainImage(file);
+    this.uploadMainImage(input.files[0]);
   }
 
   onMainImageFileDropped(files: FileList): void {
     if (!files || files.length === 0) return;
-    const file = files[0];
-    this.uploadMainImage(file);
+    this.uploadMainImage(files[0]);
   }
 
   removeMainImage(): void {
@@ -301,12 +323,8 @@ export class ProductEditComponent implements OnInit {
 
   private uploadMainImage(file: File): void {
     this.isUploadingMainImage = true;
-    this.avatarUploadService.uploadAvatar(file, {
-      entityType: 'PRODUCT',
-      altText: this.label || 'Image produit'
-    }).subscribe({
+    this.avatarUploadService.uploadAvatar(file, { entityType: 'PRODUCT', altText: this.label || 'Image produit' }).subscribe({
       next: (media: MediaResponse) => {
-        // on stocke l'URL à utiliser dans le payload du produit
         const url = media.cdnUrl || media.fileName;
         this.mainImageUrl = url;
         this.mainImagePreview = this.mediaUrlService.getMediaUrl(url);
@@ -314,7 +332,7 @@ export class ProductEditComponent implements OnInit {
       },
       error: () => {
         this.isUploadingMainImage = false;
-        this.saveError = 'Erreur lors de l’upload de l’image principale.';
+        this.saveError = 'Erreur lors de l\'upload de l\'image principale.';
       }
     });
   }
@@ -323,21 +341,15 @@ export class ProductEditComponent implements OnInit {
     this.saveError = null;
     this.saveSuccess = null;
 
-    if (this.isEditMode) {
-      // Mise à jour : validation minimale, tous les champs sont optionnels
-      this.updateProduct();
-    } else {
-      // Création : validation des champs obligatoires
-      if (!this.label.trim() || this.price === null || !this.sku.trim() || !this.shopId.trim() || !this.productTypeId.trim() || !this.categoryId.trim()) {
-        this.saveError = 'Les champs suivants sont obligatoires : nom, prix, SKU, boutique, type de produit et catégorie.';
-        return;
-      }
-      this.createProduct();
+    if (!this.selectedWorkspaceId) {
+      this.saveError = 'Veuillez sélectionner un workspace.';
+      return;
     }
-  }
+    if (!this.label.trim() || this.price === null || !this.sku.trim() || !this.shopId.trim() || !this.productTypeId.trim() || !this.categoryId.trim()) {
+      this.saveError = 'Les champs suivants sont obligatoires : nom, prix, SKU, boutique, type de produit et catégorie.';
+      return;
+    }
 
-  private createProduct(): void {
-    // Construction du payload pour la création selon l'endpoint POST /api/v1/products/products
     const body: any = {
       label: this.label.trim(),
       description: this.description?.trim() || undefined,
@@ -350,12 +362,12 @@ export class ProductEditComponent implements OnInit {
       main_image_url: this.mainImageUrl?.trim() || undefined,
       media_ids: this.mediaIds.length > 0 ? this.mediaIds : [],
       shop_id: this.shopId.trim(),
+      workspace_id: this.selectedWorkspaceId.trim(),
       product_type_id: this.productTypeId.trim(),
       product_category_id: this.categoryId.trim(),
       brand_id: this.brandId?.trim() || undefined,
       tag_ids: this.selectedTagIds && this.selectedTagIds.length > 0 ? this.selectedTagIds : [],
-      variants: [],
-      attributes: [],
+      state: this.state,
       seo: (this.seoMetaTitle || this.seoMetaDescription || this.seoMetaKeywords || this.seoSlug || this.seoCanonicalUrl) ? {
         meta_title: this.seoMetaTitle?.trim() || undefined,
         meta_description: this.seoMetaDescription?.trim() || undefined,
@@ -365,101 +377,20 @@ export class ProductEditComponent implements OnInit {
       } : undefined
     };
 
-    this.saving = true;
-    this.productService.createProduct(body).subscribe({
-      next: (res) => {
-        // Si des tags sont sélectionnés, les ajouter au produit
-        if (this.selectedTagIds && this.selectedTagIds.length > 0 && res?.data?.id) {
-          this.productService.addTagsToProduct(res.data.id, this.selectedTagIds).subscribe({
-            next: () => {
-              this.saving = false;
-              this.saveSuccess = 'Produit créé avec succès.';
-              this.router.navigate(['/admin/products']);
-            },
-            error: (err) => {
-              this.saving = false;
-              this.saveError = err?.error?.message || 'Produit créé mais erreur lors de l\'ajout des tags.';
-            }
-          });
-        } else {
-          this.saving = false;
-          this.saveSuccess = 'Produit créé avec succès.';
-          this.router.navigate(['/admin/products']);
-        }
+    const obs = this.isEditMode
+      ? this.productService.updateProduct(this.productId!, body)
+      : this.productService.createProduct(body);
+
+    obs.subscribe({
+      next: () => {
+        this.saving = false;
+        this.saveSuccess = `Produit ${this.isEditMode ? 'mis à jour' : 'créé'} avec succès.`;
+        setTimeout(() => this.router.navigate(['/admin/products']), 1500);
       },
       error: (err) => {
         this.saving = false;
-        this.saveError = err?.error?.message || 'Erreur lors de la création du produit.';
-      }
-    });
-  }
-
-  private updateProduct(): void {
-    // Construction du payload pour la mise à jour selon l'endpoint PUT /api/v1/products/products/{product_id}
-    // Selon la doc: label, description, price, sku, barcode, weight, dimensions, is_featured,
-    // main_image_url, add_media_ids, remove_media_ids, product_category_id, brand_id, seo
-    const body: any = {
-      label: this.label?.trim() || undefined,
-      description: this.description?.trim() || undefined,
-      price: this.price || undefined,
-      sku: this.sku?.trim() || undefined,
-      barcode: this.barcode?.trim() || undefined,
-      weight: this.weight || undefined,
-      dimensions: this.dimensions?.trim() || undefined,
-      is_featured: this.isFeatured,
-      main_image_url: this.mainImageUrl?.trim() || undefined,
-      add_media_ids: this.mediaIds.length > 0 ? this.mediaIds : undefined,
-      remove_media_ids: undefined, // TODO: gérer la suppression de médias si nécessaire
-      product_category_id: this.categoryId?.trim() || undefined,
-      brand_id: this.brandId?.trim() || undefined,
-      seo: (this.seoMetaTitle || this.seoMetaDescription || this.seoMetaKeywords || this.seoSlug || this.seoCanonicalUrl) ? {
-        meta_title: this.seoMetaTitle?.trim() || undefined,
-        meta_description: this.seoMetaDescription?.trim() || undefined,
-        meta_keywords: this.seoMetaKeywords?.trim() || undefined,
-        slug: this.seoSlug?.trim() || undefined,
-        canonical_url: this.seoCanonicalUrl?.trim() || undefined
-      } : undefined
-    };
-
-    // Nettoyer le body : retirer les propriétés undefined
-    Object.keys(body).forEach(key => {
-      if (body[key] === undefined) {
-        delete body[key];
-      }
-    });
-
-    this.saving = true;
-    this.productService.updateProduct(this.productId!, body).subscribe({
-      next: (res) => {
-        // Mettre à jour les tags si des tags sont sélectionnés
-        if (this.selectedTagIds && this.selectedTagIds.length > 0) {
-          this.productService.addTagsToProduct(this.productId!, this.selectedTagIds).subscribe({
-            next: () => {
-              this.saving = false;
-              this.saveSuccess = 'Produit mis à jour avec succès.';
-              setTimeout(() => {
-                this.router.navigate(['/admin/products']);
-              }, 1500);
-            },
-            error: (err) => {
-              this.saving = false;
-              this.saveError = err?.error?.message || 'Produit mis à jour mais erreur lors de la mise à jour des tags.';
-            }
-          });
-        } else {
-          this.saving = false;
-          this.saveSuccess = 'Produit mis à jour avec succès.';
-          setTimeout(() => {
-            this.router.navigate(['/admin/products']);
-          }, 1500);
-        }
-      },
-      error: (err) => {
-        this.saving = false;
-        this.saveError = err?.error?.message || 'Erreur lors de la mise à jour du produit.';
+        this.saveError = err?.error?.message || `Erreur lors de la ${this.isEditMode ? 'mise à jour' : 'création'} du produit.`;
       }
     });
   }
 }
-
-

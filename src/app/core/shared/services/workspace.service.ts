@@ -30,15 +30,20 @@ export class WorkspaceService {
   findAllWorkspaces(workspaceId?: string): Observable<RequestResultDto<WorkspaceDto[]>> {
     let params = new HttpParams()
       .set('dto.page', '0')
-      .set('dto.size', '1000')
+      .set('dto.size', '100')
       .set('dto.isActive', 'true');
     
-    // Si workspaceId est fourni, filtrer par ce workspace
-    // Sinon, si l'utilisateur est un Workspace Admin, utiliser son workspace_id
-    const finalWorkspaceId = workspaceId || (this.permissionService?.isWorkspaceAdmin() ? this.permissionService.getWorkspaceId() : undefined);
+    // Ne passer workspaceId que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? workspaceId : undefined;
+    
     if (finalWorkspaceId) {
       params = params.set('dto.workspaceId', finalWorkspaceId);
-      console.log('[WorkspaceService.findAllWorkspaces] Filtering by workspace_id:', finalWorkspaceId);
+      console.log('[WorkspaceService.findAllWorkspaces] Filtering by workspace_id (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin) {
+      console.log('[WorkspaceService.findAllWorkspaces] Not passing workspace_id - backend will use token workspace_id');
     } else {
       console.log('[WorkspaceService.findAllWorkspaces] No workspace filter - loading all workspaces');
     }

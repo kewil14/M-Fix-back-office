@@ -21,6 +21,7 @@ import {
 import { AdminState } from 'src/app/core/shared/stores/admin/admin.state';
 import { CreateUserComponent } from '../create-user/create-user.component';
 import { addUser } from 'src/app/core/shared/stores/user/user.actions';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-users-management',
@@ -55,7 +56,8 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     private modalService: BsModalService,
     private storeService: Store,
     private actionService: Actions,
-    private router: Router
+    private router: Router,
+    public permissionService: PermissionService // Public pour l'utiliser dans le template
   ) {}
 
   ngOnDestroy() {
@@ -142,25 +144,57 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     this.totalPages = Math.ceil(this.totalElements / this.pageSize);
   }
 
+  /**
+   * Vérifie si un utilisateur est Admin ou Super Admin basé sur ses rôles
+   * Un utilisateur est considéré comme Admin/Super Admin si :
+   * - Son type est 'ADMIN' ou 'SUPER_ADMIN' ET il a au moins un rôle ADMIN ou SUPER_ADMIN
+   * 
+   * Si roles est null ou vide, l'utilisateur va dans le menu "Users"
+   * Si un utilisateur a type='ADMIN' mais un rôle autre que ADMIN/SUPER_ADMIN (ex: TECHNICIAN),
+   * il est considéré comme un utilisateur normal et apparaît dans le menu "Users"
+   */
   isAdminOrSuperAdmin(user: EmployeeResponseDto): boolean {
-    if (user.type === 'ADMIN' || user.type === 'SUPER_ADMIN') {
-      return true;
+    // Si le type n'est pas ADMIN ou SUPER_ADMIN, ce n'est pas un admin
+    if (user.type !== 'ADMIN' && user.type !== 'SUPER_ADMIN') {
+      return false;
     }
     
-    if (user.roles && user.roles.length > 0) {
-      return user.roles.some(role => {
-        const roleName = role.name?.toLowerCase() || role.roleName?.toLowerCase() || '';
-        const roleCode = role.code?.toLowerCase() || role.roleCode?.toLowerCase() || '';
-        return roleName.includes('admin') || roleName.includes('super') ||
-               roleCode.includes('admin') || roleCode.includes('super');
-      });
+    // Si l'utilisateur n'a pas de rôles (null ou vide), il va dans le menu "Users"
+    if (!user.roles || user.roles.length === 0) {
+      return false;
     }
     
-    return false;
+    // Vérifier si l'utilisateur a au moins un rôle ADMIN ou SUPER_ADMIN
+    return user.roles.some(role => {
+      // Vérifier les codes de rôles (exacts)
+      const roleCode = (role.code?.toUpperCase() || role.roleCode?.toUpperCase() || '').trim();
+      if (roleCode === 'ADMIN' || roleCode === 'SUPER_ADMIN' || roleCode === 'SUPERADMIN') {
+        return true;
+      }
+      
+      // Vérifier les noms de rôles (exacts ou contient)
+      const roleName = (role.name?.toLowerCase() || role.roleName?.toLowerCase() || '').trim();
+      if (roleName === 'admin' || roleName === 'super admin' || roleName === 'superadmin' ||
+          roleName.includes('admin') || roleName.includes('super')) {
+        return true;
+      }
+      
+      return false;
+    });
   }
 
+  /**
+   * Filtre les utilisateurs pour exclure les Admin et Super Admin
+   * Retourne uniquement les utilisateurs ayant un rôle autre que admin et super admin
+   */
   getFilteredUsers(users: EmployeeResponseDto[]): EmployeeResponseDto[] {
-    return users.filter(user => !this.isAdminOrSuperAdmin(user));
+    const filtered = users.filter(user => !this.isAdminOrSuperAdmin(user));
+    console.log('[UsersManagementComponent] Filtered users (excluding admins/super admins):', {
+      total: users.length,
+      filtered: filtered.length,
+      excluded: users.length - filtered.length
+    });
+    return filtered;
   }
 
   onSearchChange(): void {

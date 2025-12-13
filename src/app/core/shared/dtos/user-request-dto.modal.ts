@@ -17,5 +17,7 @@ export class UserRequestDto {
         public isUserPhoneNumberVerified?: boolean,
         public userType?: string,
         public creationDate?: string,
+        public workspaceId?: string,
+        public shopId?: string,
     ) {}
 }

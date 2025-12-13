@@ -16,7 +16,10 @@
                 title="Exporter en CSV">
                 <i class="mdi mdi-download me-1"></i> Exporter CSV
               </button>
-              <a class="btn btn-primary" routerLink="/admin/products/create">
+              <a 
+                *ngIf="permissionService.canCreate('product')"
+                class="btn btn-primary" 
+                routerLink="/admin/products/create">
                 Nouveau produit
               </a>
             </div>
@@ -84,6 +87,15 @@
             </div>
             <div class="card-body" [collapse]="!filtersExpanded">
               <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label">Workspace</label>
+                  <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
+                    <option [ngValue]="''">Tous les workspaces</option>
+                    <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">
+                      {{ ws.name }}
+                    </option>
+                  </select>
+                </div>
                 <div class="col-md-3">
                   <label class="form-label">Catégorie</label>
                   <select class="form-select" [(ngModel)]="categoryId" (ngModelChange)="onFilterChange()">
@@ -161,19 +173,25 @@
             </div>
           </div>
 
-          <!-- Loading / Error -->
-          <div *ngIf="isLoading" class="text-center py-5">
+          <!-- Loading / Error / Workspace Selection Message -->
+          <div *ngIf="showWorkspaceSelectionMessage" class="text-center py-5">
+            <div class="alert alert-info d-inline-block">
+              <i class="mdi mdi-information-outline me-2"></i> Veuillez sélectionner un workspace pour afficher les données.
+            </div>
+          </div>
+
+          <div *ngIf="isLoading && !showWorkspaceSelectionMessage" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Chargement...</span>
             </div>
           </div>
 
-          <div *ngIf="errorMessage && !isLoading" class="alert alert-danger">
+          <div *ngIf="errorMessage && !isLoading && !showWorkspaceSelectionMessage" class="alert alert-danger">
             {{ errorMessage }}
           </div>
 
           <!-- Table -->
-          <div class="table-responsive" *ngIf="!isLoading && !errorMessage">
+          <div class="table-responsive" *ngIf="!isLoading && !errorMessage && !showWorkspaceSelectionMessage">
             <table class="table table-bordered table-hover align-middle">
               <thead class="table-light">
                 <tr>
@@ -265,6 +283,7 @@
                         <i class="mdi mdi-eye"></i>
                       </button>
                       <button
+                        *ngIf="permissionService.canEdit('product')"
                         type="button"
                         class="btn btn-sm btn-outline-primary"
                         [routerLink]="['/admin/products/edit', product.id]"
@@ -272,6 +291,7 @@
                         <i class="mdi mdi-pencil"></i>
                       </button>
                       <button
+                        *ngIf="permissionService.canCreate('product')"
                         type="button"
                         class="btn btn-sm btn-outline-success"
                         (click)="onDuplicateProduct(product)"
@@ -279,6 +299,7 @@
                         <i class="mdi mdi-content-copy"></i>
                       </button>
                       <button
+                        *ngIf="permissionService.canDelete('product')"
                         type="button"
                         class="btn btn-sm btn-outline-danger"
                         (click)="onDeleteProduct(product)"

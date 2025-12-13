@@ -74,7 +74,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     public mediaUrlService: MediaUrlService,
     private shopService: ShopService,
-    private permissionService: PermissionService
+    public permissionService: PermissionService // Public pour l'utiliser dans le template
   ) {}
 
   ngOnDestroy() {

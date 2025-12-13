@@ -49,46 +49,74 @@
           </div>
 
           <form (ngSubmit)="onSubmit()" novalidate>
-            <div class="mb-3">
-              <label class="form-label">Label <span class="text-danger">*</span></label>
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="label"
-                name="label"
-                required
-                placeholder="Ex: Physical Product"
-              />
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Description</label>
-              <textarea
-                class="form-control"
-                rows="3"
-                [(ngModel)]="description"
-                name="description"
-                placeholder="Ex: Tangible goods that require shipping"
-              ></textarea>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">État</label>
-              <select class="form-select" [(ngModel)]="state" name="state">
-                <option value="ACTIVE">Actif</option>
-                <option value="INACTIVE">Inactif</option>
-                <option value="ARCHIVED">Archivé</option>
-                <option value="DELETED">Supprimé</option>
+            <!-- Workspace Selector -->
+            <div class="mb-3" *ngIf="permissionService.isSuperAdmin() || permissionService.isAdmin()">
+              <label class="form-label">Workspace <span class="text-danger">*</span></label>
+              <select
+                class="form-select"
+                [(ngModel)]="selectedWorkspaceId"
+                name="workspace"
+                (ngModelChange)="onWorkspaceChange()"
+                [disabled]="isEditMode">
+                <option [ngValue]="''" disabled>Sélectionner un workspace</option>
+                <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">{{ ws.name }}</option>
               </select>
             </div>
 
-            <button class="btn btn-primary" type="submit" [disabled]="saving">
-              <span *ngIf="!saving">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer le type de produit' }}</span>
-              <span *ngIf="saving">
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                Traitement...
-              </span>
-            </button>
+            <!-- Form Content -->
+            <ng-container *ngIf="!showWorkspaceSelectionMessage; else pleaseSelectWorkspace">
+              <fieldset [disabled]="saving">
+                <div class="mb-3">
+                  <label class="form-label">Label <span class="text-danger">*</span></label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="label"
+                    name="label"
+                    required
+                    placeholder="Ex: Physical Product"
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea
+                    class="form-control"
+                    rows="3"
+                    [(ngModel)]="description"
+                    name="description"
+                    placeholder="Ex: Tangible goods that require shipping"
+                  ></textarea>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">État</label>
+                  <select class="form-select" [(ngModel)]="state" name="state">
+                    <option value="ACTIVE">Actif</option>
+                    <option value="INACTIVE">Inactif</option>
+                    <option value="ARCHIVED">Archivé</option>
+                    <option value="DELETED">Supprimé</option>
+                  </select>
+                </div>
+
+                <button class="btn btn-primary" type="submit" [disabled]="saving">
+                  <span *ngIf="!saving">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer le type de produit' }}</span>
+                  <span *ngIf="saving">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Traitement...
+                  </span>
+                </button>
+              </fieldset>
+            </ng-container>
+
+            <ng-template #pleaseSelectWorkspace>
+              <div class="text-center py-4">
+                <div class="alert alert-info d-inline-block">
+                  <i class="mdi mdi-information-outline me-2"></i>
+                  Veuillez sélectionner un workspace pour continuer.
+                </div>
+              </div>
+            </ng-template>
           </form>
         </div>
       </div>

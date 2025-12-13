@@ -3,6 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService, CategoryDetail, CategoryTreeItem } from 'src/app/core/shared/services/product.service';
 import { AvatarUploadService, MediaResponse } from 'src/app/core/shared/services/avatar-upload.service';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-category-edit',
@@ -19,6 +23,11 @@ export class CategoryEditComponent implements OnInit {
   loadError: string | null = null;
   saveError: string | null = null;
   saveSuccess: string | null = null;
+
+  // Workspace selection
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  selectedWorkspaceId: string = '';
+  showWorkspaceSelectionMessage: boolean = false;
 
   label = '';
   description = '';
@@ -39,15 +48,42 @@ export class CategoryEditComponent implements OnInit {
     private productService: ProductService,
     private avatarUploadService: AvatarUploadService,
     private mediaUrlService: MediaUrlService,
+    private workspaceService: WorkspaceService,
+    public permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkspaces();
     const id = this.route.snapshot.paramMap.get('id');
     this.loadCategoriesForParentSelect();
     if (id) {
       this.categoryId = id;
       this.isEditMode = true;
       this.loadCategory(id);
+    }
+  }
+
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    } else {
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+        this.showWorkspaceSelectionMessage = false;
+      } else {
+        this.showWorkspaceSelectionMessage = true;
+      }
+    }
+  }
+
+  onWorkspaceChange(): void {
+    if (this.selectedWorkspaceId) {
+      this.showWorkspaceSelectionMessage = false;
     }
   }
 
@@ -72,6 +108,10 @@ export class CategoryEditComponent implements OnInit {
           this.mainImagePreview = c.main_image_url
             ? this.mediaUrlService.getMediaUrl(c.main_image_url)
             : null;
+          if (this.isEditMode) {
+            this.selectedWorkspaceId = (c as any).workspace_id;
+            this.showWorkspaceSelectionMessage = false;
+          }
         } else {
           this.loadError = res?.message || 'Impossible de charger la catégorie.';
         }
@@ -109,6 +149,11 @@ export class CategoryEditComponent implements OnInit {
     this.saveError = null;
     this.saveSuccess = null;
 
+    if (!this.selectedWorkspaceId) {
+      this.saveError = 'Veuillez sélectionner un workspace.';
+      return;
+    }
+
     if (!this.label.trim()) {
       this.saveError = 'Le nom de la catégorie est obligatoire.';
       return;
@@ -121,6 +166,7 @@ export class CategoryEditComponent implements OnInit {
       state: this.state,
       parent_category_id: this.parentCategoryId || undefined,
       main_image_url: this.mainImageUrl || undefined,
+      workspace_id: this.selectedWorkspaceId,
     };
 
     if (this.mainImageMediaId) {
@@ -140,14 +186,16 @@ export class CategoryEditComponent implements OnInit {
           ? 'Catégorie mise à jour avec succès.'
           : 'Catégorie créée avec succès.';
         if (!this.isEditMode) {
-          this.router.navigate(['/admin/product-categories']);
+          setTimeout(() => this.router.navigate(['/admin/product-categories']), 1500);
+        } else {
+          if(this.categoryId) this.loadCategory(this.categoryId);
         }
       },
-      error: () => {
+      error: (err) => {
         this.saving = false;
-        this.saveError = this.isEditMode
+        this.saveError = err?.error?.message || (this.isEditMode
           ? 'Erreur lors de la mise à jour de la catégorie.'
-          : 'Erreur lors de la création de la catégorie.';
+          : 'Erreur lors de la création de la catégorie.');
       }
     });
   }

@@ -3,6 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService, BrandDetail } from 'src/app/core/shared/services/product.service';
 import { AvatarUploadService, MediaResponse } from 'src/app/core/shared/services/avatar-upload.service';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-brand-edit',
@@ -20,6 +24,11 @@ export class BrandEditComponent implements OnInit {
   saveError: string | null = null;
   saveSuccess: string | null = null;
 
+  // Workspace selection
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  selectedWorkspaceId: string = '';
+  showWorkspaceSelectionMessage: boolean = false;
+
   label = '';
   description = '';
   website = '';
@@ -36,14 +45,41 @@ export class BrandEditComponent implements OnInit {
     private productService: ProductService,
     private avatarUploadService: AvatarUploadService,
     private mediaUrlService: MediaUrlService,
+    private workspaceService: WorkspaceService,
+    public permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkspaces();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.brandId = id;
       this.isEditMode = true;
       this.loadBrand(id);
+    }
+  }
+
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    } else {
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+        this.showWorkspaceSelectionMessage = false;
+      } else {
+        this.showWorkspaceSelectionMessage = true;
+      }
+    }
+  }
+
+  onWorkspaceChange(): void {
+    if (this.selectedWorkspaceId) {
+      this.showWorkspaceSelectionMessage = false;
     }
   }
 
@@ -65,6 +101,12 @@ export class BrandEditComponent implements OnInit {
           this.state = (b.state as any) || 'ACTIVE';
           this.logoUrl = b.logo_url || null;
           this.logoPreview = b.logo_url ? this.mediaUrlService.getMediaUrl(b.logo_url) : null;
+          // En mode édition, le workspace est déjà défini et ne doit pas être changé.
+          // On récupère l'ID pour s'assurer qu'il est bien présent.
+          if (this.isEditMode) {
+            this.selectedWorkspaceId = (b as any).workspace_id;
+            this.showWorkspaceSelectionMessage = false;
+          }
         } else {
           this.loadError = res?.message || 'Impossible de charger la marque.';
         }
@@ -81,6 +123,11 @@ export class BrandEditComponent implements OnInit {
     this.saveError = null;
     this.saveSuccess = null;
 
+    if (!this.selectedWorkspaceId) {
+      this.saveError = 'Veuillez sélectionner un workspace.';
+      return;
+    }
+
     if (!this.label.trim()) {
       this.saveError = 'Le nom de la marque est obligatoire.';
       return;
@@ -92,6 +139,7 @@ export class BrandEditComponent implements OnInit {
       website: this.website?.trim() || undefined,
       state: this.state,
       logo_url: this.logoUrl || undefined,
+      workspace_id: this.selectedWorkspaceId,
     };
 
     if (this.logoMediaId) {
@@ -105,20 +153,26 @@ export class BrandEditComponent implements OnInit {
       : this.productService.createBrand(body);
 
     obs.subscribe({
-      next: () => {
+      next: (res) => {
         this.saving = false;
         this.saveSuccess = this.isEditMode
           ? 'Marque mise à jour avec succès.'
           : 'Marque créée avec succès.';
+        
+        // Si c'est une nouvelle marque, on peut rediriger.
         if (!this.isEditMode) {
-          this.router.navigate(['/admin/product-brands']);
+          // On attend un peu pour que l'utilisateur voie le message de succès.
+          setTimeout(() => this.router.navigate(['/admin/product-brands']), 1500);
+        } else {
+           // En mode édition, on peut recharger les données pour être à jour
+           if(this.brandId) this.loadBrand(this.brandId);
         }
       },
-      error: () => {
+      error: (err) => {
         this.saving = false;
-        this.saveError = this.isEditMode
+        this.saveError = err?.error?.message || (this.isEditMode
           ? 'Erreur lors de la mise à jour de la marque.'
-          : 'Erreur lors de la création de la marque.';
+          : 'Erreur lors de la création de la marque.');
       }
     });
   }

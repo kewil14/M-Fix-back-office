@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { Observable, share } from 'rxjs';
 import { API_URLS } from '../../config/app.url.config';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
@@ -7,18 +7,31 @@ import { CreateEmployeeDto } from '../dtos/create-employee-dto.modal';
 import { EmployeeListRequestDto } from '../dtos/employee-list-request-dto';
 import { EmployeeListResponseDto, EmployeeResponseDto } from '../dtos/employee-response-dto';
 import { UpdateEmployeeDto } from '../dtos/update-employee-dto';
+import { PermissionService } from './permission.service';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    @Optional() private permissionService?: PermissionService
   ) { }
 
   findAllEmployees(filters: EmployeeListRequestDto): Observable<RequestResultDto<EmployeeListResponseDto>> {
     let params = new HttpParams();
     
-    if (filters.workspaceId) params = params.set('workspaceId', filters.workspaceId);
+    // Ne passer workspaceId que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? filters.workspaceId : undefined;
+    
+    if (finalWorkspaceId) {
+      params = params.set('workspaceId', finalWorkspaceId);
+      console.log('[EmployeeService.findAllEmployees] Adding workspaceId filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin && filters.workspaceId) {
+      console.log('[EmployeeService.findAllEmployees] Not passing workspaceId - backend will use token workspace_id');
+    }
     if (filters.shopId) params = params.set('shopId', filters.shopId);
     if (filters.userType) params = params.set('userType', filters.userType);
     if (filters.isActive !== undefined) params = params.set('isActive', filters.isActive.toString());

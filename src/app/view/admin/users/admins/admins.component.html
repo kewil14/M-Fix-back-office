@@ -14,7 +14,11 @@
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-success" (click)="openCreateModal()">
+                    <button 
+                      *ngIf="permissionService.canCreate('admin')"
+                      type="button" 
+                      class="btn btn-success" 
+                      (click)="openCreateModal()">
                       <i class="mdi mdi-plus me-1"></i> Nouvel Administrateur
                     </button>
                   </div>

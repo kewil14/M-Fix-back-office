@@ -17,9 +17,9 @@
                 </div>
                 <div class="col-md-6">
                   <div class="d-flex justify-content-end gap-2">
-                    <!-- Sélecteur de workspace pour super admin -->
+                    <!-- Sélecteur de workspace pour admin et super admin -->
                     <select 
-                      *ngIf="isSuperAdmin && workspaces.length > 0" 
+                      *ngIf="isAdminOrSuperAdmin && workspaces.length > 0" 
                       class="form-select me-2" 
                       style="width: auto;"
                       [(ngModel)]="workspaceId"
@@ -49,7 +49,12 @@
                         [disabled]="!workspaceId"
                         style="display: none;">
                     </label>
-                    <button type="button" class="btn btn-sm btn-success" (click)="openCreateModal()" [disabled]="!workspaceId">
+                    <button 
+                      *ngIf="permissionService.canCreate('shop')"
+                      type="button" 
+                      class="btn btn-sm btn-success" 
+                      (click)="openCreateModal()" 
+                      [disabled]="!workspaceId">
                       <i class="mdi mdi-plus me-1"></i> {{ 'MESSAGES.ADMIN.SHOP.NEW_SHOP' | translate }}
                     </button>
                   </div>
@@ -137,18 +142,22 @@
                           <button type="button" class="btn btn-sm btn-info" (click)="onView(shop)">
                             <i class="mdi mdi-eye"></i>
                           </button>
-                          <button type="button" class="btn btn-sm btn-primary" (click)="onEdit(shop)">
+                          <button 
+                            *ngIf="permissionService.canEdit('shop')"
+                            type="button" 
+                            class="btn btn-sm btn-primary" 
+                            (click)="onEdit(shop)">
                             <i class="mdi mdi-pencil"></i>
                           </button>
                           <button 
-                            *ngIf="shop.isActive"
+                            *ngIf="shop.isActive && permissionService.canDelete('shop')"
                             type="button" 
                             class="btn btn-sm btn-danger" 
                             (click)="onDelete(shop)">
                             <i class="mdi mdi-delete"></i>
                           </button>
                           <button 
-                            *ngIf="!shop.isActive"
+                            *ngIf="!shop.isActive && permissionService.canEdit('shop')"
                             type="button" 
                             class="btn btn-sm btn-success" 
                             (click)="onReactivate(shop)">
@@ -222,7 +231,7 @@
 </ng-container>
 
 <!-- Message si workspaceId manquant et chargement des workspaces -->
-<div class="container-fluid" *ngIf="!workspaceId && isSuperAdmin && isLoadingWorkspaces">
+<div class="container-fluid" *ngIf="!workspaceId && isAdminOrSuperAdmin && isLoadingWorkspaces">
   <div class="row">
     <div class="col-12">
       <div class="alert alert-info">
@@ -234,7 +243,7 @@
 </div>
 
 <!-- Message si workspaceId manquant et pas de workspaces -->
-<div class="container-fluid" *ngIf="!workspaceId && !isSuperAdmin">
+<div class="container-fluid" *ngIf="!workspaceId && !isAdminOrSuperAdmin">
   <div class="row">
     <div class="col-12">
       <div class="alert alert-warning">

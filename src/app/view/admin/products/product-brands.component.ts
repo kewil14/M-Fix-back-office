@@ -4,6 +4,10 @@ import { ProductService, BrandListItem } from 'src/app/core/shared/services/prod
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-brands',
@@ -23,6 +27,10 @@ export class ProductBrandsComponent implements OnInit {
   stateFilter: 'ALL' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'DELETED' = 'ALL';
   currentPage: number = 1;
   pageSize: number = 10;
+  selectedWorkspaceId: string = ''; // Nouveau filtre workspace
+  showWorkspaceSelectionMessage: boolean = false; // Nouveau
+
+  workspaces$: Observable<WorkspaceDto[]> = of([]); // Liste des workspaces
 
   get filteredBrands(): BrandListItem[] {
     let result = [...this.brands];
@@ -49,17 +57,45 @@ export class ProductBrandsComponent implements OnInit {
     private productService: ProductService,
     public mediaUrlService: MediaUrlService,
     private modalService: BsModalService,
+    public permissionService: PermissionService, // Public pour l'utiliser dans le template
+    private workspaceService: WorkspaceService, // Injecter WorkspaceService
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkspaces(); // Charger les workspaces
+
+    // Déterminer si le message de sélection de workspace doit être affiché
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
+    
     this.loadBrands();
   }
 
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+  }
+
   loadBrands(): void {
+    // Si l'utilisateur est SuperAdmin/Admin et qu'aucun workspace n'est sélectionné, ne pas charger les marques
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !this.selectedWorkspaceId) {
+      this.brands = [];
+      this.showWorkspaceSelectionMessage = true;
+      this.loading = false; // Assurez-vous que le loading est à false
+      return;
+    }
+    this.showWorkspaceSelectionMessage = false; // Cacher le message si un workspace est sélectionné ou si l'utilisateur n'est pas SuperAdmin/Admin
+
     this.loading = true;
     this.error = null;
 
-    this.productService.getBrands().subscribe({
+    // Passer le workspaceId au service
+    const finalWorkspaceId = this.selectedWorkspaceId || 
+                             (this.permissionService.isWorkspaceAdmin() ? this.permissionService.getWorkspaceId() : undefined);
+
+    this.productService.getBrands({ workspaceId: finalWorkspaceId }).subscribe({
       next: (response) => {
         if (response && response.status === 'SUCCESS') {
           this.brands = (response.data as BrandListItem[]) || [];
@@ -116,6 +152,26 @@ export class ProductBrandsComponent implements OnInit {
 
   onFilterChange(): void {
     this.currentPage = 1;
+  }
+
+  onWorkspaceChange(): void {
+    this.currentPage = 1;
+    this.showWorkspaceSelectionMessage = false; // Cacher le message dès qu'un workspace est sélectionné
+    console.log('[ProductBrandsComponent] Workspace changed, loading brands for workspaceId:', this.selectedWorkspaceId);
+    this.loadBrands();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.stateFilter = 'ALL';
+    this.selectedWorkspaceId = ''; // Réinitialiser le filtre workspace
+    this.currentPage = 1;
+    
+    // Si l'utilisateur est SuperAdmin/Admin, réafficher le message après réinitialisation
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
+    this.loadBrands();
   }
 
   changePage(page: number): void {

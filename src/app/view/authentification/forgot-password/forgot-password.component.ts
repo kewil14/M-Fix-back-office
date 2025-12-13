@@ -36,9 +36,9 @@ export class ForgotPasswordComponent implements OnInit {
       console.log('[ForgotPasswordComponent] Token found:', token);
       
       if (token) {
-        // Si un token est présent, rediriger vers la page new-password avec le token
-        console.log('[ForgotPasswordComponent] Redirecting to new-password with token');
-        this.router.navigate(['/auth/new-password'], { 
+        // Si un token est présent, rediriger vers la page reset-password avec le token
+        console.log('[ForgotPasswordComponent] Redirecting to reset-password with token');
+        this.router.navigate(['/auth/reset-password'], { 
           queryParams: { token: token },
           replaceUrl: true 
         });

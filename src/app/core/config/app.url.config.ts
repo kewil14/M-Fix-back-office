@@ -18,7 +18,6 @@ export const API_URLS = {
 export const APP_LINK = {
   LINK_AUTH_LOGIN: '/auth',
   LINK_AUTH_RESET_PASSWORD: '/auth/reset-password',
-  LINK_AUTH_NEW_PASSWORD: '/auth/new-password',
   LINK_DASHBOARD_ADMIN: '/admin/admin-dashboard',
   LINK_DASHBOARD_USER: '/user',
   LINK_DASHBOARD_WORKSPACE_ADMIN: '/admin/workspace-admin-dashboard',

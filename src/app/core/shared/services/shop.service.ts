@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { Observable, share, map } from 'rxjs';
 import { API_URLS } from '../../config/app.url.config';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
@@ -10,20 +10,37 @@ import {
   CreateShopDto,
   UpdateShopDto
 } from '../dtos/shop-response-dto';
+import { PermissionService } from './permission.service';
 
 @Injectable({ providedIn: 'root' })
 export class ShopService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    @Optional() private permissionService?: PermissionService
   ) { }
 
   private getNestedValue(obj: any, path: string): any {
     return path.split('.').reduce((current, prop) => current?.[prop], obj);
   }
 
+  private resolveWorkspaceId(provided?: string): string | null {
+    const isAdmin = this.permissionService?.isAdmin?.() || false;
+    const isSuperAdmin = this.permissionService?.isSuperAdmin?.() || false;
+
+    // Ne passer workspaceId que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    if (!isAdmin && !isSuperAdmin) {
+      return null; // Ne pas passer workspace_id, le backend utilisera celui du token
+    }
+
+    // Admin / SuperAdmin : respecter le workspace passé en argument, sinon pas de filtre
+    return provided || null;
+  }
+
   getShops(workspaceId?: string, filters?: ShopListRequestDto): Observable<RequestResultDto<ShopResponseDto[]>> {
-    const endpoint = workspaceId
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId);
+    const endpoint = effectiveWorkspaceId
       ? `/api/shops/${workspaceId}/shops`
       : `/api/shops`;
     
@@ -34,7 +51,7 @@ export class ShopService {
         if (data.status === 'SUCCESS' && data.data) {
           let shops = Array.isArray(data.data) ? [...data.data] : [];
 
-          const workspaceFilter = workspaceId || filters?.workspaceId;
+          const workspaceFilter = effectiveWorkspaceId || filters?.workspaceId;
           if (workspaceFilter) {
             shops = shops.filter(shop => shop.workspaceId === workspaceFilter);
           }
@@ -104,12 +121,13 @@ export class ShopService {
   }
 
   getShopById(workspaceId: string, shopId: string): Observable<RequestResultDto<ShopResponseDto>> {
-    if (!workspaceId || !shopId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId || !shopId) {
       throw new Error('workspaceId and shopId are required');
     }
     
     return this.http.get<RequestResultDto<ShopResponseDto>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/${shopId}`
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/${shopId}`
     ).pipe(share());
   }
 
@@ -118,7 +136,8 @@ export class ShopService {
   }
 
   createShop(workspaceId: string, createShopDto: CreateShopDto): Observable<RequestResultDto<ShopResponseDto>> {
-    if (!workspaceId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId) {
       throw new Error('workspaceId is required');
     }
     
@@ -136,13 +155,14 @@ export class ShopService {
     };
     
     return this.http.post<RequestResultDto<ShopResponseDto>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops`,
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops`,
       shopDto
     ).pipe(share());
   }
 
   updateShop(workspaceId: string, shopId: string, updateShopDto: UpdateShopDto): Observable<RequestResultDto<ShopResponseDto>> {
-    if (!workspaceId || !shopId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId || !shopId) {
       throw new Error('workspaceId and shopId are required');
     }
     
@@ -159,39 +179,42 @@ export class ShopService {
     };
     
     return this.http.put<RequestResultDto<ShopResponseDto>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/${shopId}`,
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/${shopId}`,
       shopDto
     ).pipe(share());
   }
 
   deleteShop(workspaceId: string, shopId: string): Observable<RequestResultDto<string>> {
-    if (!workspaceId || !shopId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId || !shopId) {
       throw new Error('workspaceId and shopId are required');
     }
     
     return this.http.delete<RequestResultDto<string>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/${shopId}`
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/${shopId}`
     ).pipe(share());
   }
 
   deactivateShop(workspaceId: string, shopId: string): Observable<RequestResultDto<string>> {
-    if (!workspaceId || !shopId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId || !shopId) {
       throw new Error('workspaceId and shopId are required');
     }
     
     return this.http.put<RequestResultDto<string>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/${shopId}/deactivate`,
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/${shopId}/deactivate`,
       {}
     ).pipe(share());
   }
 
   activateShop(workspaceId: string, shopId: string): Observable<RequestResultDto<string>> {
-    if (!workspaceId || !shopId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId || !shopId) {
       throw new Error('workspaceId and shopId are required');
     }
     
     return this.http.put<RequestResultDto<string>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/${shopId}/activate`,
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/${shopId}/activate`,
       {}
     ).pipe(share());
   }
@@ -205,12 +228,13 @@ export class ShopService {
    * @param workspaceId Workspace ID (required)
    */
   exportShops(workspaceId: string): Observable<Blob> {
-    if (!workspaceId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId) {
       throw new Error('workspaceId is required');
     }
     
     return this.http.get(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/export`,
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/export`,
       { 
         responseType: 'blob',
         observe: 'body'
@@ -224,7 +248,8 @@ export class ShopService {
    * @param file CSV file to import
    */
   importShops(workspaceId: string, file: File): Observable<RequestResultDto<any>> {
-    if (!workspaceId) {
+    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId) || workspaceId;
+    if (!effectiveWorkspaceId) {
       throw new Error('workspaceId is required');
     }
     
@@ -232,7 +257,7 @@ export class ShopService {
     formData.append('file', file);
     
     return this.http.post<RequestResultDto<any>>(
-      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${workspaceId}/shops/import`,
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops/import`,
       formData
     ).pipe(share());
   }

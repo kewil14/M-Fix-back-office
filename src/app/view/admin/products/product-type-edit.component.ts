@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService, ProductTypeListItem } from 'src/app/core/shared/services/product.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-type-edit',
@@ -18,6 +22,11 @@ export class ProductTypeEditComponent implements OnInit {
   saveError: string | null = null;
   saveSuccess: string | null = null;
 
+  // Workspace selection
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  selectedWorkspaceId: string = '';
+  showWorkspaceSelectionMessage: boolean = false;
+
   label = '';
   description = '';
   state: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'DELETED' = 'ACTIVE';
@@ -26,14 +35,41 @@ export class ProductTypeEditComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
+    private workspaceService: WorkspaceService,
+    public permissionService: PermissionService,
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkspaces();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.typeId = id;
       this.isEditMode = true;
       this.loadProductType(id);
+    }
+  }
+
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    } else {
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+        this.showWorkspaceSelectionMessage = false;
+      } else {
+        this.showWorkspaceSelectionMessage = true;
+      }
+    }
+  }
+
+  onWorkspaceChange(): void {
+    if (this.selectedWorkspaceId) {
+      this.showWorkspaceSelectionMessage = false;
     }
   }
 
@@ -52,6 +88,10 @@ export class ProductTypeEditComponent implements OnInit {
           this.label = pt.label;
           this.description = pt.description || '';
           this.state = (pt.state as any) || 'ACTIVE';
+          if (this.isEditMode) {
+            this.selectedWorkspaceId = (pt as any).workspace_id;
+            this.showWorkspaceSelectionMessage = false;
+          }
         } else {
           this.loadError = res?.message || 'Impossible de charger le type de produit.';
         }
@@ -68,6 +108,11 @@ export class ProductTypeEditComponent implements OnInit {
     this.saveError = null;
     this.saveSuccess = null;
 
+    if (!this.selectedWorkspaceId) {
+      this.saveError = 'Veuillez sélectionner un workspace.';
+      return;
+    }
+
     if (!this.label.trim()) {
       this.saveError = 'Le label est obligatoire.';
       return;
@@ -76,7 +121,8 @@ export class ProductTypeEditComponent implements OnInit {
     const body: any = {
       label: this.label.trim(),
       description: this.description?.trim() || undefined,
-      state: this.state
+      state: this.state,
+      workspace_id: this.selectedWorkspaceId,
     };
 
     this.saving = true;
@@ -97,11 +143,11 @@ export class ProductTypeEditComponent implements OnInit {
           }, 1500);
         }
       },
-      error: () => {
+      error: (err) => {
         this.saving = false;
-        this.saveError = this.isEditMode
+        this.saveError = err?.error?.message || (this.isEditMode
           ? 'Erreur lors de la mise à jour du type de produit.'
-          : 'Erreur lors de la création du type de produit.';
+          : 'Erreur lors de la création du type de produit.');
       }
     });
   }

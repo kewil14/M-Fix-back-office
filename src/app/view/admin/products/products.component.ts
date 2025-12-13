@@ -1,10 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, of } from 'rxjs';
 import { ProductService, ProductListItem, ProductSearchParams } from 'src/app/core/shared/services/product.service';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
 import { DuplicateProductModalComponent, DuplicateProductOptions } from 'src/app/shared-module/components/duplicate-product-modal/duplicate-product-modal.component';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
+import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-products',
@@ -17,6 +19,7 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
   products: ProductListItem[] = [];
   isLoading = false;
   errorMessage: string | null = null;
+  showWorkspaceSelectionMessage: boolean = false; // Nouveau
 
   // Filtres
   searchTerm: string = '';
@@ -30,10 +33,12 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
   sortBy: string = 'created_at';
   sortOrder: 'asc' | 'desc' = 'desc';
   filtersExpanded: boolean = false;
+  selectedWorkspaceId: string = ''; // Nouveau filtre workspace
 
   // Données pour les filtres
   brands: any[] = [];
   categoriesFlat: { id: string; labelPath: string }[] = [];
+  workspaces$: Observable<WorkspaceDto[]> = of([]); // Liste des workspaces
 
   // Pagination
   page: number = 1;
@@ -46,12 +51,20 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
   constructor(
     private productService: ProductService,
     private modalService: BsModalService,
-    private permissionService: PermissionService
+    public permissionService: PermissionService, // Public pour l'utiliser dans le template
+    private workspaceService: WorkspaceService // Injecter le service Workspace
   ) {}
 
   ngOnInit(): void {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Produits', active: true }];
     this.loadBrandsAndCategories();
+    this.loadWorkspaces(); // Charger les workspaces
+
+    // Déterminer si le message de sélection de workspace doit être affiché
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
+    
     this.loadProducts();
   }
 
@@ -86,6 +99,12 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadWorkspaces(): void {
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+  }
+
   private flattenCategory(cat: any, prefix: string = ''): void {
     const labelPath = prefix ? `${prefix} / ${cat.label}` : cat.label;
     this.categoriesFlat.push({ id: cat.id, labelPath });
@@ -99,6 +118,15 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
   }
 
   loadProducts(): void {
+    // Si l'utilisateur est SuperAdmin/Admin et qu'aucun workspace n'est sélectionné, ne pas charger les produits
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !this.selectedWorkspaceId) {
+      this.products = [];
+      this.total = 0;
+      this.showWorkspaceSelectionMessage = true;
+      return;
+    }
+    this.showWorkspaceSelectionMessage = false; // Cacher le message si un workspace est sélectionné ou si l'utilisateur n'est pas SuperAdmin/Admin
+
     this.isLoading = true;
     this.errorMessage = null;
 
@@ -114,22 +142,27 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
       sort_by: this.sortBy,
       sort_order: this.sortOrder,
       page: this.page,
-      page_size: this.pageSize
+      page_size: this.pageSize,
+      workspace_id: this.selectedWorkspaceId || undefined // Ajouter le filtre workspace
     };
 
-    // Filtrer selon le rôle de l'utilisateur
-    if (this.permissionService.isWorkspaceAdmin()) {
-      const workspaceId = this.permissionService.getWorkspaceId();
-      if (workspaceId) {
-        (params as any).workspace_id = workspaceId;
-        console.log('[ProductsComponent] Workspace Admin - Filtering by workspace:', workspaceId);
+    // Si un workspace est sélectionné via le filtre, il prime sur le filtrage par rôle
+    if (!this.selectedWorkspaceId) {
+      if (this.permissionService.isWorkspaceAdmin()) {
+        const workspaceId = this.permissionService.getWorkspaceId();
+        if (workspaceId) {
+          (params as any).workspace_id = workspaceId;
+          console.log('[ProductsComponent] Workspace Admin - Filtering by workspace:', workspaceId);
+        }
+      } else if (this.permissionService.isShopManager()) {
+        const shopId = this.permissionService.getShopId();
+        if (shopId) {
+          (params as any).shop_id = shopId;
+          console.log('[ProductsComponent] Shop Manager - Filtering by shop:', shopId);
+        }
       }
-    } else if (this.permissionService.isShopManager()) {
-      const shopId = this.permissionService.getShopId();
-      if (shopId) {
-        (params as any).shop_id = shopId;
-        console.log('[ProductsComponent] Shop Manager - Filtering by shop:', shopId);
-      }
+    } else {
+      console.log('[ProductsComponent] Filtering by selected workspace:', this.selectedWorkspaceId);
     }
 
     console.log('[ProductsComponent.loadProducts] Request params:', params);
@@ -172,6 +205,16 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
     this.loadProducts();
   }
 
+  onWorkspaceChange(): void {
+    this.page = 1;
+    this.showWorkspaceSelectionMessage = false; // Cacher le message dès qu'un workspace est sélectionné
+    console.log('[ProductsComponent] Workspace changed, loading products for workspaceId:', this.selectedWorkspaceId);
+    // Réinitialiser les filtres dépendants du workspace
+    this.categoryId = '';
+    this.brandId = '';
+    this.loadProducts();
+  }
+
   resetFilters(): void {
     this.searchTerm = '';
     this.stateFilter = 'ACTIVE';
@@ -183,7 +226,13 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
     this.isFeatured = null;
     this.sortBy = 'created_at';
     this.sortOrder = 'desc';
+    this.selectedWorkspaceId = ''; // Réinitialiser le filtre workspace
     this.page = 1;
+    
+    // Si l'utilisateur est SuperAdmin/Admin, réafficher le message après réinitialisation
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
     this.loadProducts();
   }
 
@@ -341,6 +390,7 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
       category_id?: string;
       brand_id?: string;
       state?: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'DELETED';
+      workspace_id?: string; // Ajouter le filtre workspace
     } = {};
 
     if (this.categoryId) {
@@ -351,6 +401,9 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
     }
     if (this.stateFilter && this.stateFilter !== 'ALL') {
       exportParams.state = this.stateFilter;
+    }
+    if (this.selectedWorkspaceId) {
+      exportParams.workspace_id = this.selectedWorkspaceId;
     }
 
     this.productService.exportProductsCSV(exportParams).subscribe({
@@ -376,5 +429,7 @@ export class AdminProductsComponent implements OnInit, OnDestroy {
     });
   }
 }
+
+
 
 

@@ -8,7 +8,11 @@
       <button type="button" class="btn btn-outline-secondary me-2" (click)="onBack()">
         ← Retour à la liste
       </button>
-      <button type="button" class="btn btn-primary" (click)="onEdit()">
+      <button 
+        *ngIf="permissionService.canEdit('product')"
+        type="button" 
+        class="btn btn-primary" 
+        (click)="onEdit()">
         <i class="mdi mdi-pencil me-1"></i> Éditer
       </button>
     </div>

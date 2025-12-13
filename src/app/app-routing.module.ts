@@ -4,7 +4,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { LoginComponent } from './view/authentification/login/login.component';
 import { RegisterComponent } from './view/authentification/register/register.component';
 import { ActivateAccountComponent } from './view/authentification/activate-account/activate-account.component';
-import { NewPasswordComponent } from './view/authentification/new-password/new-password.component';
+import { ResetPasswordComponent } from './view/authentification/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './view/authentification/forgot-password/forgot-password.component';
 import { LayoutAdminComponent } from './layout-admin/layout-admin.component';
 import { LoggedInGuard } from './core/shared/guards/logged-in.guard';
@@ -15,7 +15,7 @@ const routes: Routes = [
   {path: 'register', component: RegisterComponent, canActivate: [LoggedInGuard]},
   {path: 'activate-account', component: ActivateAccountComponent},
   {path: 'auth/activate', component: ActivateAccountComponent},
-  {path: 'auth/new-password', component: NewPasswordComponent},
+  {path: 'auth/reset-password', component: ResetPasswordComponent},
   {path: 'auth/forgot-password', component: ForgotPasswordComponent},
   {
     path: 'admin', 

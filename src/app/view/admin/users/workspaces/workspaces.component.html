@@ -23,10 +23,10 @@
                       <i class="mdi mdi-download"></i>
                     </button>
                     <button 
+                      *ngIf="permissionService.canCreate('workspace')"
                       type="button" 
                       class="btn btn-sm btn-success" 
-                      (click)="openCreateModal()"
-                      *ngIf="!isWorkspaceAdmin">
+                      (click)="openCreateModal()">
                       <i class="mdi mdi-plus me-1"></i> {{ 'MESSAGES.ADMIN.WORKSPACE.NEW_WORKSPACE' | translate }}
                     </button>
                   </div>
@@ -136,12 +136,13 @@
                           </button>
                           <button 
                             class="btn btn-sm btn-warning btn-icon" 
+                            *ngIf="permissionService.canEdit('workspace')"
                             (click)="onEdit(workspaceAdmin)"
                             [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
                             <i class="mdi mdi-pencil"></i>
                           </button>
                           <button 
-                            *ngIf="workspaceAdmin.isActive"
+                            *ngIf="workspaceAdmin.isActive && permissionService.canDelete('workspace')"
                             class="btn btn-sm btn-danger btn-icon" 
                             (click)="onDelete(workspaceAdmin)"
                             [title]="'MESSAGES.ADMIN.COMMON.DELETE' | translate">

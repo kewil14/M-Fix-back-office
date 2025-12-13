@@ -83,14 +83,21 @@
           </ul>
 
           <div class="tab-content mt-3">
+            <!-- Message de sélection de workspace (toujours visible si actif) -->
+            <div *ngIf="showWorkspaceSelectionMessage" class="text-center py-5">
+              <div class="alert alert-info d-inline-block">
+                <i class="mdi mdi-information-outline me-2"></i> Veuillez sélectionner un workspace pour afficher les données.
+              </div>
+            </div>
+
             <!-- Onglet Liste -->
             <div *ngIf="activeTab === 'list'">
               <div class="row g-3 mb-3">
                 <div class="col-md-4">
                   <label class="form-label">Workspace</label>
-                  <select class="form-select" [(ngModel)]="workspaceId" (ngModelChange)="loadShopsForWorkspace(); onListFilterChange()">
+                  <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Tous les workspaces</option>
-                    <option *ngFor="let w of workspaces" [ngValue]="w.id">
+                    <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
                       {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
                     </option>
                   </select>
@@ -131,92 +138,94 @@
                 </div>
               </div>
 
-              <div *ngIf="listLoading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Chargement...</span>
+              <ng-container *ngIf="!showWorkspaceSelectionMessage">
+                <div *ngIf="listLoading" class="text-center py-5">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
                 </div>
-              </div>
 
-              <div *ngIf="!listLoading && stockList.length > 0" class="table-responsive">
-                <table class="table table-hover">
-                  <thead>
-                    <tr>
-                      <th>Variant ID</th>
-                      <th>Boutique</th>
-                      <th>Quantité</th>
-                      <th>Quantité réservée</th>
-                      <th>Quantité disponible</th>
-                      <th>Seuil d'alerte</th>
-                      <th>État</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let stock of stockList">
-                      <td>
-                        <code class="small">{{ stock.product_variant_id || stock.variant_id }}</code>
-                      </td>
-                      <td>
-                        <ng-container *ngIf="findShopById(getStockShopId(stock)) as shop; else shopIdFallback">
-                          {{ shop.name }}<span *ngIf="shop.city"> - {{ shop.city }}</span>
-                        </ng-container>
-                        <ng-template #shopIdFallback>
-                          {{ getStockShopId(stock) }}
-                        </ng-template>
-                      </td>
-                      <td>
-                        <strong>{{ stock.quantity || 0 }}</strong>
-                      </td>
-                      <td>
-                        <span class="text-warning">{{ stock.reserved_quantity || stock.reservedQuantity || 0 }}</span>
-                      </td>
-                      <td>
-                        <span class="text-success" [class.text-danger]="isStockLow(stock)">
-                          <strong>{{ getAvailableQuantity(stock) }}</strong>
-                        </span>
-                      </td>
-                      <td>
-                        <span class="badge bg-warning">{{ getAlertThreshold(stock) }}</span>
-                      </td>
-                      <td>
-                        <span class="badge" [ngClass]="{
-                          'bg-success': (stock.state || 'ACTIVE') === 'ACTIVE',
-                          'bg-secondary': (stock.state || 'ACTIVE') === 'INACTIVE',
-                          'bg-danger': (stock.state || 'ACTIVE') === 'DELETED'
-                        }">
-                          {{ stock.state || 'ACTIVE' }}
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div *ngIf="!listLoading && stockList.length === 0" class="text-center py-5 text-muted">
-                <i class="mdi mdi-information-outline" style="font-size: 48px;"></i>
-                <p class="mt-2">Aucun stock trouvé.</p>
-              </div>
-
-              <!-- Pagination -->
-              <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!listLoading && stockList.length > 0">
-                <div>
-                  <span class="text-muted">
-                    Affichage de {{ (listCurrentPage - 1) * listPageSize + 1 }} à {{ Math.min(listCurrentPage * listPageSize, listTotalItems) }} sur {{ listTotalItems }}
-                  </span>
+                <div *ngIf="!listLoading && stockList.length > 0" class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Variant ID</th>
+                        <th>Boutique</th>
+                        <th>Quantité</th>
+                        <th>Quantité réservée</th>
+                        <th>Quantité disponible</th>
+                        <th>Seuil d'alerte</th>
+                        <th>État</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let stock of stockList">
+                        <td>
+                          <code class="small">{{ stock.product_variant_id || stock.variant_id }}</code>
+                        </td>
+                        <td>
+                          <ng-container *ngIf="findShopById(getStockShopId(stock)) as shop; else shopIdFallback">
+                            {{ shop.name }}<span *ngIf="shop.city"> - {{ shop.city }}</span>
+                          </ng-container>
+                          <ng-template #shopIdFallback>
+                            {{ getStockShopId(stock) }}
+                          </ng-template>
+                        </td>
+                        <td>
+                          <strong>{{ stock.quantity || 0 }}</strong>
+                        </td>
+                        <td>
+                          <span class="text-warning">{{ stock.reserved_quantity || stock.reservedQuantity || 0 }}</span>
+                        </td>
+                        <td>
+                          <span class="text-success" [class.text-danger]="isStockLow(stock)">
+                            <strong>{{ getAvailableQuantity(stock) }}</strong>
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge bg-warning">{{ getAlertThreshold(stock) }}</span>
+                        </td>
+                        <td>
+                          <span class="badge" [ngClass]="{
+                            'bg-success': (stock.state || 'ACTIVE') === 'ACTIVE',
+                            'bg-secondary': (stock.state || 'ACTIVE') === 'INACTIVE',
+                            'bg-danger': (stock.state || 'ACTIVE') === 'DELETED'
+                          }">
+                            {{ stock.state || 'ACTIVE' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-                <nav>
-                  <ul class="pagination mb-0">
-                    <li class="page-item" [class.disabled]="listCurrentPage === 1">
-                      <a class="page-link" (click)="onListPageChange(listCurrentPage - 1)" href="javascript:void(0)">Précédent</a>
-                    </li>
-                    <li class="page-item" *ngFor="let page of getListPageNumbers()" [class.active]="page === listCurrentPage">
-                      <a class="page-link" (click)="onListPageChange(page)" href="javascript:void(0)">{{ page }}</a>
-                    </li>
-                    <li class="page-item" [class.disabled]="listCurrentPage === getListTotalPages()">
-                      <a class="page-link" (click)="onListPageChange(listCurrentPage + 1)" href="javascript:void(0)">Suivant</a>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
+
+                <div *ngIf="!listLoading && stockList.length === 0" class="text-center py-5 text-muted">
+                  <i class="mdi mdi-information-outline" style="font-size: 48px;"></i>
+                  <p class="mt-2">Aucun stock trouvé.</p>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="!listLoading && stockList.length > 0">
+                  <div>
+                    <span class="text-muted">
+                      Affichage de {{ (listCurrentPage - 1) * listPageSize + 1 }} à {{ Math.min(listCurrentPage * listPageSize, listTotalItems) }} sur {{ listTotalItems }}
+                    </span>
+                  </div>
+                  <nav>
+                    <ul class="pagination mb-0">
+                      <li class="page-item" [class.disabled]="listCurrentPage === 1">
+                        <a class="page-link" (click)="onListPageChange(listCurrentPage - 1)" href="javascript:void(0)">Précédent</a>
+                      </li>
+                      <li class="page-item" *ngFor="let page of getListPageNumbers()" [class.active]="page === listCurrentPage">
+                        <a class="page-link" (click)="onListPageChange(page)" href="javascript:void(0)">{{ page }}</a>
+                      </li>
+                      <li class="page-item" [class.disabled]="listCurrentPage === getListTotalPages()">
+                        <a class="page-link" (click)="onListPageChange(listCurrentPage + 1)" href="javascript:void(0)">Suivant</a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </ng-container>
             </div>
 
             <!-- Onglet Mise à jour -->
@@ -224,94 +233,96 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Workspace</label>
-                  <select class="form-select" [(ngModel)]="workspaceId" (ngModelChange)="loadShopsForWorkspace()">
+                  <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Sélectionner un workspace</option>
-                    <option *ngFor="let w of workspaces" [ngValue]="w.id">
+                    <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
                       {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
                     </option>
                   </select>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">Produit</label>
-                  <div class="input-group mb-1">
+                <ng-container *ngIf="!showWorkspaceSelectionMessage">
+                  <div class="col-md-4">
+                    <label class="form-label">Produit</label>
+                    <div class="input-group mb-1">
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="productSearch"
+                        placeholder="Rechercher..."
+                        (keyup.enter)="loadProducts()"
+                      />
+                      <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
+                        <i class="mdi mdi-magnify"></i>
+                      </button>
+                    </div>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="updateSelectedProductId"
+                      (ngModelChange)="onProductChange($event, 'update'); updateSelectedVariantId = ''">
+                      <option [ngValue]="''">Sélectionner un produit</option>
+                      <option *ngFor="let p of products" [ngValue]="p.id">
+                        {{ p.label }} ({{ p.sku }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Variant</label>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="updateSelectedVariantId">
+                      <option [ngValue]="''">Sélectionner un variant</option>
+                      <option *ngFor="let v of variants" [ngValue]="v.id">
+                        {{ v.label || v.name }} ({{ v.sku }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Boutique <span class="text-danger">*</span></label>
+                    <select class="form-select" [(ngModel)]="updateSelectedShopId">
+                      <option [ngValue]="''">Sélectionner une boutique</option>
+                      <option *ngFor="let s of shops" [ngValue]="s.id">
+                        {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Quantité <span class="text-danger">*</span></label>
                     <input
-                      type="text"
+                      type="number"
                       class="form-control"
-                      [(ngModel)]="productSearch"
-                      placeholder="Rechercher..."
-                      (keyup.enter)="loadProducts()"
+                      [(ngModel)]="updateQuantity"
+                      min="0"
+                      required
                     />
-                    <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
-                      <i class="mdi mdi-magnify"></i>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Type <span class="text-danger">*</span></label>
+                    <select class="form-select" [(ngModel)]="updateType">
+                      <option value="ADJUSTMENT">Ajustement</option>
+                      <option value="PURCHASE">Achat</option>
+                      <option value="RETURN">Retour</option>
+                      <option value="CORRECTION">Correction</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Note (optionnel)</label>
+                    <textarea
+                      class="form-control"
+                      rows="2"
+                      [(ngModel)]="updateNote"
+                      placeholder="Note sur le mouvement de stock..."
+                    ></textarea>
+                  </div>
+                  <div class="col-12">
+                    <button class="btn btn-primary" (click)="onUpdateStock()" [disabled]="loading">
+                      <span *ngIf="!loading">Mettre à jour le stock</span>
+                      <span *ngIf="loading">
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        Traitement...
+                      </span>
                     </button>
                   </div>
-                  <select
-                    class="form-select"
-                    [(ngModel)]="updateSelectedProductId"
-                    (ngModelChange)="onProductChange($event, 'update'); updateSelectedVariantId = ''">
-                    <option [ngValue]="''">Sélectionner un produit</option>
-                    <option *ngFor="let p of products" [ngValue]="p.id">
-                      {{ p.label }} ({{ p.sku }})
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Variant</label>
-                  <select
-                    class="form-select"
-                    [(ngModel)]="updateSelectedVariantId">
-                    <option [ngValue]="''">Sélectionner un variant</option>
-                    <option *ngFor="let v of variants" [ngValue]="v.id">
-                      {{ v.label || v.name }} ({{ v.sku }})
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Boutique <span class="text-danger">*</span></label>
-                  <select class="form-select" [(ngModel)]="updateSelectedShopId">
-                    <option [ngValue]="''">Sélectionner une boutique</option>
-                    <option *ngFor="let s of shops" [ngValue]="s.id">
-                      {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Quantité <span class="text-danger">*</span></label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    [(ngModel)]="updateQuantity"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Type <span class="text-danger">*</span></label>
-                  <select class="form-select" [(ngModel)]="updateType">
-                    <option value="ADJUSTMENT">Ajustement</option>
-                    <option value="PURCHASE">Achat</option>
-                    <option value="RETURN">Retour</option>
-                    <option value="CORRECTION">Correction</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Note (optionnel)</label>
-                  <textarea
-                    class="form-control"
-                    rows="2"
-                    [(ngModel)]="updateNote"
-                    placeholder="Note sur le mouvement de stock..."
-                  ></textarea>
-                </div>
-                <div class="col-12">
-                  <button class="btn btn-primary" (click)="onUpdateStock()" [disabled]="loading">
-                    <span *ngIf="!loading">Mettre à jour le stock</span>
-                    <span *ngIf="loading">
-                      <span class="spinner-border spinner-border-sm me-1"></span>
-                      Traitement...
-                    </span>
-                  </button>
-                </div>
+                </ng-container>
               </div>
             </div>
 
@@ -320,98 +331,102 @@
               <div class="row g-3 mb-3">
                 <div class="col-md-4">
                   <label class="form-label">Workspace</label>
-                  <select class="form-select" [(ngModel)]="workspaceId" (ngModelChange)="loadShopsForWorkspace()">
+                  <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Sélectionner un workspace</option>
-                    <option *ngFor="let w of workspaces" [ngValue]="w.id">
+                    <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
                       {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
                     </option>
                   </select>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">Produit</label>
-                  <div class="input-group mb-1">
-                    <input
-                      type="text"
-                      class="form-control"
-                      [(ngModel)]="productSearch"
-                      placeholder="Rechercher..."
-                      (keyup.enter)="loadProducts()"
-                    />
-                    <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
-                      <i class="mdi mdi-magnify"></i>
+                <ng-container *ngIf="!showWorkspaceSelectionMessage">
+                  <div class="col-md-4">
+                    <label class="form-label">Produit</label>
+                    <div class="input-group mb-1">
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="productSearch"
+                        placeholder="Rechercher..."
+                        (keyup.enter)="loadProducts()"
+                      />
+                      <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
+                        <i class="mdi mdi-magnify"></i>
+                      </button>
+                    </div>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="reserveProductId"
+                      (ngModelChange)="onProductChange($event, 'reserve'); reserveVariantId = ''">
+                      <option [ngValue]="''">Sélectionner un produit</option>
+                      <option *ngFor="let p of products" [ngValue]="p.id">
+                        {{ p.label }} ({{ p.sku }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Variant</label>
+                    <select class="form-select" [(ngModel)]="reserveVariantId">
+                      <option [ngValue]="''">Sélectionner un variant</option>
+                      <option *ngFor="let v of variants" [ngValue]="v.id">
+                        {{ v.label || v.name }} ({{ v.sku }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Boutique</label>
+                    <select class="form-select" [(ngModel)]="reserveShopId">
+                      <option [ngValue]="''">Sélectionner une boutique</option>
+                      <option *ngFor="let s of shops" [ngValue]="s.id">
+                        {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Quantité</label>
+                    <input type="number" class="form-control" [(ngModel)]="reserveQuantity" min="1" />
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-outline-primary" (click)="addReserveItem()">
+                      <i class="mdi mdi-plus me-1"></i> Ajouter
                     </button>
                   </div>
-                  <select
-                    class="form-select"
-                    [(ngModel)]="reserveProductId"
-                    (ngModelChange)="onProductChange($event, 'reserve'); reserveVariantId = ''">
-                    <option [ngValue]="''">Sélectionner un produit</option>
-                    <option *ngFor="let p of products" [ngValue]="p.id">
-                      {{ p.label }} ({{ p.sku }})
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Variant</label>
-                  <select class="form-select" [(ngModel)]="reserveVariantId">
-                    <option [ngValue]="''">Sélectionner un variant</option>
-                    <option *ngFor="let v of variants" [ngValue]="v.id">
-                      {{ v.label || v.name }} ({{ v.sku }})
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Boutique</label>
-                  <select class="form-select" [(ngModel)]="reserveShopId">
-                    <option [ngValue]="''">Sélectionner une boutique</option>
-                    <option *ngFor="let s of shops" [ngValue]="s.id">
-                      {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Quantité</label>
-                  <input type="number" class="form-control" [(ngModel)]="reserveQuantity" min="1" />
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                  <button class="btn btn-outline-primary" (click)="addReserveItem()">
-                    <i class="mdi mdi-plus me-1"></i> Ajouter
-                  </button>
-                </div>
+                </ng-container>
               </div>
 
-              <div class="table-responsive" *ngIf="reserveItems.length > 0">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Variant ID</th>
-                      <th>Boutique</th>
-                      <th>Quantité</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let item of reserveItems; let i = index">
-                      <td>{{ item.variant_id }}</td>
-                      <td>{{ item.shop_id }}</td>
-                      <td>{{ item.quantity }}</td>
-                      <td>
-                        <button class="btn btn-sm btn-outline-danger" (click)="removeReserveItem(i)">
-                          <i class="mdi mdi-delete"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <ng-container *ngIf="!showWorkspaceSelectionMessage">
+                <div class="table-responsive" *ngIf="reserveItems.length > 0">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Variant ID</th>
+                        <th>Boutique</th>
+                        <th>Quantité</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let item of reserveItems; let i = index">
+                        <td>{{ item.variant_id }}</td>
+                        <td>{{ item.shop_id }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-danger" (click)="removeReserveItem(i)">
+                            <i class="mdi mdi-delete"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
-              <button class="btn btn-primary" (click)="onReserveStock()" [disabled]="loading || reserveItems.length === 0">
-                <span *ngIf="!loading">Réserver le stock</span>
-                <span *ngIf="loading">
-                  <span class="spinner-border spinner-border-sm me-1"></span>
-                  Traitement...
-                </span>
-              </button>
+                <button class="btn btn-primary" (click)="onReserveStock()" [disabled]="loading || reserveItems.length === 0">
+                  <span *ngIf="!loading">Réserver le stock</span>
+                  <span *ngIf="loading">
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Traitement...
+                  </span>
+                </button>
+              </ng-container>
             </div>
 
             <!-- Onglet Synchronisation -->
@@ -419,90 +434,92 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Workspace</label>
-                  <select class="form-select" [(ngModel)]="workspaceId" (ngModelChange)="loadShopsForWorkspace()">
+                  <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Sélectionner un workspace</option>
-                    <option *ngFor="let w of workspaces" [ngValue]="w.id">
+                    <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
                       {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
                     </option>
                   </select>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">Produit</label>
-                  <div class="input-group mb-1">
-                    <input
-                      type="text"
-                      class="form-control"
-                      [(ngModel)]="productSearch"
-                      placeholder="Rechercher..."
-                      (keyup.enter)="loadProducts()"
-                    />
-                    <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
-                      <i class="mdi mdi-magnify"></i>
-                    </button>
+                <ng-container *ngIf="!showWorkspaceSelectionMessage">
+                  <div class="col-md-4">
+                    <label class="form-label">Produit</label>
+                    <div class="input-group mb-1">
+                      <input
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="productSearch"
+                        placeholder="Rechercher..."
+                        (keyup.enter)="loadProducts()"
+                      />
+                      <button class="btn btn-outline-secondary" type="button" (click)="loadProducts()">
+                        <i class="mdi mdi-magnify"></i>
+                      </button>
+                    </div>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="syncProductId"
+                      (ngModelChange)="onProductChange($event, 'sync'); syncVariantId = ''">
+                      <option [ngValue]="''">Sélectionner un produit</option>
+                      <option *ngFor="let p of products" [ngValue]="p.id">
+                        {{ p.label }} ({{ p.sku }})
+                      </option>
+                    </select>
                   </div>
-                  <select
-                    class="form-select"
-                    [(ngModel)]="syncProductId"
-                    (ngModelChange)="onProductChange($event, 'sync'); syncVariantId = ''">
-                    <option [ngValue]="''">Sélectionner un produit</option>
-                    <option *ngFor="let p of products" [ngValue]="p.id">
-                      {{ p.label }} ({{ p.sku }})
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Variant <span class="text-danger">*</span></label>
-                  <select
-                    class="form-select"
-                    [(ngModel)]="syncVariantId"
-                    required>
-                    <option [ngValue]="''">Sélectionner un variant</option>
-                    <option *ngFor="let v of variants" [ngValue]="v.id">
-                      {{ v.label || v.name }} ({{ v.sku }})
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Boutique source <span class="text-danger">*</span></label>
-                  <select class="form-select" [(ngModel)]="syncSourceShopId">
-                    <option [ngValue]="''">Sélectionner une boutique</option>
-                    <option *ngFor="let s of shops" [ngValue]="s.id">
-                      {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Quantité <span class="text-danger">*</span></label>
-                  <input type="number" class="form-control" [(ngModel)]="syncQuantity" min="1" required />
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Boutiques cibles <span class="text-danger">*</span></label>
-                  <div class="row g-2">
-                    <div class="col-md-4" *ngFor="let s of shops">
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          [checked]="syncTargetShopIds.includes(s.id)"
-                          (change)="toggleSyncTargetShop(s.id)"
-                          [disabled]="s.id === syncSourceShopId"
-                        />
-                        <label class="form-check-label">
-                          {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
-                        </label>
+                  <div class="col-md-4">
+                    <label class="form-label">Variant <span class="text-danger">*</span></label>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="syncVariantId"
+                      required>
+                      <option [ngValue]="''">Sélectionner un variant</option>
+                      <option *ngFor="let v of variants" [ngValue]="v.id">
+                        {{ v.label || v.name }} ({{ v.sku }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Boutique source <span class="text-danger">*</span></label>
+                    <select class="form-select" [(ngModel)]="syncSourceShopId">
+                      <option [ngValue]="''">Sélectionner une boutique</option>
+                      <option *ngFor="let s of shops" [ngValue]="s.id">
+                        {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" [(ngModel)]="syncQuantity" min="1" required />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Boutiques cibles <span class="text-danger">*</span></label>
+                    <div class="row g-2">
+                      <div class="col-md-4" *ngFor="let s of shops">
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            [checked]="syncTargetShopIds.includes(s.id)"
+                            (change)="toggleSyncTargetShop(s.id)"
+                            [disabled]="s.id === syncSourceShopId"
+                          />
+                          <label class="form-check-label">
+                            {{ s.name }} <span *ngIf="s.city">- {{ s.city }}</span>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div class="col-12">
-                  <button class="btn btn-primary" (click)="onSyncStock()" [disabled]="loading || syncTargetShopIds.length === 0">
-                    <span *ngIf="!loading">Synchroniser le stock</span>
-                    <span *ngIf="loading">
-                      <span class="spinner-border spinner-border-sm me-1"></span>
-                      Traitement...
-                    </span>
-                  </button>
-                </div>
+                  <div class="col-12">
+                    <button class="btn btn-primary" (click)="onSyncStock()" [disabled]="loading || syncTargetShopIds.length === 0">
+                      <span *ngIf="!loading">Synchroniser le stock</span>
+                      <span *ngIf="loading">
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        Traitement...
+                      </span>
+                    </button>
+                  </div>
+                </ng-container>
               </div>
             </div>
 

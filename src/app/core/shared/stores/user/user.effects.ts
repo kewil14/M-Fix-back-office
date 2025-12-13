@@ -85,10 +85,18 @@ export class UserEffects {
         }
       }),
       catchError((error) => {
-        if (error.status === 401 || error.status === 403) {
-          throw error;
+        let errorMessage = this.translateService.instant('MESSAGES.ERRORS.LOAD');
+        if (error.status === 403) {
+          errorMessage = this.translateService.instant('MESSAGES.ERRORS.FORBIDDEN_ACCESS'); // Assuming this key exists or will be added
+        } else if (error.status === 401) {
+          errorMessage = this.translateService.instant('MESSAGES.ERRORS.UNAUTHORIZED_ACCESS'); // Assuming this key exists or will be added
+        } else if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
         }
-        return of(erreurUsers({ messages: this.translateService.instant('MESSAGES.ERRORS.LOAD') }));
+        this.notificationService.showError(errorMessage);
+        return of(erreurUsers({ messages: errorMessage }));
       })
     );
   }

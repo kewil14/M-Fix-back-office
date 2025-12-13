@@ -1,23 +1,36 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Optional } from '@angular/core';
 import { Observable, share } from 'rxjs';
 import { API_URLS } from '../../config/app.url.config';
 import { RequestResultDto } from '../dtos/request-result-dto.modal';
 import { EmployeeListResponseDto, EmployeeResponseDto } from '../dtos/employee-response-dto';
 import { WorkspaceAdminListRequestDto } from '../dtos/workspace-admin-list-request-dto';
 import { UpdateWorkspaceAdminDto } from '../dtos/update-workspace-admin-dto';
+import { PermissionService } from './permission.service';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceAdminService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    @Optional() private permissionService?: PermissionService
   ) { }
 
   findAllWorkspaceAdmins(filters: WorkspaceAdminListRequestDto): Observable<RequestResultDto<EmployeeListResponseDto>> {
     let params = new HttpParams();
     
-    if (filters.workspaceId) params = params.set('dto.workspaceId', filters.workspaceId);
+    // Ne passer workspaceId que pour super admin et admin
+    // Pour tous les autres rôles, le backend utilisera le workspace_id du token
+    const isSuperAdmin = this.permissionService?.isSuperAdmin();
+    const isAdmin = this.permissionService?.isAdmin();
+    const finalWorkspaceId = (isSuperAdmin || isAdmin) ? filters.workspaceId : undefined;
+    
+    if (finalWorkspaceId) {
+      params = params.set('dto.workspaceId', finalWorkspaceId);
+      console.log('[WorkspaceAdminService.findAllWorkspaceAdmins] Adding workspaceId filter (super admin/admin only):', finalWorkspaceId);
+    } else if (!isSuperAdmin && !isAdmin && filters.workspaceId) {
+      console.log('[WorkspaceAdminService.findAllWorkspaceAdmins] Not passing workspaceId - backend will use token workspace_id');
+    }
     if (filters.isActive !== undefined) params = params.set('dto.isActive', filters.isActive.toString());
     if (filters.search) params = params.set('dto.search', filters.search);
     if (filters.page !== undefined) params = params.set('dto.page', filters.page.toString());

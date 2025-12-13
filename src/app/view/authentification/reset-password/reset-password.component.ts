@@ -11,14 +11,15 @@ import { ResetPasswordWithTokenDto } from 'src/app/core/shared/dtos/reset-passwo
 import { APP_LINK } from 'src/app/core/config/app.url.config';
 
 @Component({
-  selector: 'app-new-password',
-  templateUrl: './new-password.component.html',
-  styleUrls: ['./new-password.component.scss']
+  selector: 'app-reset-password',
+  templateUrl: './reset-password.component.html',
+  styleUrls: ['./reset-password.component.scss']
 })
-export class NewPasswordComponent implements OnInit, OnDestroy {
+export class ResetPasswordComponent implements OnInit, OnDestroy {
   newPasswordForm!: FormGroup;
   submitted = false;
   token: string = '';
+  showOtpField: boolean = true; // Afficher le champ OTP par défaut
 
   dataStateEnum = DataStateEnum;
   isProcessing = false;
@@ -41,24 +42,17 @@ export class NewPasswordComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       this.token = params['token'] || params['resetToken'] || '';
-      console.log('[NewPasswordComponent] Query params:', params);
-      console.log('[NewPasswordComponent] Token extracted:', this.token ? 'Token présent' : 'Token absent');
+      console.log('[ResetPasswordComponent] Query params:', params);
+      console.log('[ResetPasswordComponent] Token extracted:', this.token ? 'Token présent' : 'Token absent');
       
-      // Si aucun token n'est présent, rediriger vers forgot-password
-      if (!this.token) {
-        console.warn('[NewPasswordComponent] ⚠️ No token found in URL, redirecting to forgot-password');
-        this.messages = { 
-          type: 'error', 
-          text: 'Token manquant. Redirection vers la page de demande de réinitialisation...' 
-        };
-        setTimeout(() => {
-          this.router.navigate(['/auth/forgot-password'], { replaceUrl: true });
-        }, 2000);
-        return;
-      }
+      // Si le token existe dans l'URL, ne pas demander l'OTP
+      // Sinon, l'OTP est requis
+      this.showOtpField = !this.token;
+      
+      // Réinitialiser le formulaire avec la bonne validation
+      this.initForm();
     });
 
-    this.initForm();
     this.listenActions();
   }
 
@@ -67,8 +61,12 @@ export class NewPasswordComponent implements OnInit, OnDestroy {
   }
 
   initForm(): void {
+    // Si le token existe, l'OTP n'est pas requis
+    // Sinon, l'OTP est requis
+    const otpValidators = this.showOtpField ? [Validators.required] : [];
+    
     this.newPasswordForm = this.formBuilder.group({
-      otp: ['', [Validators.required]],
+      otp: ['', otpValidators],
       newPassword: ['', [
         Validators.required,
         Validators.minLength(8),
@@ -98,9 +96,12 @@ export class NewPasswordComponent implements OnInit, OnDestroy {
     this.messages = null;
 
     // Vérifier si le token ou l'otp existe, sinon renvoyer une erreur
-    const otp = this.newPasswordForm.value.otp;
+    const otp = this.newPasswordForm.value.otp?.trim() || '';
     if (!this.token && !otp) {
-      this.messages = { type: 'error', text: 'Token ou OTP manquant. Veuillez utiliser le lien reçu par email ou fournir un OTP valide.' };
+      this.messages = { 
+        type: 'error', 
+        text: 'Token ou OTP manquant. Veuillez utiliser le lien reçu par email ou fournir un OTP valide.' 
+      };
       return;
     }
 

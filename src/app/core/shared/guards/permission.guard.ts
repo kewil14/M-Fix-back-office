@@ -22,7 +22,29 @@ export class PermissionGuard implements CanActivate {
     // Récupérer les permissions requises depuis la route
     const requiredPermissions = route.data['permissions'] as string[];
     const requiredRoles = route.data['roles'] as string[];
+    const requiredUserTypes = route.data['userTypes'] as string[];
     const requireAnyPermission = route.data['requireAnyPermission'] as boolean || false;
+
+    // Vérifier les userTypes d'abord
+    if (requiredUserTypes && requiredUserTypes.length > 0) {
+      const userType = this.permissionService.getUserType();
+      const isSuperAdmin = this.permissionService.isSuperAdmin();
+      const isAdmin = this.permissionService.isAdmin();
+      
+      // Super Admin a accès à tous les userTypes
+      if (isSuperAdmin) {
+        console.log('Accès autorisé - Super Admin a accès à tous les userTypes');
+      } 
+      // Admin a accès à tous les userTypes sauf SUPER_ADMIN (mais peut-être qu'on veut aussi leur donner accès?)
+      else if (isAdmin) {
+        console.log('Accès autorisé - Admin a accès aux routes admin');
+      }
+      else if (!userType || !requiredUserTypes.includes(userType)) {
+        console.log('UserType requis non trouvé. Requis:', requiredUserTypes, 'Actuel:', userType);
+        return false;
+      }
+      console.log('UserType vérifié avec succès:', requiredUserTypes);
+    }
 
     // Si aucune permission ou rôle requis, autoriser l'accès (juste vérifier l'authentification)
     if ((!requiredPermissions || requiredPermissions.length === 0) && 
@@ -44,6 +66,15 @@ export class PermissionGuard implements CanActivate {
 
     // Vérifier les permissions
     if (requiredPermissions && requiredPermissions.length > 0) {
+      // Super Admin et Admin ont accès à toutes les permissions
+      const isSuperAdmin = this.permissionService.isSuperAdmin();
+      const isAdmin = this.permissionService.isAdmin();
+      
+      if (isSuperAdmin || isAdmin) {
+        console.log('Accès autorisé - Super Admin ou Admin ont accès à toutes les permissions');
+        return true;
+      }
+      
       // Workspace Admins et Shop Managers ont automatiquement accès aux produits
       const isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
       const isShopManager = this.permissionService.isShopManager();

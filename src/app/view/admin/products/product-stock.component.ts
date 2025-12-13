@@ -4,6 +4,8 @@ import { ShopService } from 'src/app/core/shared/services/shop.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
 import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-stock',
@@ -24,8 +26,9 @@ export class ProductStockComponent implements OnInit {
   productSearch: string = '';
   variants: any[] = [];
   shops: ShopResponseDto[] = [];
-  workspaces: WorkspaceDto[] = [];
-  workspaceId: string = '';
+  workspaces$: Observable<WorkspaceDto[]> = of([]); // Liste des workspaces
+  selectedWorkspaceId: string = ''; // Renommé de workspaceId pour cohérence
+  showWorkspaceSelectionMessage: boolean = false; // Nouveau
 
   // Update Stock
   updateSelectedProductId: string = '';
@@ -76,30 +79,41 @@ export class ProductStockComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadWorkspaces();
-    this.loadProducts();
+    this.loadProducts(); // Load products for other tabs
+    
+    // Déterminer si le message de sélection de workspace doit être affiché
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.showWorkspaceSelectionMessage = true;
+    }
+
     if (this.activeTab === 'list') {
       this.loadStockList();
     }
   }
 
   loadWorkspaces(): void {
-    this.workspaceService.findAllWorkspaces().subscribe({
-      next: (res) => {
-        if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
-          this.workspaces = res.data;
-          const tokenWorkspaceId = this.permissionService.getWorkspaceId();
-          if (tokenWorkspaceId && this.workspaces.some(w => w.id === tokenWorkspaceId)) {
-            this.workspaceId = tokenWorkspaceId;
-            this.loadShopsForWorkspace();
-          }
-        }
+    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      map(response => response.status === 'SUCCESS' ? response.data : [])
+    );
+
+    // Initialiser selectedWorkspaceId si l'utilisateur est SuperAdmin/Admin
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      // Ne pas pré-sélectionner, laisser l'utilisateur choisir
+      this.selectedWorkspaceId = '';
+    } else {
+      // Pour WorkspaceAdmin ou ShopManager, pré-sélectionner leur workspace
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+        this.loadShopsForWorkspace();
       }
-    });
+    }
   }
 
   loadShopsForWorkspace(): void {
-    if (!this.workspaceId) return;
-    this.shopService.getShopsByWorkspace(this.workspaceId).subscribe({
+    this.shops = []; // Clear shops when workspace changes
+    if (!this.selectedWorkspaceId) return;
+    this.shopService.getShopsByWorkspace(this.selectedWorkspaceId).subscribe({
       next: (res) => {
         if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
           this.shops = res.data;
@@ -109,11 +123,18 @@ export class ProductStockComponent implements OnInit {
   }
 
   loadProducts(): void {
+    // Si l'utilisateur est SuperAdmin/Admin et qu'aucun workspace n'est sélectionné, ne pas charger les produits
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !this.selectedWorkspaceId) {
+      this.products = [];
+      return;
+    }
+
     const params: ProductSearchParams = {
       q: this.productSearch || undefined,
       state: 'ACTIVE',
       page: 1,
-      page_size: 50
+      page_size: 50,
+      workspace_id: this.selectedWorkspaceId || undefined // Passer le workspaceId
     };
     this.productService.getProducts(params).subscribe({
       next: (res) => {
@@ -338,12 +359,23 @@ export class ProductStockComponent implements OnInit {
 
   // Liste Stock
   loadStockList(): void {
+    // Si l'utilisateur est SuperAdmin/Admin et qu'aucun workspace n'est sélectionné, ne pas charger la liste de stock
+    if ((this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) && !this.selectedWorkspaceId) {
+      this.stockList = [];
+      this.listTotalItems = 0;
+      this.showWorkspaceSelectionMessage = true;
+      this.listLoading = false; // Assurez-vous que le loading est à false
+      return;
+    }
+    this.showWorkspaceSelectionMessage = false; // Cacher le message si un workspace est sélectionné ou si l'utilisateur n'est pas SuperAdmin/Admin
+
     this.listLoading = true;
     this.errorMsg = null;
 
     const params: any = {
       page: this.listCurrentPage,
-      page_size: this.listPageSize
+      page_size: this.listPageSize,
+      workspace_id: this.selectedWorkspaceId || undefined // Passer le workspaceId
     };
 
     if (this.listShopFilter) {
@@ -382,6 +414,19 @@ export class ProductStockComponent implements OnInit {
         this.stockList = [];
       }
     });
+  }
+
+  onWorkspaceChange(): void {
+    console.log('[ProductStockComponent] Workspace changed, loading data for workspaceId:', this.selectedWorkspaceId);
+    // For the list tab, reload the stock list
+    if (this.activeTab === 'list') {
+      this.listCurrentPage = 1;
+      this.showWorkspaceSelectionMessage = false; // Hide message once workspace is selected
+      this.loadStockList();
+    }
+    // For other tabs (update, reserve, sync, check), reload products as they depend on workspace
+    this.loadProducts();
+    this.loadShopsForWorkspace(); // Reload shops for the newly selected workspace
   }
 
   onListFilterChange(): void {
