@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { selectProfileState } from 'src/app/core/core.state';
 import { ProfileState } from 'src/app/core/shared/stores/profile/profile.state';
 import { DataStateEnum } from 'src/app/core/config/data.state.enum';
@@ -16,11 +16,12 @@ import { AuthentificationService } from 'src/app/core/shared/services/authentifi
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   breadCrumbItems!: Array<{}>;
   profileState$: Observable<ProfileState>;
   user$: Observable<any>;
   dataStateEnum = DataStateEnum;
+  private subscriptions: Subscription[] = [];
 
   // Formulaire de changement de mot de passe
   changePasswordForm!: FormGroup;
@@ -47,6 +48,25 @@ export class ProfileComponent implements OnInit {
     
     this.profileState$ = this.store.select(selectProfileState);
     
+    // Charger immédiatement depuis localStorage si le state est initial/vide
+    const initSub = this.store.select(selectProfileState).pipe(
+      take(1), // Prendre seulement la première valeur
+      map(state => {
+        // Si le state est initial ou vide, charger depuis localStorage
+        if (state?.dataState === DataStateEnum.INITIAL || 
+            !state?.user || 
+            Object.keys(state.user || {}).length === 0) {
+          const localUser = this.localStorageService.currentUserValue;
+          if (localUser && Object.keys(localUser).length > 0) {
+            // Dispatcher l'action pour mettre à jour le state
+            this.store.dispatch(setUserProfile({ user: localUser }));
+          }
+        }
+        return state;
+      })
+    ).subscribe();
+    this.subscriptions.push(initSub);
+    
     this.user$ = this.profileState$.pipe(
       map(state => {
         let userData = null;
@@ -57,7 +77,7 @@ export class ProfileComponent implements OnInit {
           const localUser = this.localStorageService.currentUserValue;
           if (localUser && Object.keys(localUser).length > 0) {
             userData = localUser;
-            this.store.dispatch(setUserProfile({ user: localUser }));
+            // Ne pas dispatcher ici car on l'a déjà fait ci-dessus
           }
         }
         
@@ -71,6 +91,10 @@ export class ProfileComponent implements OnInit {
     );
 
     this.initChangePasswordForm();
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   normalizeUser(user: any): any {

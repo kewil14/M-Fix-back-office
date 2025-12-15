@@ -116,8 +116,19 @@ export class PermissionService {
    */
   isSuperAdmin(): boolean {
     const decoded = this.getDecodedToken();
-    // Directement vérifier le type du token pour éviter la récursion
-    return decoded?.type === 'SUPER_ADMIN';
+    if (!decoded) return false;
+    
+    // Vérifier le type du token
+    if (decoded.type === 'SUPER_ADMIN') {
+      return true;
+    }
+    
+    // Vérifier aussi le rôle dans le tableau roles (pour gérer les cas où type="ADMIN" mais roles=["SUPERADMIN"])
+    if (decoded.roles && Array.isArray(decoded.roles)) {
+      return decoded.roles.includes('SUPERADMIN') || decoded.roles.includes('SUPER_ADMIN');
+    }
+    
+    return false;
   }
 
   /**
@@ -125,8 +136,19 @@ export class PermissionService {
    */
   isAdmin(): boolean {
     const decoded = this.getDecodedToken();
-    // Directement vérifier le type du token pour éviter la récursion
-    return decoded?.type === 'ADMIN' || decoded?.type === 'SUPER_ADMIN';
+    if (!decoded) return false;
+    
+    // Vérifier le type du token
+    if (decoded.type === 'ADMIN' || decoded.type === 'SUPER_ADMIN') {
+      return true;
+    }
+    
+    // Vérifier aussi les rôles (pour gérer les cas où type="ADMIN" mais roles=["SUPERADMIN"])
+    if (decoded.roles && Array.isArray(decoded.roles)) {
+      return decoded.roles.includes('ADMIN') || decoded.roles.includes('SUPERADMIN') || decoded.roles.includes('SUPER_ADMIN');
+    }
+    
+    return false;
   }
 
   /**
@@ -200,11 +222,11 @@ export class PermissionService {
       '/admin/admins': ['ADMIN', 'SUPER_ADMIN'],
       '/admin/invitations': ['ADMIN', 'SUPER_ADMIN'],
       
-      // Workspaces - ADMIN et WORKSPACE_ADMIN
-      '/admin/workspaces': ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN'],
+      // Workspaces - ADMIN uniquement (masqué pour WORKSPACE_ADMIN)
+      '/admin/workspaces': ['ADMIN', 'SUPER_ADMIN'],
       
-      // Shops - ADMIN, WORKSPACE_ADMIN, SHOP_MANAGER
-      '/admin/shops': ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN', 'SHOP_MANAGER'],
+      // Shops - ADMIN, WORKSPACE_ADMIN uniquement (SHOP_MANAGER ne peut pas voir les autres shops)
+      '/admin/shops': ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN'],
       
       // Employees - ADMIN, WORKSPACE_ADMIN, SHOP_MANAGER
       '/admin/employees': ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN', 'SHOP_MANAGER'],

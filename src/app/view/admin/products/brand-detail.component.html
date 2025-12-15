@@ -1,8 +1,15 @@
 <div class="container-fluid" *ngIf="!loading && brand; else loadingOrError">
   <div class="row mb-3">
     <div class="col">
-      <h4 class="mb-0">{{ brand?.label }}</h4>
-      <small class="text-muted">Détail de la marque</small>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h4 class="mb-0">{{ brand?.label }}</h4>
+          <small class="text-muted">Détail de la marque</small>
+        </div>
+        <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+          <i class="mdi mdi-arrow-left me-1"></i> Retour à la liste
+        </button>
+      </div>
     </div>
   </div>
 
@@ -97,7 +104,12 @@
           </div>
         </div>
         <div *ngIf="!loading && errorMsg" class="alert alert-danger mt-3">
-          {{ errorMsg }}
+          <div class="d-flex justify-content-between align-items-center">
+            <span>{{ errorMsg }}</span>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="onBack()">
+              <i class="mdi mdi-arrow-left me-1"></i> Retour à la liste
+            </button>
+          </div>
         </div>
       </div>
     </div>

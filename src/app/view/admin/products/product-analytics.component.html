@@ -27,37 +27,12 @@
     </div>
   </div>
 
-  <!-- Onglets -->
+  <!-- Contenu principal -->
   <div class="row mb-3">
     <div class="col-12">
       <div class="card">
         <div class="card-body">
-          <ul class="nav nav-tabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                [class.active]="activeTab === 'tag'"
-                (click)="activeTab = 'tag'; errorMsg = null; successMsg = null"
-                type="button">
-                <i class="mdi mdi-tag me-1"></i>
-                {{ 'MESSAGES.MENU.PRODUCTS_TAGS' | translate }}
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                [class.active]="activeTab === 'produit'"
-                (click)="activeTab = 'produit'; errorMsg = null; successMsg = null"
-                type="button">
-                <i class="mdi mdi-package-variant me-1"></i>
-                {{ 'MESSAGES.MENU.PRODUCTS_LIST' | translate }}
-              </button>
-            </li>
-          </ul>
-
-          <div class="tab-content mt-3">
-            <!-- Onglet Produit -->
-            <div *ngIf="activeTab === 'produit'">
+          <div>
   <!-- Filtres en pleine largeur -->
   <div class="row mb-3">
     <div class="col-12">
@@ -69,7 +44,8 @@
           </h5>
           <form (ngSubmit)="onSubmit()" novalidate>
             <div class="row g-3 align-items-end">
-              <div class="col-lg-4 col-md-6">
+              <!-- Afficher le filtre workspace uniquement pour ADMIN et SUPER_ADMIN -->
+              <div class="col-lg-4 col-md-6" *ngIf="permissionService.isSuperAdmin() || permissionService.isAdmin()">
                 <label class="form-label">Workspace</label>
                 <select
                   class="form-select"
@@ -78,11 +54,11 @@
                   (ngModelChange)="loadShopsForWorkspace()">
                   <option [ngValue]="''">Sélectionner un workspace</option>
                   <option *ngFor="let w of workspaces" [ngValue]="w.id">
-                    {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                    {{ w.name }}
                   </option>
                 </select>
               </div>
-              <div class="col-lg-3 col-md-6">
+              <div [ngClass]="{'col-lg-4': permissionService.isSuperAdmin() || permissionService.isAdmin(), 'col-lg-3': !(permissionService.isSuperAdmin() || permissionService.isAdmin())}" class="col-md-6">
                 <label class="form-label">Boutique <span class="text-danger">*</span></label>
                 <select
                   class="form-select"
@@ -95,7 +71,7 @@
                   </option>
                 </select>
               </div>
-              <div class="col-lg-2 col-md-6">
+              <div [ngClass]="{'col-lg-2': permissionService.isSuperAdmin() || permissionService.isAdmin(), 'col-lg-3': !(permissionService.isSuperAdmin() || permissionService.isAdmin())}" class="col-md-6">
                 <label class="form-label">Date de début <span class="text-danger">*</span></label>
                 <input
                   type="datetime-local"
@@ -143,9 +119,8 @@
                       class="form-check-input"
                       type="checkbox"
                       value="views"
-                      [(ngModel)]="selectedMetrics"
-                      name="selectedMetrics"
-                      [ngModelOptions]="{standalone: true}">
+                      [checked]="isMetricSelected('views')"
+                      (change)="onMetricChange('views', $event)">
                     <label class="form-check-label" for="metricViews">Vues</label>
                   </div>
                   <div class="form-check form-check-inline">
@@ -154,9 +129,8 @@
                       class="form-check-input"
                       type="checkbox"
                       value="sales"
-                      [(ngModel)]="selectedMetrics"
-                      name="selectedMetricsSales"
-                      [ngModelOptions]="{standalone: true}">
+                      [checked]="isMetricSelected('sales')"
+                      (change)="onMetricChange('sales', $event)">
                     <label class="form-check-label" for="metricSales">Ventes</label>
                   </div>
                   <div class="form-check form-check-inline">
@@ -165,9 +139,8 @@
                       class="form-check-input"
                       type="checkbox"
                       value="stock"
-                      [(ngModel)]="selectedMetrics"
-                      name="selectedMetricsStock"
-                      [ngModelOptions]="{standalone: true}">
+                      [checked]="isMetricSelected('stock')"
+                      (change)="onMetricChange('stock', $event)">
                     <label class="form-check-label" for="metricStock">Stock</label>
                   </div>
                 </div>
@@ -290,16 +263,6 @@
       </div>
     </div>
   </div>
-            </div>
-
-            <!-- Onglet Tag -->
-            <div *ngIf="activeTab === 'tag'">
-              <div class="row">
-                <div class="col-12">
-                  <p class="text-muted">Contenu de l'onglet Tag - À implémenter</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

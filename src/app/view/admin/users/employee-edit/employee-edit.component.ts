@@ -12,7 +12,6 @@ import { UpdateEmployeeDto } from 'src/app/core/shared/dtos/update-employee-dto'
 import { findEmployeeById, updateEmployee, setEmployee, erreurEmployees } from 'src/app/core/shared/stores/employee/employee.actions';
 import { EmployeeState } from 'src/app/core/shared/stores/employee/employee.state';
 import { ShopService } from 'src/app/core/shared/services/shop.service';
-import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 
 @Component({
@@ -39,9 +38,7 @@ export class EmployeeEditComponent implements OnInit, OnDestroy {
 
   breadCrumbItems: Array<{}> = [];
   
-  workspaces: WorkspaceDto[] = [];
   shops: ShopResponseDto[] = [];
-  isLoadingWorkspaces: boolean = false;
   isLoadingShops: boolean = false;
 
   constructor(
@@ -51,8 +48,7 @@ export class EmployeeEditComponent implements OnInit, OnDestroy {
     private storeService: Store,
     private actionService: Actions,
     private translateService: TranslateService,
-    private shopService: ShopService,
-    private workspaceService: WorkspaceService
+    private shopService: ShopService
   ) {}
 
   ngOnInit() {
@@ -65,22 +61,11 @@ export class EmployeeEditComponent implements OnInit, OnDestroy {
     this.employeeState$ = this.storeService.select(selectEmployeeState).pipe();
     this.initForm();
     this.actionEmployee();
-    this.loadWorkspaces();
     
     this.route.paramMap.subscribe(params => {
       this.employeeId = params.get('id');
       if (this.employeeId) {
         this.loadEmployee();
-      }
-    });
-
-    // Charger les shops quand le workspace change
-    this.employeeForm.get('workspaceId')?.valueChanges.subscribe(workspaceId => {
-      if (workspaceId) {
-        this.loadShops(workspaceId);
-      } else {
-        this.shops = [];
-        this.employeeForm.patchValue({ shopId: '' });
       }
     });
 
@@ -193,26 +178,6 @@ export class EmployeeEditComponent implements OnInit, OnDestroy {
     if (this.employeeId) {
       this.storeService.dispatch(findEmployeeById({ employeeId: this.employeeId }));
     }
-  }
-
-  loadWorkspaces(): void {
-    this.isLoadingWorkspaces = true;
-    this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).subscribe({
-      next: (response) => {
-        if (response.status === 'SUCCESS' && response.data?.content) {
-          this.workspaces = response.data.content.map(ws => ({
-            id: ws.id,
-            name: ws.name,
-            adminName: undefined
-          }));
-        }
-        this.isLoadingWorkspaces = false;
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des workspaces:', error);
-        this.isLoadingWorkspaces = false;
-      }
-    });
   }
 
   loadShops(workspaceId: string): void {

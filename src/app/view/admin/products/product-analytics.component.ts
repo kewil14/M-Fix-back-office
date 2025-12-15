@@ -18,14 +18,13 @@ export class ProductAnalyticsComponent implements OnInit {
   errorMsg: string | null = null;
   successMsg: string | null = null;
 
-  // Onglet actif
-  activeTab: 'tag' | 'produit' = 'produit';
 
   startDate = '';
   endDate = '';
   workspaceId = '';
   shopId = '';
   selectedMetrics: string[] = ['views', 'sales', 'stock'];
+  allMetrics: string[] = ['views', 'sales', 'stock'];
 
   workspaces: WorkspaceDto[] = [];
   shops: ShopResponseDto[] = [];
@@ -38,13 +37,25 @@ export class ProductAnalyticsComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private shopService: ShopService,
-    private permissionService: PermissionService,
+    public permissionService: PermissionService,
     private workspaceService: WorkspaceService,
   ) {}
 
   ngOnInit(): void {
     this.initDefaultDates();
-    this.loadWorkspaces();
+    
+    // Pour WORKSPACE_ADMIN, SHOP_MANAGER et EMPLOYEE, utiliser automatiquement le workspaceId du token
+    // Pour ADMIN et SUPER_ADMIN, charger la liste des workspaces pour sélection
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.loadWorkspaces();
+    } else {
+      // Pour les autres rôles, utiliser le workspaceId du token
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.workspaceId = tokenWorkspaceId;
+        this.loadShopsForWorkspace();
+      }
+    }
   }
 
   private initDefaultDates(): void {
@@ -63,17 +74,15 @@ export class ProductAnalyticsComponent implements OnInit {
   }
 
   private loadWorkspaces(): void {
-    this.workspaceService.findAllWorkspaces().subscribe({
-      next: (res) => {
-        if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
-          this.workspaces = res.data;
-
-          // Pré-sélectionner le workspace du token si présent
-          const tokenWorkspaceId = this.permissionService.getWorkspaceId();
-          if (tokenWorkspaceId && this.workspaces.some(w => w.id === tokenWorkspaceId)) {
-            this.workspaceId = tokenWorkspaceId;
-            this.loadShopsForWorkspace();
-          }
+    // Pour ADMIN et SUPER_ADMIN, utiliser getWorkspaces pour obtenir les vrais workspaces (espaces)
+    this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          this.workspaces = response.data.content.map((ws: any) => ({
+            id: ws.id,
+            name: ws.name,
+            adminName: undefined
+          }));
         }
       },
       error: () => {
@@ -342,6 +351,30 @@ export class ProductAnalyticsComponent implements OnInit {
       },
       colors: ['#556ee6', '#34c38f', '#f1b44c']
     };
+  }
+
+  /**
+   * Gère la sélection/désélection des métriques
+   * Sélectionner une métrique sélectionne toutes les autres
+   * Désélectionner une métrique désélectionne toutes les autres
+   */
+  onMetricChange(metric: string, event: any): void {
+    const isChecked = event.target.checked;
+    
+    if (isChecked) {
+      // Si on sélectionne une métrique, sélectionner toutes les métriques
+      this.selectedMetrics = [...this.allMetrics];
+    } else {
+      // Si on désélectionne une métrique, désélectionner toutes les métriques
+      this.selectedMetrics = [];
+    }
+  }
+
+  /**
+   * Vérifie si une métrique est sélectionnée
+   */
+  isMetricSelected(metric: string): boolean {
+    return this.selectedMetrics.includes(metric);
   }
 }
 

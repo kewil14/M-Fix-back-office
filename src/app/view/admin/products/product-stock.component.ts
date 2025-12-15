@@ -63,7 +63,6 @@ export class ProductStockComponent implements OnInit {
   // Liste Stock
   stockList: any[] = [];
   listShopFilter: string = '';
-  listVariantFilter: string = '';
   listProductFilter: string = '';
   listCurrentPage: number = 1;
   listPageSize: number = 20;
@@ -92,8 +91,18 @@ export class ProductStockComponent implements OnInit {
   }
 
   loadWorkspaces(): void {
-    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
-      map(response => response.status === 'SUCCESS' ? response.data : [])
+    // Utiliser getWorkspaces pour obtenir les vrais workspaces (espaces) au lieu des workspace admins
+    this.workspaces$ = this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).pipe(
+      map(response => {
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          return response.data.content.map((ws: any) => ({
+            id: ws.id,
+            name: ws.name,
+            adminName: undefined
+          }));
+        }
+        return [];
+      })
     );
 
     // Initialiser selectedWorkspaceId si l'utilisateur est SuperAdmin/Admin
@@ -382,9 +391,6 @@ export class ProductStockComponent implements OnInit {
       params.shop_id = this.listShopFilter;
     }
 
-    if (this.listVariantFilter) {
-      params.variant_id = this.listVariantFilter;
-    }
 
     this.productService.getStockList(params).subscribe({
       next: (res) => {
@@ -437,6 +443,39 @@ export class ProductStockComponent implements OnInit {
   onListPageChange(page: number): void {
     this.listCurrentPage = page;
     this.loadStockList();
+  }
+
+  // Actions sur les stocks dans la liste
+  onViewStock(stock: any): void {
+    // Afficher les détails du stock (peut ouvrir un modal ou naviguer vers une page de détail)
+    const variantId = stock.product_variant_id || stock.variant_id;
+    const shopId = this.getStockShopId(stock);
+    console.log('[ProductStockComponent] View stock:', { variantId, shopId, stock });
+    // TODO: Implémenter l'affichage des détails (modal ou navigation)
+    this.successMsg = `Détails du stock - Variant ID: ${variantId}, Boutique: ${shopId}`;
+    setTimeout(() => this.successMsg = null, 3000);
+  }
+
+  onUpdateStockFromList(stock: any): void {
+    // Pré-remplir le formulaire de mise à jour avec les données du stock sélectionné
+    const variantId = stock.product_variant_id || stock.variant_id;
+    const shopId = this.getStockShopId(stock);
+    
+    // Aller à l'onglet update et pré-remplir les champs
+    this.activeTab = 'update';
+    this.updateSelectedVariantId = variantId;
+    this.updateSelectedShopId = shopId;
+    this.updateQuantity = stock.quantity || 0;
+    this.updateType = 'ADJUSTMENT';
+    this.updateNote = '';
+    
+    // Si on a un workspace, s'assurer qu'il est sélectionné
+    if (this.selectedWorkspaceId) {
+      // Charger les produits et variants pour ce workspace
+      this.loadProducts();
+    }
+    
+    console.log('[ProductStockComponent] Update stock from list:', { variantId, shopId });
   }
 
   onListPageSizeChange(size: number): void {

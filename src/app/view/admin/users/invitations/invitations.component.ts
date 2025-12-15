@@ -72,16 +72,8 @@ export class InvitationsComponent implements OnInit, OnDestroy {
     // Vérifier si l'utilisateur est super admin
     this.isSuperAdmin = this.permissionService.isSuperAdmin();
     
-    if (!this.isSuperAdmin) {
-      // Rediriger vers la page d'accueil si l'utilisateur n'est pas super admin
-      this.messages$.next(
-        {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: 'Accès refusé. Seul le super administrateur peut accéder à cette page.', dismissible: false}
-      );
-      setTimeout(() => {
-        this.router.navigate(['/admin']);
-      }, 2000);
-      return;
-    }
+    // Le guard a déjà vérifié l'accès, donc on peut supposer que si on arrive ici, l'utilisateur a le droit d'accéder
+    // La vérification supplémentaire n'est plus nécessaire car le guard gère déjà la restriction
 
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Invitations', active: true }];
     this.actionInvitations();

@@ -1,211 +1,222 @@
-<ng-container *ngIf="(workspaceAdminState$|async) as state" [ngSwitch]="state.dataState">
-  <ng-container *ngSwitchCase="dataStateEnum.LOADING">
-      <app-loading5></app-loading5>
-  </ng-container>
-  <ng-container *ngSwitchCase="dataStateEnum.SUCCESS">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-12">
-          <div class="card shadow-sm">
-            <div class="card-header border-bottom">
-              <div class="row align-items-center">
-                <div class="col-md-6">
-                  <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.COMMON.WORKSPACES' | translate }}</h4>
-                </div>
-                <div class="col-md-6">
-                  <div class="d-flex justify-content-end gap-2">
-                    <button 
-                      type="button" 
-                      class="btn btn-sm btn-outline-info" 
-                      (click)="onExportWorkspaces()"
-                      *ngIf="!isWorkspaceAdmin"
-                      title="{{ 'MESSAGES.ADMIN.WORKSPACE.EXPORT' | translate }}">
-                      <i class="mdi mdi-download"></i>
-                    </button>
-                    <button 
-                      *ngIf="permissionService.canCreate('workspace')"
-                      type="button" 
-                      class="btn btn-sm btn-success" 
-                      (click)="openCreateModal()">
-                      <i class="mdi mdi-plus me-1"></i> {{ 'MESSAGES.ADMIN.WORKSPACE.NEW_WORKSPACE' | translate }}
-                    </button>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header border-bottom">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.COMMON.WORKSPACES' | translate }}</h4>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-end gap-2">
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-outline-info" 
+                  (click)="onExportWorkspaces()"
+                  *ngIf="permissionService.isSuperAdmin()"
+                  title="{{ 'MESSAGES.ADMIN.WORKSPACE.EXPORT' | translate }}">
+                  <i class="mdi mdi-download"></i>
+                </button>
+                <button 
+                  *ngIf="permissionService.canCreate('workspace')"
+                  type="button" 
+                  class="btn btn-sm btn-success" 
+                  (click)="openCreateModal()">
+                  <i class="mdi mdi-plus me-1"></i> {{ 'MESSAGES.ADMIN.WORKSPACE.NEW_WORKSPACE' | translate }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Messages -->
+          <loto-message-alert [messages$]="messages$"></loto-message-alert>
+
+          <!-- Loading -->
+          <div *ngIf="isLoading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div *ngIf="!isLoading">
+            <!-- Filtres -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="search-box">
+                  <div class="position-relative">
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [placeholder]="'MESSAGES.ADMIN.SHOP.SEARCH_PLACEHOLDER' | translate" 
+                      [(ngModel)]="searchTerm"
+                      (ngModelChange)="onSearchChange()"
+                      (keyup.enter)="onSearchChange()"
+                      (blur)="onSearchChange()">
+                    <i class="ri-search-line search-icon"></i>
                   </div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
+                  <option [ngValue]="null">{{ 'MESSAGES.ADMIN.SHOP.ALL_STATUS' | translate }}</option>
+                  <option [ngValue]="true">{{ 'MESSAGES.ADMIN.SHOP.ACTIVE' | translate }}</option>
+                  <option [ngValue]="false">{{ 'MESSAGES.ADMIN.SHOP.INACTIVE' | translate }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 text-end">
+                <div class="d-flex align-items-center justify-content-end gap-2">
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-outline-secondary" 
+                    (click)="resetFilters()"
+                    *ngIf="searchTerm || isActiveFilter !== null"
+                    title="{{ 'MESSAGES.ADMIN.COMMON.RESET_FILTERS' | translate }}">
+                    <i class="ri-refresh-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.RESET' | translate }}
+                  </button>
+                  <label class="mb-0">{{ 'MESSAGES.ADMIN.SHOP.SHOW' | translate }}</label>
+                  <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (ngModelChange)="changePageSize(pageSize)">
+                    <option [value]="5">5</option>
+                    <option [value]="10">10</option>
+                    <option [value]="20">20</option>
+                    <option [value]="50">50</option>
+                  </select>
                 </div>
               </div>
             </div>
-            <div class="card-body">
-              <!-- Filtres -->
-              <div class="row mb-3">
-                <div class="col-md-4">
-                  <div class="search-box">
-                    <div class="position-relative">
-                      <input 
-                        type="text" 
-                        class="form-control" 
-                        [placeholder]="'MESSAGES.ADMIN.SHOP.SEARCH_PLACEHOLDER' | translate" 
-                        [(ngModel)]="searchTerm"
-                        (ngModelChange)="onSearchChange()"
-                        (keyup.enter)="onSearchChange()"
-                        (blur)="onSearchChange()">
-                      <i class="ri-search-line search-icon"></i>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-2">
-                  <select class="form-select" [(ngModel)]="isActiveFilter" (ngModelChange)="onFilterChange()">
-                    <option [ngValue]="null">{{ 'MESSAGES.ADMIN.SHOP.ALL_STATUS' | translate }}</option>
-                    <option [ngValue]="true">{{ 'MESSAGES.ADMIN.SHOP.ACTIVE' | translate }}</option>
-                    <option [ngValue]="false">{{ 'MESSAGES.ADMIN.SHOP.INACTIVE' | translate }}</option>
-                  </select>
-                </div>
-                <div class="col-md-6 text-end">
-                  <div class="d-flex align-items-center justify-content-end gap-2">
-                    <button 
-                      type="button" 
-                      class="btn btn-sm btn-outline-secondary" 
-                      (click)="resetFilters()"
-                      *ngIf="searchTerm || isActiveFilter !== null"
-                      title="{{ 'MESSAGES.ADMIN.COMMON.RESET_FILTERS' | translate }}">
-                      <i class="ri-refresh-line me-1"></i>{{ 'MESSAGES.ADMIN.COMMON.RESET' | translate }}
-                    </button>
-                    <label class="mb-0">{{ 'MESSAGES.ADMIN.SHOP.SHOW' | translate }}</label>
-                    <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (ngModelChange)="changePageSize(pageSize)">
-                      <option [value]="5">5</option>
-                      <option [value]="10">10</option>
-                      <option [value]="20">20</option>
-                      <option [value]="50">50</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
 
-              <!-- Table -->
-              <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                  <thead class="table-light">
-                    <tr>
-                      <th scope="col" style="width: 60px;">#</th>
-                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.FULL_NAME' | translate }}</th>
-                      <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.EMAIL' | translate }}</th>
-                      <th scope="col">{{ 'MESSAGES.ADMIN.SHOP.PHONE' | translate }}</th>
-                      <th scope="col" class="text-center">{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}</th>
-                      <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</th>
-                      <th scope="col" class="text-center" style="width: 200px;">{{ 'MESSAGES.ADMIN.COMMON.ACTIONS' | translate }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let workspaceAdmin of paginatedWorkspaces; let index = index">
-                      <th scope="row">{{ (currentPage * pageSize) + index + 1 }}</th>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <div class="avatar-sm me-2">
-                            <img 
-                              *ngIf="mediaUrlService.getMediaUrl(workspaceAdmin.avatar)" 
-                              [src]="mediaUrlService.getMediaUrl(workspaceAdmin.avatar)" 
-                              [alt]="workspaceAdmin.firstName + ' ' + workspaceAdmin.lastName"
-                              class="rounded-circle"
-                              style="width: 100%; height: 100%; object-fit: cover;"
-                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div 
-                              class="avatar-title bg-info-subtle text-info rounded-circle"
-                              [style.display]="mediaUrlService.getMediaUrl(workspaceAdmin.avatar) ? 'none' : 'flex'">
-                              {{ (workspaceAdmin.firstName?.[0] || '') + (workspaceAdmin.lastName?.[0] || '') }}
-                            </div>
-                          </div>
-                          <div>
-                            <strong>{{ workspaceAdmin.firstName }} {{ workspaceAdmin.lastName }}</strong>
-                            <div class="text-muted small">{{ workspaceAdmin.username }}</div>
+            <!-- Table -->
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col" style="width: 60px;">#</th>
+                    <th scope="col">{{ 'MESSAGES.ADMIN.WORKSPACE.NAME' | translate }}</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Plan</th>
+                    <th scope="col" class="text-center">{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}</th>
+                    <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</th>
+                    <th scope="col" class="text-center" style="width: 200px;">{{ 'MESSAGES.ADMIN.COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let workspace of paginatedWorkspaces; let index = index">
+                    <th scope="row">{{ (currentPage * pageSize) + index + 1 }}</th>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-sm me-2">
+                          <img 
+                            *ngIf="workspace.logo" 
+                            [src]="workspace.logo" 
+                            [alt]="workspace.name"
+                            class="rounded-circle"
+                            style="width: 100%; height: 100%; object-fit: cover;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                          <div 
+                            class="avatar-title bg-primary-subtle text-primary rounded-circle"
+                            [style.display]="workspace.logo ? 'none' : 'flex'">
+                            {{ workspace.name?.[0]?.toUpperCase() || 'W' }}
                           </div>
                         </div>
-                      </td>
-                      <td>{{ workspaceAdmin.email }}</td>
-                      <td>{{ workspaceAdmin.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
-                      <td class="text-center">
-                        <span class="badge" [ngClass]="workspaceAdmin.isActive ? 'bg-success' : 'bg-danger'">
-                          {{ workspaceAdmin.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
-                        </span>
-                      </td>
-                      <td>{{ workspaceAdmin.createdAt ? (workspaceAdmin.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
-                      <td>
-                        <div class="d-flex justify-content-center gap-1">
-                          <button 
-                            class="btn btn-sm btn-info btn-icon" 
-                            (click)="onView(workspaceAdmin)"
-                            [title]="'MESSAGES.ADMIN.COMMON.VIEW' | translate">
-                            <i class="mdi mdi-eye-outline"></i>
-                          </button>
-                          <button 
-                            class="btn btn-sm btn-warning btn-icon" 
-                            *ngIf="permissionService.canEdit('workspace')"
-                            (click)="onEdit(workspaceAdmin)"
-                            [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
-                            <i class="mdi mdi-pencil"></i>
-                          </button>
-                          <button 
-                            *ngIf="workspaceAdmin.isActive && permissionService.canDelete('workspace')"
-                            class="btn btn-sm btn-danger btn-icon" 
-                            (click)="onDelete(workspaceAdmin)"
-                            [title]="'MESSAGES.ADMIN.COMMON.DELETE' | translate">
-                            <i class="mdi mdi-delete-outline"></i>
-                          </button>
-                          <button 
-                            *ngIf="!workspaceAdmin.isActive"
-                            class="btn btn-sm btn-success btn-icon" 
-                            (click)="onReactivate(workspaceAdmin)"
-                            [title]="'MESSAGES.ADMIN.COMMON.REACTIVATE' | translate">
-                            <i class="mdi mdi-restore"></i>
-                          </button>
+                        <div>
+                          <strong>{{ workspace.name }}</strong>
+                          <div class="text-muted small" *ngIf="workspace.slug">{{ workspace.slug }}</div>
                         </div>
-                      </td>
-                    </tr>
-                    <tr *ngIf="paginatedWorkspaces.length === 0">
-                      <td colspan="8" class="text-center py-4">
-                        <div class="text-muted">
-                          <i class="ri-inbox-line" style="font-size: 48px;"></i>
-                          <p class="mt-2 mb-0">{{ 'MESSAGES.ADMIN.WORKSPACE.NO_WORKSPACE_FOUND' | translate }}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="text-muted">{{ workspace.description || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-info">{{ workspace.industry || 'N/A' }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ workspace.planType || workspace.subscription?.planType || 'FREE' }}</span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="workspace.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ workspace.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                    </td>
+                    <td>{{ workspace.createdAt ? (workspace.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
+                    <td>
+                      <div class="d-flex justify-content-center gap-1">
+                        <button 
+                          class="btn btn-sm btn-info btn-icon" 
+                          (click)="onView(workspace)"
+                          [title]="'MESSAGES.ADMIN.COMMON.VIEW' | translate">
+                          <i class="mdi mdi-eye-outline"></i>
+                        </button>
+                        <button 
+                          class="btn btn-sm btn-warning btn-icon" 
+                          *ngIf="permissionService.canEdit('workspace')"
+                          (click)="onEdit(workspace)"
+                          [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
+                          <i class="mdi mdi-pencil"></i>
+                        </button>
+                        <button 
+                          *ngIf="workspace.isActive && permissionService.canDelete('workspace')"
+                          class="btn btn-sm btn-danger btn-icon" 
+                          (click)="onDelete(workspace)"
+                          [title]="'MESSAGES.ADMIN.COMMON.DELETE' | translate">
+                          <i class="mdi mdi-delete-outline"></i>
+                        </button>
+                        <button 
+                          *ngIf="!workspace.isActive && permissionService.canEdit('workspace')"
+                          class="btn btn-sm btn-success btn-icon" 
+                          (click)="onReactivate(workspace)"
+                          [title]="'MESSAGES.ADMIN.COMMON.REACTIVATE' | translate">
+                          <i class="mdi mdi-restore"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="paginatedWorkspaces.length === 0">
+                    <td colspan="8" class="text-center py-4">
+                      <div class="text-muted">
+                        <i class="ri-inbox-line" style="font-size: 48px;"></i>
+                        <p class="mt-2 mb-0">{{ 'MESSAGES.ADMIN.WORKSPACE.NO_WORKSPACE_FOUND' | translate }}</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-              <!-- Pagination -->
-              <div class="row align-items-center mt-3" *ngIf="totalPages > 0">
-                <div class="col-md-6">
-                  <div class="text-muted">
-                    {{ 'MESSAGES.ADMIN.SHOP.DISPLAYING' | translate }} <strong>{{ (currentPage * pageSize) + 1 }}</strong> {{ 'MESSAGES.ADMIN.SHOP.TO' | translate }} 
-                    <strong>{{ Math.min((currentPage + 1) * pageSize, totalElements) }}</strong> 
-                    {{ 'MESSAGES.ADMIN.SHOP.OF' | translate }} <strong>{{ totalElements }}</strong> {{ 'MESSAGES.ADMIN.SHOP.RESULTS' | translate }}
-                  </div>
+            <!-- Pagination -->
+            <div class="row align-items-center mt-3" *ngIf="totalPages > 0">
+              <div class="col-md-6">
+                <div class="text-muted">
+                  {{ 'MESSAGES.ADMIN.SHOP.DISPLAYING' | translate }} <strong>{{ (currentPage * pageSize) + 1 }}</strong> {{ 'MESSAGES.ADMIN.SHOP.TO' | translate }} 
+                  <strong>{{ Math.min((currentPage + 1) * pageSize, totalElements) }}</strong> 
+                  {{ 'MESSAGES.ADMIN.SHOP.OF' | translate }} <strong>{{ totalElements }}</strong> {{ 'MESSAGES.ADMIN.SHOP.RESULTS' | translate }}
                 </div>
-                <div class="col-md-6">
-                  <nav aria-label="Page navigation">
-                    <ul class="pagination pagination-sm justify-content-end mb-0">
-                      <li class="page-item" [class.disabled]="currentPage === 0">
-                        <a class="page-link" (click)="changePage(currentPage - 1); $event.preventDefault()">
-                          <i class="mdi mdi-chevron-left"></i>
-                        </a>
-                      </li>
-                      <li class="page-item" *ngFor="let page of getPageNumbersLocal()" [class.active]="page === currentPage">
-                        <a class="page-link" (click)="changePage(page); $event.preventDefault()">{{ page + 1 }}</a>
-                      </li>
-                      <li class="page-item" [class.disabled]="currentPage >= totalPages - 1">
-                        <a class="page-link" (click)="changePage(currentPage + 1); $event.preventDefault()">
-                          <i class="mdi mdi-chevron-right"></i>
-                        </a>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
+              </div>
+              <div class="col-md-6">
+                <nav aria-label="Page navigation">
+                  <ul class="pagination pagination-sm justify-content-end mb-0">
+                    <li class="page-item" [class.disabled]="currentPage === 0">
+                      <a class="page-link" (click)="changePage(currentPage - 1); $event.preventDefault()">
+                        <i class="mdi mdi-chevron-left"></i>
+                      </a>
+                    </li>
+                    <li class="page-item" *ngFor="let page of getPageNumbersLocal()" [class.active]="page === currentPage">
+                      <a class="page-link" (click)="changePage(page); $event.preventDefault()">{{ page + 1 }}</a>
+                    </li>
+                    <li class="page-item" [class.disabled]="currentPage >= totalPages - 1">
+                      <a class="page-link" (click)="changePage(currentPage + 1); $event.preventDefault()">
+                        <i class="mdi mdi-chevron-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </ng-container>
-  <ng-container *ngSwitchDefault>
-    <loto-message-alert [messages]="messages$ | async"></loto-message-alert>
-  </ng-container>
-</ng-container>
+  </div>
+</div>

@@ -28,6 +28,7 @@ export class ProductEditComponent implements OnInit {
 
   // Workspace selection
   workspaces$: Observable<WorkspaceDto[]> = of([]);
+  workspaces: WorkspaceDto[] = []; // Tableau pour stocker les workspaces
   selectedWorkspaceId: string = '';
   showWorkspaceSelectionMessage: boolean = false;
 
@@ -96,14 +97,49 @@ export class ProductEditComponent implements OnInit {
       this.selectedWorkspaceId = tokenWorkspaceId;
       this.loadBrandsAndCategories(tokenWorkspaceId);
       this.loadTags(tokenWorkspaceId);
+      this.loadShopsForWorkspace();
     }
   }
 
   loadWorkspaces(): void {
-    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
-      map(response => response.status === 'SUCCESS' ? response.data : [])
-    );
+    // Utiliser getWorkspaces pour obtenir les vrais workspaces (espaces) au lieu des workspace admins
+    this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).subscribe({
+      next: (response) => {
+        if (response && response.status === 'SUCCESS' && response.data?.content) {
+          // Mapper la réponse pour correspondre à WorkspaceDto[]
+          this.workspaces = response.data.content.map((ws: any) => ({
+            id: ws.id,
+            name: ws.name,
+            adminName: undefined
+          }));
+          console.log('[ProductEditComponent] Workspaces loaded:', this.workspaces.length, this.workspaces);
+          
+          // Mettre à jour aussi l'Observable pour la compatibilité
+          this.workspaces$ = of(this.workspaces);
+          
+          // Si on est en mode édition et qu'on a déjà un selectedWorkspaceId, vérifier qu'il existe dans la liste
+          if (this.isEditMode && this.selectedWorkspaceId) {
+            const workspaceExists = this.workspaces.some(ws => ws.id === this.selectedWorkspaceId);
+            if (!workspaceExists && this.workspaces.length > 0) {
+              console.warn('[ProductEditComponent] Workspace du produit non trouvé dans la liste, utilisation du premier disponible');
+              // Optionnel: utiliser le premier workspace si celui du produit n'existe plus
+              // this.selectedWorkspaceId = this.workspaces[0].id;
+            }
+          }
+        } else {
+          console.warn('[ProductEditComponent] No workspaces found or error:', response);
+          this.workspaces = [];
+          this.workspaces$ = of([]);
+        }
+      },
+      error: (error) => {
+        console.error('[ProductEditComponent] Error loading workspaces:', error);
+        this.workspaces = [];
+        this.workspaces$ = of([]);
+      }
+    });
 
+    // Pour ADMIN et SUPER_ADMIN, on doit afficher le message de sélection
     if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
       this.showWorkspaceSelectionMessage = true;
     } else {
@@ -168,6 +204,14 @@ export class ProductEditComponent implements OnInit {
           this.shopId = p.shop_id || '';
           this.selectedWorkspaceId = p.workspace_id || '';
           this.isFeatured = p.is_featured || false;
+
+          // Si on est ADMIN ou SUPER_ADMIN, on doit s'assurer que les workspaces sont chargés
+          // et que le workspace du produit est bien sélectionné
+          if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+            if (this.selectedWorkspaceId) {
+              this.showWorkspaceSelectionMessage = false;
+            }
+          }
 
           if (this.selectedWorkspaceId) {
             this.showWorkspaceSelectionMessage = false;

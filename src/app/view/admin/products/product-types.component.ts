@@ -88,10 +88,18 @@ export class ProductTypesComponent implements OnInit {
   }
 
   loadWorkspaces(): void {
-    this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+    // Utiliser getWorkspaces pour obtenir les vrais workspaces (espaces) au lieu des workspace admins
+    this.workspaces$ = this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).pipe(
       map(response => {
         console.log('[ProductTypesComponent] Workspaces loaded:', response);
-        return response.status === 'SUCCESS' ? response.data : []
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          return response.data.content.map((ws: any) => ({
+            id: ws.id,
+            name: ws.name,
+            adminName: undefined
+          }));
+        }
+        return [];
       })
     );
   }

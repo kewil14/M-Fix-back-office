@@ -72,11 +72,16 @@ export class ProductVariantsComponent implements OnInit {
     // Si admin/super admin, charger la liste des workspaces
     if (this.isAdminOrSuperAdmin) {
       this.isLoadingWorkspaces = true;
-      this.workspaces$ = this.workspaceService.findAllWorkspaces().pipe(
+      // Utiliser getWorkspaces pour obtenir les vrais workspaces (espaces) au lieu des workspace admins
+      this.workspaces$ = this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).pipe(
         map(response => {
           this.isLoadingWorkspaces = false;
-          if (response.status === 'SUCCESS' && response.data && response.data.length > 0) {
-            const workspaces = response.data;
+          if (response.status === 'SUCCESS' && response.data?.content) {
+            const workspaces = response.data.content.map((ws: any) => ({
+              id: ws.id,
+              name: ws.name,
+              adminName: undefined
+            }));
             // Utiliser le workspaceId du token s'il existe, sinon le premier workspace
             const tokenWorkspaceId = this.permissionService.getWorkspaceId();
             if (tokenWorkspaceId && workspaces.some(ws => ws.id === tokenWorkspaceId)) {

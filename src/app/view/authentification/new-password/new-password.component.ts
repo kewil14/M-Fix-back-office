@@ -97,10 +97,8 @@ export class NewPasswordComponent implements OnInit, OnDestroy {
     this.submitted = true;
     this.messages = null;
 
-    // Vérifier si le token ou l'otp existe, sinon renvoyer une erreur
-    const otp = this.newPasswordForm.value.otp;
-    if (!this.token && !otp) {
-      this.messages = { type: 'error', text: 'Token ou OTP manquant. Veuillez utiliser le lien reçu par email ou fournir un OTP valide.' };
+    if (!this.token) {
+      this.messages = { type: 'error', text: 'Token manquant. Veuillez utiliser le lien reçu par email.' };
       return;
     }
 
@@ -109,8 +107,8 @@ export class NewPasswordComponent implements OnInit, OnDestroy {
     }
 
     const dto: ResetPasswordWithTokenDto = {
-      token: this.token || '',
-      otp: otp || '',
+      token: this.token,
+      otp: this.newPasswordForm.value.otp,
       newPassword: this.newPasswordForm.value.newPassword
     };
 

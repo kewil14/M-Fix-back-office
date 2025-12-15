@@ -18,6 +18,7 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
 import { ShopService } from 'src/app/core/shared/services/shop.service';
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
+import { PermissionService } from 'src/app/core/shared/services/permission.service';
 
 @Component({
   selector: 'app-create-employee',
@@ -60,7 +61,8 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     public modalService: BsModalService,
     public bsModalRef: BsModalRef,
     private workspaceService: WorkspaceService,
-    private shopService: ShopService
+    private shopService: ShopService,
+    public permissionService: PermissionService
   ) {
     this.modalRef = bsModalRef;
   }
@@ -69,21 +71,35 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     this.authentificationState$ = this.storeService.select(selectauthentificationState).pipe();
     this.initForm();
     this.actionEmployee();
-    this.loadWorkspaces();
+    
+    // Si l'utilisateur est WORKSPACE_ADMIN, utiliser le workspaceId du token
+    if (this.permissionService.isWorkspaceAdmin()) {
+      const workspaceId = this.permissionService.getWorkspaceId();
+      if (workspaceId) {
+        this.employeeForm.patchValue({ workspaceId: workspaceId });
+        // Charger les shops pour ce workspace
+        this.loadShops(workspaceId);
+      }
+    } else {
+      // Pour ADMIN et SUPER_ADMIN, charger la liste des workspaces
+      this.loadWorkspaces();
+    }
     
     this.employeeForm.get('userType')?.valueChanges.subscribe(type => {
       this.updateFormValidation(type);
     });
 
-    // Charger les shops quand le workspace change
-    this.employeeForm.get('workspaceId')?.valueChanges.subscribe(workspaceId => {
-      if (workspaceId) {
-        this.loadShops(workspaceId);
-      } else {
-        this.shops = [];
-        this.employeeForm.patchValue({ shopId: '' });
-      }
-    });
+    // Charger les shops quand le workspace change (uniquement si pas WORKSPACE_ADMIN)
+    if (!this.permissionService.isWorkspaceAdmin()) {
+      this.employeeForm.get('workspaceId')?.valueChanges.subscribe(workspaceId => {
+        if (workspaceId) {
+          this.loadShops(workspaceId);
+        } else {
+          this.shops = [];
+          this.employeeForm.patchValue({ shopId: '' });
+        }
+      });
+    }
   }
 
   loadWorkspaces(): void {
@@ -156,12 +172,16 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
   }
 
   initForm(): void {
+    // Si l'utilisateur est WORKSPACE_ADMIN, workspaceId n'est pas requis (il sera rempli automatiquement)
+    const isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
+    const workspaceIdValidators = isWorkspaceAdmin ? [] : [Validators.required];
+    
     this.employeeForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       firstName: ['', [Validators.required]],
       lastName: ['', [Validators.required]],
       userType: ['EMPLOYEE', [Validators.required]],
-      workspaceId: ['', [Validators.required]],
+      workspaceId: ['', workspaceIdValidators],
       shopId: [''],
       employeeCode: [''],
       department: [''],
@@ -266,8 +286,23 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
 
     const formValue = this.employeeForm.value;
     
+    // Pour WORKSPACE_ADMIN, utiliser automatiquement le workspaceId du token
+    let workspaceId = formValue.workspaceId;
+    if (this.permissionService.isWorkspaceAdmin()) {
+      workspaceId = this.permissionService.getWorkspaceId();
+      if (!workspaceId) {
+        this.messages$.next({
+          type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+          title: APP_COLORS.DANGER,
+          message: 'Impossible de récupérer le workspace. Veuillez vous reconnecter.',
+          dismissible: true
+        });
+        return;
+      }
+    }
+    
     // Vérifier que le workspaceId est valide
-    if (!formValue.workspaceId || formValue.workspaceId.trim() === '') {
+    if (!workspaceId || workspaceId.trim() === '') {
       this.messages$.next({
         type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
         title: APP_COLORS.DANGER,
@@ -277,17 +312,19 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Vérifier que le workspace existe dans la liste chargée
-    const selectedWorkspace = this.workspaces.find(ws => ws.id === formValue.workspaceId);
-    if (!selectedWorkspace) {
-      console.error('Workspace sélectionné non trouvé dans la liste:', formValue.workspaceId);
-      this.messages$.next({
-        type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
-        title: APP_COLORS.DANGER,
-        message: 'Le workspace sélectionné n\'est pas valide. Veuillez recharger la page.',
-        dismissible: true
-      });
-      return;
+    // Vérifier que le workspace existe dans la liste chargée (uniquement pour ADMIN/SUPER_ADMIN)
+    if (!this.permissionService.isWorkspaceAdmin()) {
+      const selectedWorkspace = this.workspaces.find(ws => ws.id === workspaceId);
+      if (!selectedWorkspace) {
+        console.error('Workspace sélectionné non trouvé dans la liste:', workspaceId);
+        this.messages$.next({
+          type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+          title: APP_COLORS.DANGER,
+          message: 'Le workspace sélectionné n\'est pas valide. Veuillez recharger la page.',
+          dismissible: true
+        });
+        return;
+      }
     }
 
     const createEmployeeDto: CreateEmployeeDto = {
@@ -295,7 +332,7 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
       firstName: formValue.firstName,
       lastName: formValue.lastName,
       userType: formValue.userType,
-      workspaceId: formValue.workspaceId.trim(), // S'assurer qu'il n'y a pas d'espaces
+      workspaceId: workspaceId.trim(), // Utiliser le workspaceId déterminé ci-dessus
       shopId: formValue.shopId && formValue.shopId.trim() !== '' ? formValue.shopId.trim() : undefined,
       roleIds: []
     };
@@ -316,7 +353,7 @@ export class CreateEmployeeComponent implements OnInit, OnDestroy {
     }
 
     console.log('Création d\'employé - DTO envoyé:', JSON.stringify(createEmployeeDto, null, 2));
-    console.log('Workspace sélectionné:', selectedWorkspace);
+    console.log('Workspace utilisé:', workspaceId);
     
     this.storeService.dispatch(createEmployeeNew({createEmployeeDto}));
   }

@@ -325,12 +325,17 @@
       "USERS_TITLE": "Users",
       "ADMINISTRATEURS": "Administrators",
       "WORKSPACE": "Workspace",
+      "WORKSPACE_ADMIN": "Workspace Administrator",
+      "SHOP_MANAGER": "Shop Manager",
       "SHOPS": "Shops",
       "EMPLOYE": "Employee",
       "PERMISSIONS": "Permissions",
       "ROLE": "Role",
       "AUTORISATION": "Authorization",
-      "PROFILE": "Profile"
+      "PROFILE": "Profile",
+      "SPACES_TITLE": "Spaces",
+      "SPACES": "Spaces",
+      "WORKSPACES": "Workspaces"
     },
     "DASHBOARD": {
       "WELCOME_BACK": "Welcome Back",

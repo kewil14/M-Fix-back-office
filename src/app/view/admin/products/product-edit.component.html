@@ -59,8 +59,13 @@
                 (ngModelChange)="onWorkspaceChange()"
                 [disabled]="isEditMode">
                 <option [ngValue]="''" disabled>Sélectionner un workspace</option>
-                <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">{{ ws.name }}</option>
+                <option *ngFor="let ws of workspaces" [ngValue]="ws.id">
+                  {{ ws.name }}
+                </option>
               </select>
+              <small class="text-muted" *ngIf="workspaces.length === 0">
+                Aucun workspace disponible. Veuillez contacter l'administrateur.
+              </small>
             </div>
 
             <!-- Form Content -->

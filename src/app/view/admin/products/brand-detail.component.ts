@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService, BrandDetail } from 'src/app/core/shared/services/product.service';
 import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
 
@@ -17,9 +17,14 @@ export class BrandDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private productService: ProductService,
     public mediaUrlService: MediaUrlService
   ) {}
+
+  onBack(): void {
+    this.router.navigate(['/admin/product-brands']);
+  }
 
   ngOnInit(): void {
     this.brandId = this.route.snapshot.paramMap.get('id') as string;

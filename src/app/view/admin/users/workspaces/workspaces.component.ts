@@ -1,30 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Actions, ofType } from '@ngrx/effects';
-import { Store } from '@ngrx/store';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
-import { DataStateEnum } from 'src/app/core/config/data.state.enum';
-import { selectWorkspaceAdminState } from 'src/app/core/core.state';
-import { WorkspaceAdminListRequestDto } from 'src/app/core/shared/dtos/workspace-admin-list-request-dto';
-import { EmployeeResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
-import { createWorkspaceWithAdminOk, erreursAuthentification } from 'src/app/core/shared/stores/authentification/authentification.actions';
-import {
-  findAllWorkspaceAdmins,
-  deleteWorkspaceAdmin,
-  reactivateWorkspaceAdmin,
-  erreurWorkspaceAdmins,
-  addWorkspaceAdmin,
-  loadWorkspaceAdmins
-} from 'src/app/core/shared/stores/workspace-admin/workspace-admin.actions';
-import { WorkspaceAdminState } from 'src/app/core/shared/stores/workspace-admin/workspace-admin.state';
-import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-workspace-admin.component';
 import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
-import { MediaUrlService } from 'src/app/core/shared/services/media-url.service';
+import { WorkspaceResponseDto, WorkspaceListRequestDto } from 'src/app/core/shared/dtos/workspace-response-dto';
+import { RequestResultDto } from 'src/app/core/shared/dtos/request-result-dto.modal';
+import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-workspace-admin.component';
 
 @Component({
   selector: 'app-workspaces',
@@ -34,8 +19,6 @@ import { MediaUrlService } from 'src/app/core/shared/services/media-url.service'
 export class WorkspacesComponent implements OnInit, OnDestroy {
   modalRef?: BsModalRef;
   breadCrumbItems!: Array<{}>;
-  workspaceAdminState$!: Observable<WorkspaceAdminState>;
-  dataStateEnum: typeof DataStateEnum = DataStateEnum;
   subscriptions: Subscription[] = [];
   messages$ = new BehaviorSubject<{type: {icon: any, color: any}, title: any, message: any, dismissible: boolean}>(
     {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: '', dismissible: false}
@@ -45,29 +28,24 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   isActiveFilter: boolean | null = null;
   currentPage: number = 0;
   pageSize: number = 10;
-  sortBy: string = 'assignedAt';
+  sortBy: string = 'createdAt';
   sortDirection: string = 'desc';
 
   // Frontend filtering
-  allWorkspaces: EmployeeResponseDto[] = [];
-  filteredWorkspaces: EmployeeResponseDto[] = [];
-  paginatedWorkspaces: EmployeeResponseDto[] = [];
+  allWorkspaces: WorkspaceResponseDto[] = [];
+  filteredWorkspaces: WorkspaceResponseDto[] = [];
+  paginatedWorkspaces: WorkspaceResponseDto[] = [];
   totalElements: number = 0;
   totalPages: number = 0;
-
-  // Permissions
-  isWorkspaceAdmin: boolean = false;
-  userWorkspaceId: string | null = null;
+  
+  isLoading: boolean = false;
 
   constructor(
     private modalService: BsModalService,
-    private storeService: Store,
-    private actionService: Actions,
     private router: Router,
     private translateService: TranslateService,
     private workspaceService: WorkspaceService,
-    public permissionService: PermissionService, // Public pour l'utiliser dans le template
-    public mediaUrlService: MediaUrlService
+    public permissionService: PermissionService
   ) {}
 
   ngOnDestroy() {
@@ -76,91 +54,52 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Workspaces', active: true }];
-    this.workspaceAdminState$ = this.storeService.select(selectWorkspaceAdminState).pipe();
-    
-    // Vérifier les permissions
-    this.isWorkspaceAdmin = this.permissionService.isWorkspaceAdmin();
-    this.userWorkspaceId = this.permissionService.getWorkspaceId();
-    
-    console.log('[WorkspacesComponent] Is Workspace Admin:', this.isWorkspaceAdmin);
-    console.log('[WorkspacesComponent] User Workspace ID:', this.userWorkspaceId);
-    
-    this.actionWorkspaces();
     this.loadWorkspaces();
-    
-    // Écouter les changements du state pour mettre à jour les données
-    this.subscriptions.push(
-      this.workspaceAdminState$.subscribe(state => {
-        if (state && state.dataState === DataStateEnum.SUCCESS && state.workspaceAdmins) {
-          this.allWorkspaces = state.workspaceAdmins;
-          this.applyFilters();
-        }
-      })
-    );
   }
 
-  actionWorkspaces() {
-    this.subscriptions.push(
-      this.actionService.pipe(ofType(erreurWorkspaceAdmins)).subscribe(({messages}) => {
-        this.messages$.next(
-          {type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER}, title: APP_COLORS.DANGER, message: messages, dismissible: false}
-        );
-      }),
-      this.actionService.pipe(ofType(addWorkspaceAdmin)).subscribe(() => {
-        this.messages$.next(
-          {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Workspace créé avec succès!', dismissible: false}
-        );
-        setTimeout(() => {
-          this.loadWorkspaces();
-        }, 1000);
-      }),
-      this.actionService.pipe(ofType(createWorkspaceWithAdminOk)).subscribe(
-        ({data}) => {
-          this.messages$.next(
-            {type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS}, title: APP_COLORS.SUCCESS, message: 'Workspace créé avec succès!', dismissible: false}
-          );
-          setTimeout(() => {
-            this.loadWorkspaces();
-          }, 1000);
-        }
-      ),
-      this.actionService.pipe(ofType(loadWorkspaceAdmins)).subscribe(() => {
-      })
-    );
-  }
-
-  loadWorkspaces() {
-    // Charger toutes les données une fois
-    const filters: WorkspaceAdminListRequestDto = {
-      search: undefined,
-      isActive: undefined,
-      page: 0,
-      size: 100, // Charger toutes les données
-      sortBy: this.sortBy,
-      sortDirection: this.sortDirection,
-      // Pour les Workspace Admins, filtrer par leur workspace_id
-      workspaceId: this.isWorkspaceAdmin && this.userWorkspaceId ? this.userWorkspaceId : undefined
+  loadWorkspaces(): void {
+    this.isLoading = true;
+    const filters: WorkspaceListRequestDto = {
+      page: this.currentPage,
+      size: 1000, // Charger beaucoup de données pour le filtrage frontend
+      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined
     };
-    console.log('[WorkspacesComponent] Loading workspaces with filters:', filters);
-    this.storeService.dispatch(findAllWorkspaceAdmins({ filters }));
+    
+    this.workspaceService.getWorkspaces(filters).subscribe({
+      next: (response: RequestResultDto<any>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          this.allWorkspaces = response.data.content;
+          this.applyFilters();
+        } else {
+          this.allWorkspaces = [];
+          this.filteredWorkspaces = [];
+          this.paginatedWorkspaces = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading workspaces:', error);
+        this.messages$.next({
+          type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+          title: APP_COLORS.DANGER,
+          message: error?.error?.message || 'Erreur lors du chargement des workspaces',
+          dismissible: true
+        });
+      }
+    });
   }
 
   applyFilters(): void {
     // Filtrer les données localement
     this.filteredWorkspaces = this.allWorkspaces.filter(workspace => {
-      // Pour les Workspace Admins, ne montrer que leur propre workspace
-      if (this.isWorkspaceAdmin && this.userWorkspaceId) {
-        if (workspace.workspaceId !== this.userWorkspaceId) {
-          return false;
-        }
-      }
-      
       // Filtre de recherche
       const matchesSearch = !this.searchTerm || 
-        (workspace.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-         workspace.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-         workspace.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-         workspace.username?.toLowerCase().includes(this.searchTerm.toLowerCase()));
+        workspace.name?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        workspace.description?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        workspace.slug?.toLowerCase().includes(this.searchTerm.toLowerCase());
 
       // Filtre de statut
       const matchesStatus = this.isActiveFilter === null || workspace.isActive === this.isActiveFilter;
@@ -168,8 +107,27 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
       return matchesSearch && matchesStatus;
     });
 
+    // Trier
+    this.filteredWorkspaces = this.sortData(this.filteredWorkspaces);
+
     // Appliquer la pagination
     this.applyPagination();
+  }
+
+  sortData(data: WorkspaceResponseDto[]): WorkspaceResponseDto[] {
+    return [...data].sort((a, b) => {
+      let aVal: any = (a as any)[this.sortBy];
+      let bVal: any = (b as any)[this.sortBy];
+      
+      if (aVal === null || aVal === undefined) aVal = '';
+      if (bVal === null || bVal === undefined) bVal = '';
+      
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+      
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return this.sortDirection === 'asc' ? comparison : -comparison;
+    });
   }
 
   applyPagination(): void {
@@ -187,14 +145,14 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   onFilterChange(): void {
     this.currentPage = 0;
-    this.applyFilters();
+    this.loadWorkspaces(); // Recharger avec le nouveau filtre isActive
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.isActiveFilter = null;
     this.currentPage = 0;
-    this.applyFilters();
+    this.loadWorkspaces();
   }
 
   changePage(page: number): void {
@@ -206,23 +164,6 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     this.pageSize = size;
     this.currentPage = 0;
     this.applyFilters();
-  }
-
-  getPageNumbers(state: WorkspaceAdminState): number[] {
-    if (!state || state.totalPages === 0) return [];
-    const pages: number[] = [];
-    const maxPages = Math.min(5, state.totalPages);
-    let startPage = Math.max(0, state.currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(state.totalPages - 1, startPage + maxPages - 1);
-    
-    if (endPage - startPage < maxPages - 1) {
-      startPage = Math.max(0, endPage - maxPages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
   }
 
   getPageNumbersLocal(): number[] {
@@ -252,25 +193,38 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
       backdrop: true,
       ignoreBackdropClick: true
     });
-  }
-
-  onView(workspaceAdmin: EmployeeResponseDto): void {
-    if (workspaceAdmin.id) {
-      this.router.navigate(['/admin/workspaces/detail', workspaceAdmin.id]);
+    
+    // Recharger après la création
+    if (this.modalRef.content) {
+      this.subscriptions.push(
+        (this.modalRef.content as any).onClose?.subscribe(() => {
+          this.loadWorkspaces();
+        }) || new BehaviorSubject(null).subscribe()
+      );
     }
   }
 
-  onEdit(workspaceAdmin: EmployeeResponseDto): void {
-    if (workspaceAdmin.id) {
-      this.router.navigate(['/admin/workspaces/edit', workspaceAdmin.id]);
+  onView(workspace: WorkspaceResponseDto): void {
+    if (workspace.id) {
+      // TODO: Créer une page de détail pour les workspaces
+      // this.router.navigate(['/admin/workspaces/detail', workspace.id]);
+      console.log('View workspace:', workspace);
     }
   }
 
-  onDelete(workspaceAdmin: EmployeeResponseDto): void {
+  onEdit(workspace: WorkspaceResponseDto): void {
+    if (workspace.id) {
+      // TODO: Créer une page d'édition pour les workspaces
+      // this.router.navigate(['/admin/workspaces/edit', workspace.id]);
+      console.log('Edit workspace:', workspace);
+    }
+  }
+
+  onDelete(workspace: WorkspaceResponseDto): void {
     const initialState = {
       title: this.translateService.instant('MESSAGES.ADMIN.WORKSPACE.DELETE_TITLE'),
       message: this.translateService.instant('MESSAGES.ADMIN.WORKSPACE.DELETE_MESSAGE'),
-      itemName: `${workspaceAdmin.firstName} ${workspaceAdmin.lastName}`,
+      itemName: workspace.name,
       confirmBtnText: this.translateService.instant('MESSAGES.ADMIN.WORKSPACE.DELETE_BUTTON'),
       cancelBtnText: this.translateService.instant('MESSAGES.ADMIN.SHOP.CANCEL')
     };
@@ -282,21 +236,61 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     
     if (this.modalRef.content) {
       this.modalRef.content.onConfirm.subscribe((confirmed: boolean) => {
-        if (confirmed) {
-          this.storeService.dispatch(deleteWorkspaceAdmin({ workspaceAdminId: workspaceAdmin.id }));
-          setTimeout(() => {
-            this.loadWorkspaces();
-          }, 1000);
+        if (confirmed && workspace.id) {
+          this.workspaceService.deleteWorkspace(workspace.id).subscribe({
+            next: (response) => {
+              if (response.status === 'SUCCESS') {
+                this.messages$.next({
+                  type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS},
+                  title: APP_COLORS.SUCCESS,
+                  message: 'Workspace désactivé avec succès!',
+                  dismissible: true
+                });
+                setTimeout(() => {
+                  this.loadWorkspaces();
+                }, 1000);
+              }
+            },
+            error: (error) => {
+              this.messages$.next({
+                type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+                title: APP_COLORS.DANGER,
+                message: error?.error?.message || 'Erreur lors de la désactivation du workspace',
+                dismissible: true
+              });
+            }
+          });
         }
       });
     }
   }
 
-  onReactivate(workspaceAdmin: EmployeeResponseDto): void {
-    this.storeService.dispatch(reactivateWorkspaceAdmin({ workspaceAdminId: workspaceAdmin.id }));
-    setTimeout(() => {
-      this.loadWorkspaces();
-    }, 1000);
+  onReactivate(workspace: WorkspaceResponseDto): void {
+    if (!workspace.id) return;
+    
+    this.workspaceService.reactivateWorkspace(workspace.id).subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS') {
+          this.messages$.next({
+            type: {icon: APP_ICONS.SUCCESS, color: APP_COLORS.SUCCESS},
+            title: APP_COLORS.SUCCESS,
+            message: 'Workspace réactivé avec succès!',
+            dismissible: true
+          });
+          setTimeout(() => {
+            this.loadWorkspaces();
+          }, 1000);
+        }
+      },
+      error: (error) => {
+        this.messages$.next({
+          type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+          title: APP_COLORS.DANGER,
+          message: error?.error?.message || 'Erreur lors de la réactivation du workspace',
+          dismissible: true
+        });
+      }
+    });
   }
 
   onExportWorkspaces(): void {

@@ -84,23 +84,9 @@
 
                     <div class="row mb-3">
                       <div class="col-md-6">
-                        <label class="form-label">{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }}</label>
-                        <select class="form-control" formControlName="workspaceId"
-                                [disabled]="isLoadingWorkspaces">
-                          <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_WORKSPACE' | translate }}</option>
-                          <option *ngFor="let workspace of workspaces" [value]="workspace.id">
-                            {{ workspace.name }}
-                          </option>
-                        </select>
-                        <div *ngIf="isLoadingWorkspaces" class="text-muted small mt-1">
-                          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                          {{ 'MESSAGES.ADMIN.EMPLOYEE.LOADING_WORKSPACES' | translate }}
-                        </div>
-                      </div>
-                      <div class="col-md-6">
                         <label class="form-label">{{ 'MESSAGES.ADMIN.EMPLOYEE.SHOP' | translate }}</label>
                         <select class="form-control" formControlName="shopId"
-                                [disabled]="isLoadingShops || !employeeForm.get('workspaceId')?.value">
+                                [disabled]="isLoadingShops">
                           <option value="">{{ 'MESSAGES.ADMIN.EMPLOYEE.SELECT_SHOP' | translate }}</option>
                           <option *ngFor="let shop of shops" [value]="shop.id">
                             {{ shop.name }} {{ shop.city ? '(' + shop.city + ')' : '' }}

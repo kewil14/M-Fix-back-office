@@ -287,7 +287,7 @@ const routes: Routes = [
     ]
   },
   {
-    path: 'workspaces',
+    path: 'workspace-admins',
     children: [
       {
         path: '',
@@ -306,6 +306,28 @@ const routes: Routes = [
         component: AdminEditComponent,
         canActivate: [PermissionGuard],
         data: { permissions: ['workspaces:update'] }
+      }
+    ]
+  },
+  {
+    path: 'workspaces',
+    children: [
+      {
+        path: '',
+        component: WorkspacesComponent, // TODO: Créer un nouveau composant pour afficher les workspaces (espaces) et non les workspace admins
+        canActivate: [PermissionGuard],
+        data: { permissions: ['workspaces:read'] }
+      }
+    ]
+  },
+  {
+    path: 'shop-managers',
+    children: [
+      {
+        path: '',
+        component: EmployeesComponent, // TODO: Créer un nouveau composant pour afficher uniquement les shop managers
+        canActivate: [PermissionGuard],
+        data: { permissions: ['employees:read'] }
       }
     ]
   },
@@ -362,13 +384,15 @@ const routes: Routes = [
         path: '',
         component: InvitationsComponent,
         canActivate: [PermissionGuard],
-        data: { roles: ['SUPERADMIN'] }
+        // SUPER_ADMIN et ADMIN doivent avoir le même accès
+        data: { roles: ['SUPERADMIN', 'ADMIN', 'SUPER_ADMIN'] }
       },
       {
         path: 'detail/:id',
         component: InvitationDetailComponent,
         canActivate: [PermissionGuard],
-        data: { roles: ['SUPERADMIN'] }
+        // SUPER_ADMIN et ADMIN doivent avoir le même accès
+        data: { roles: ['SUPERADMIN', 'ADMIN', 'SUPER_ADMIN'] }
       }
     ]
   },

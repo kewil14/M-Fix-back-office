@@ -57,6 +57,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   
   // Liste des shops pour le filtre
   shops: ShopResponseDto[] = [];
+  
+  // Détecter si on est sur la route shop-managers
+  isShopManagersRoute: boolean = false;
 
   // Options de filtres
   userTypeOptions = [
@@ -82,7 +85,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Employés', active: true }];
+    // Détecter si on est sur la route shop-managers
+    this.isShopManagersRoute = this.router.url.includes('/shop-managers');
+    
+    this.breadCrumbItems = [{ label: 'Admin' }, { label: this.isShopManagersRoute ? 'Shop Managers' : 'Employés', active: true }];
     this.employeeState$ = this.storeService.select(selectEmployeeState).pipe();
     this.actionEmployees();
     
@@ -162,6 +168,22 @@ export class EmployeesComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     let filtered = [...this.allEmployees];
     
+    // Filtrer selon la route actuelle
+    if (this.isShopManagersRoute) {
+      // Pour la route shop-managers, afficher uniquement les SHOP_MANAGER
+      filtered = filtered.filter(emp => {
+        const empType = emp.type || '';
+        return empType.toUpperCase() === 'SHOP_MANAGER';
+      });
+    } else {
+      // Pour la route employees, afficher uniquement les EMPLOYEE, TECHNICIAN, DELIVERER
+      const allowedTypes = ['EMPLOYEE', 'TECHNICIAN', 'DELIVERER'];
+      filtered = filtered.filter(emp => {
+        const empType = emp.type || '';
+        return allowedTypes.includes(empType.toUpperCase());
+      });
+    }
+    
     // Filtre par recherche
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
@@ -173,7 +195,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
       );
     }
     
-    // Filtre par type
+    // Filtre par type (affine le filtre parmi les types autorisés)
     if (this.userTypeFilter) {
       filtered = filtered.filter(emp => emp.type === this.userTypeFilter);
     }

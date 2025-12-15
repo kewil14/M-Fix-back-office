@@ -47,7 +47,7 @@
                 [disabled]="isLoadingWorkspaces">
                 <option [ngValue]="''">Sélectionner un workspace</option>
                 <option *ngFor="let ws of workspaces$ | async" [ngValue]="ws.id">
-                  {{ ws.name }} ({{ ws.adminName || 'N/A' }})
+                  {{ ws.name }}
                 </option>
               </select>
               <small class="text-muted" *ngIf="showWorkspaceSelectionMessage">

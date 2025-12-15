@@ -136,65 +136,119 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   private filterMenuByPermissions(menu: MenuItem[]): MenuItem[] {
-    return menu.filter(item => {
-      // Les titres et layouts sont toujours affichés
-      if (item.isTitle || item.isLayout) {
-        return true;
+    // Première passe : filtrer tous les items non-titres (les titres sont gardés temporairement)
+    const filteredMenu: MenuItem[] = [];
+    
+    for (const item of menu) {
+      // Les layouts sont toujours affichés
+      if (item.isLayout) {
+        filteredMenu.push(item);
+        continue;
       }
 
-      // Super Admin et Admin ont accès à TOUS les menus et sous-menus sans restriction
-      if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
-        return true;
+      // Les titres sont gardés temporairement pour la deuxième passe
+      if (item.isTitle) {
+        filteredMenu.push(item);
+        continue;
       }
 
-      // Vérifier si l'item a un requiredRole
-      if (item.requiredRole) {
-        const requiredRoles = Array.isArray(item.requiredRole) ? item.requiredRole : [item.requiredRole];
-        const hasRole = this.permissionService.hasAnyRole(requiredRoles);
-        
-        if (!hasRole) {
-          return false;
-        }
+      // Filtrer les items non-titres
+      if (this.isMenuItemVisible(item)) {
+        filteredMenu.push(item);
+      }
+    }
+
+    // Deuxième passe : masquer les titres qui n'ont pas de menus visibles après eux
+    const finalMenu: MenuItem[] = [];
+    for (let i = 0; i < filteredMenu.length; i++) {
+      const item = filteredMenu[i];
+      
+      // Les layouts sont toujours affichés
+      if (item.isLayout) {
+        finalMenu.push(item);
+        continue;
       }
 
-      // Vérifier l'accès à la page via canAccessPage si un link est défini
-      if (item.link) {
-        const canAccess = this.permissionService.canAccessPage(item.link);
-        if (!canAccess) {
-          return false;
-        }
-      }
-
-      // Filtrer les sous-items
-      if (item.subItems && item.subItems.length > 0) {
-        item.subItems = item.subItems.filter((subItem: MenuItem) => {
-          // Vérifier requiredRole pour le sous-item
-          if (subItem.requiredRole) {
-            const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
-            if (!this.permissionService.hasAnyRole(requiredRoles)) {
-              return false;
-            }
+      // Pour les titres, vérifier s'il y a un menu visible après
+      if (item.isTitle) {
+        // Chercher le prochain item non-titre après ce titre
+        let hasVisibleMenuAfter = false;
+        for (let j = i + 1; j < filteredMenu.length; j++) {
+          const nextItem = filteredMenu[j];
+          if (nextItem.isTitle || nextItem.isLayout) {
+            // On a trouvé un autre titre ou layout, on arrête
+            break;
           }
-
-          // Vérifier l'accès à la page via canAccessPage si un link est défini
-          if (subItem.link) {
-            const canAccess = this.permissionService.canAccessPage(subItem.link);
-            if (!canAccess) {
-              return false;
-            }
-          }
-
-          return true;
-        });
-        
-        // Si aucun sous-item n'est accessible, masquer l'item parent
-        if (item.subItems.length === 0) {
-          return false;
+          // Si on arrive ici, c'est qu'il y a un menu visible après le titre
+          hasVisibleMenuAfter = true;
+          break;
         }
+        // Ajouter le titre seulement s'il y a un menu visible après
+        if (hasVisibleMenuAfter) {
+          finalMenu.push(item);
+        }
+      } else {
+        // Les items non-titres sont déjà filtrés, on les ajoute
+        finalMenu.push(item);
       }
+    }
 
+    return finalMenu;
+  }
+
+  private isMenuItemVisible(item: MenuItem): boolean {
+    // Super Admin et Admin ont accès à TOUS les menus et sous-menus sans restriction
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
       return true;
-    });
+    }
+
+    // Vérifier si l'item a un requiredRole
+    if (item.requiredRole) {
+      const requiredRoles = Array.isArray(item.requiredRole) ? item.requiredRole : [item.requiredRole];
+      const hasRole = this.permissionService.hasAnyRole(requiredRoles);
+      
+      if (!hasRole) {
+        return false;
+      }
+    }
+
+    // Vérifier l'accès à la page via canAccessPage si un link est défini
+    if (item.link) {
+      const canAccess = this.permissionService.canAccessPage(item.link);
+      if (!canAccess) {
+        return false;
+      }
+    }
+
+    // Filtrer les sous-items
+    if (item.subItems && item.subItems.length > 0) {
+      item.subItems = item.subItems.filter((subItem: MenuItem) => {
+        // Vérifier requiredRole pour le sous-item
+        if (subItem.requiredRole) {
+          const requiredRoles = Array.isArray(subItem.requiredRole) ? subItem.requiredRole : [subItem.requiredRole];
+          if (!this.permissionService.hasAnyRole(requiredRoles)) {
+            return false;
+          }
+        }
+
+        // Vérifier l'accès à la page via canAccessPage si un link est défini
+        if (subItem.link) {
+          const canAccess = this.permissionService.canAccessPage(subItem.link);
+          if (!canAccess) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+      
+      // Si aucun sous-item n'est accessible, masquer l'item parent
+      if (item.subItems.length === 0) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   hasItems(item: MenuItem) {

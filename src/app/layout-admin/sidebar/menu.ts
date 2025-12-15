@@ -63,17 +63,17 @@ export const MENU: MenuItem[] = [
             },
             {
                 id: 72,
-                label: 'MESSAGES.MENU.WORKSPACE',
-                link: '/admin/workspaces',
+                label: 'MESSAGES.MENU.WORKSPACE_ADMIN',
+                link: '/admin/workspace-admins',
                 parentId: 67,
-                requiredRole: ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN'],
+                requiredRole: ['ADMIN', 'SUPER_ADMIN'],
             },
             {
-                id: 73,
-                label: 'MESSAGES.MENU.SHOPS',
-                link: '/admin/shops',
+                id: 74,
+                label: 'MESSAGES.MENU.SHOP_MANAGER',
+                link: '/admin/shop-managers',
                 parentId: 67,
-                requiredRole: ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN', 'SHOP_MANAGER'],
+                requiredRole: ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN'],
             },
             {
                 id: 69,
@@ -81,6 +81,32 @@ export const MENU: MenuItem[] = [
                 link: '/admin/employees',
                 parentId: 67,
                 requiredRole: ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN', 'SHOP_MANAGER'],
+            },
+        ]
+    },
+    {
+        id: 88,
+        label: 'MESSAGES.MENU.SPACES_TITLE',
+        isTitle: true
+    },
+    {
+        id: 89,
+        label: 'MESSAGES.MENU.SPACES',
+        icon: 'bx-building',
+        subItems: [
+            {
+                id: 90,
+                label: 'MESSAGES.MENU.WORKSPACES',
+                link: '/admin/workspaces',
+                parentId: 89,
+                requiredRole: ['ADMIN', 'SUPER_ADMIN'],
+            },
+            {
+                id: 91,
+                label: 'MESSAGES.MENU.SHOPS',
+                link: '/admin/shops',
+                parentId: 89,
+                requiredRole: ['ADMIN', 'SUPER_ADMIN', 'WORKSPACE_ADMIN'],
             },
         ]
     },

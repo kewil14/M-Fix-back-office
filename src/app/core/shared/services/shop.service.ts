@@ -132,7 +132,8 @@ export class ShopService {
   }
 
   getShopsByWorkspace(workspaceId: string): Observable<RequestResultDto<ShopResponseDto[]>> {
-    return this.getShops(workspaceId);
+    // Pour les WORKSPACE_ADMIN, passer workspaceId dans les filters pour que le filtrage fonctionne
+    return this.getShops(workspaceId, { workspaceId: workspaceId });
   }
 
   createShop(workspaceId: string, createShopDto: CreateShopDto): Observable<RequestResultDto<ShopResponseDto>> {

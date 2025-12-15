@@ -55,16 +55,16 @@ export class CreateShopComponent implements OnInit, OnDestroy {
     this.workspaceId = this.permissionService.getWorkspaceId();
     this.shopState$ = this.storeService.select(selectShopState).pipe();
     this.initForm();
-    // Pour workspace admin, workspaceId est déjà connu, pas besoin de charger la liste
-    if (!this.permissionService.isSuperAdmin()) {
-      // Workspace admin : utiliser son workspaceId
+    
+    // Si l'utilisateur est Super Admin ou Admin, charger la liste des workspaces pour sélection
+    if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.loadWorkspaces();
+    } else if (this.permissionService.isWorkspaceAdmin()) {
+      // Workspace admin : utiliser son workspaceId et désactiver le champ
       if (this.workspaceId) {
         this.shopForm.patchValue({ workspaceId: this.workspaceId });
         this.shopForm.get('workspaceId')?.disable();
       }
-    } else {
-      // Super admin : charger la liste des workspaces
-      this.loadWorkspaces();
     }
     this.actionShop();
   }
@@ -89,14 +89,24 @@ export class CreateShopComponent implements OnInit, OnDestroy {
 
   loadWorkspaces() {
     this.isLoadingWorkspaces = true;
-    this.workspaceService.findAllWorkspaces().subscribe({
-      next: (result) => {
-        if (result.status === 'SUCCESS' && result.data) {
-          this.workspaces = result.data;
+    // Utiliser getWorkspaces pour obtenir les vrais workspaces (espaces) et non les workspace admins
+    this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).subscribe({
+      next: (response) => {
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          // Convertir WorkspaceListResponseDto en WorkspaceDto[]
+          this.workspaces = response.data.content.map((ws: any) => ({
+            id: ws.id,
+            name: ws.name,
+            adminName: undefined
+          }));
+        } else {
+          this.workspaces = [];
         }
         this.isLoadingWorkspaces = false;
       },
-      error: () => {
+      error: (error) => {
+        console.error('Erreur lors du chargement des workspaces:', error);
+        this.workspaces = [];
         this.isLoadingWorkspaces = false;
       }
     });

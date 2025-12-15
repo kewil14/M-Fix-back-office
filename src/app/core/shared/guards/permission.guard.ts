@@ -19,6 +19,14 @@ export class PermissionGuard implements CanActivate {
       return false;
     }
 
+    // Bloquer l'accès des SHOP_MANAGER à la route /admin/shops
+    // Les SHOP_MANAGER ne doivent pas voir les autres shops
+    if (state.url.startsWith('/admin/shops') && this.permissionService.isShopManager()) {
+      console.log('Accès refusé - SHOP_MANAGER ne peut pas accéder à la liste des shops');
+      this.router.navigate(['/admin']);
+      return false;
+    }
+
     // Récupérer les permissions requises depuis la route
     const requiredPermissions = route.data['permissions'] as string[];
     const requiredRoles = route.data['roles'] as string[];
@@ -55,13 +63,28 @@ export class PermissionGuard implements CanActivate {
 
     // Vérifier les rôles
     if (requiredRoles && requiredRoles.length > 0) {
-      const hasRole = this.permissionService.hasAnyRole(requiredRoles);
+      // Traiter SUPERADMIN comme SUPER_ADMIN (alias)
+      const normalizedRoles = requiredRoles.map(role => role === 'SUPERADMIN' ? 'SUPER_ADMIN' : role);
+      
+      // Si SUPER_ADMIN est requis, vérifier explicitement isSuperAdmin()
+      if (normalizedRoles.includes('SUPER_ADMIN')) {
+        const isSuperAdmin = this.permissionService.isSuperAdmin();
+        if (isSuperAdmin) {
+          console.log('Accès autorisé - Super Admin vérifié');
+          return true;
+        } else {
+          console.log('Accès refusé - Super Admin requis mais utilisateur n\'est pas Super Admin');
+          return false;
+        }
+      }
+      
+      const hasRole = this.permissionService.hasAnyRole(normalizedRoles);
       if (!hasRole) {
-        console.log('Rôle requis non trouvé. Requis:', requiredRoles, 'Disponibles:', this.permissionService.getRoles());
+        console.log('Rôle requis non trouvé. Requis:', normalizedRoles, 'Disponibles:', this.permissionService.getRoles());
         // Ne pas rediriger vers 403, simplement bloquer l'accès
         return false;
       }
-      console.log('Rôle vérifié avec succès:', requiredRoles);
+      console.log('Rôle vérifié avec succès:', normalizedRoles);
     }
 
     // Vérifier les permissions

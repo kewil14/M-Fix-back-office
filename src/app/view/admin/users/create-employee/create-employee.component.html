@@ -49,7 +49,8 @@
           </div>
         </div>
 
-        <div class="mb-3">
+        <!-- Masquer le champ workspace pour WORKSPACE_ADMIN -->
+        <div class="mb-3" *ngIf="!permissionService.isWorkspaceAdmin()">
           <label class="control-label">{{ 'MESSAGES.ADMIN.SHOP.WORKSPACE' | translate }} <span class="text-danger">*</span></label>
           <select class="form-control" formControlName="workspaceId"
                   [ngClass]="{'is-invalid': submitted && f.workspaceId.errors}"

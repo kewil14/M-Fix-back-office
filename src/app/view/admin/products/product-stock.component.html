@@ -98,7 +98,7 @@
                   <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Tous les workspaces</option>
                     <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
-                      {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                      {{ w.name }}
                     </option>
                   </select>
                 </div>
@@ -112,16 +112,6 @@
                   </select>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Filtrer par variant</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    [(ngModel)]="listVariantFilter"
-                    (ngModelChange)="onListFilterChange()"
-                    placeholder="ID du variant..."
-                  />
-                </div>
-                <div class="col-md-3">
                   <label class="form-label">Par page</label>
                   <select class="form-select" [(ngModel)]="listPageSize" (ngModelChange)="onListPageSizeChange($event)">
                     <option [ngValue]="10">10</option>
@@ -130,7 +120,7 @@
                     <option [ngValue]="100">100</option>
                   </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-md-4 d-flex align-items-end">
                   <button class="btn btn-outline-primary" (click)="loadStockList()">
                     <i class="mdi mdi-refresh me-1"></i>
                     Actualiser
@@ -156,6 +146,7 @@
                         <th>Quantité disponible</th>
                         <th>Seuil d'alerte</th>
                         <th>État</th>
+                        <th class="text-end">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -193,6 +184,24 @@
                           }">
                             {{ stock.state || 'ACTIVE' }}
                           </span>
+                        </td>
+                        <td class="text-end">
+                          <div class="btn-group" role="group">
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline-info"
+                              (click)="onViewStock(stock)"
+                              title="Voir les détails">
+                              <i class="mdi mdi-eye"></i>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-outline-primary"
+                              (click)="onUpdateStockFromList(stock)"
+                              title="Mettre à jour">
+                              <i class="mdi mdi-pencil"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -236,7 +245,7 @@
                   <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Sélectionner un workspace</option>
                     <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
-                      {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                      {{ w.name }}
                     </option>
                   </select>
                 </div>
@@ -334,7 +343,7 @@
                   <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Sélectionner un workspace</option>
                     <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
-                      {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                      {{ w.name }}
                     </option>
                   </select>
                 </div>
@@ -437,7 +446,7 @@
                   <select class="form-select" [(ngModel)]="selectedWorkspaceId" (ngModelChange)="onWorkspaceChange()">
                     <option [ngValue]="''">Sélectionner un workspace</option>
                     <option *ngFor="let w of workspaces$ | async" [ngValue]="w.id">
-                      {{ w.name }} <span *ngIf="w.adminName">- {{ w.adminName }}</span>
+                      {{ w.name }}
                     </option>
                   </select>
                 </div>
