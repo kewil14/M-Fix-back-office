@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { ProductService, ProductDetail, ProductListItem, ProductSearchParams } from 'src/app/core/shared/services/product.service';
 import { ShopService } from 'src/app/core/shared/services/shop.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
@@ -6,6 +7,7 @@ import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/wor
 import { ShopResponseDto } from 'src/app/core/shared/dtos/shop-response-dto';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 
 @Component({
   selector: 'app-product-stock',
@@ -18,52 +20,28 @@ export class ProductStockComponent implements OnInit {
   successMsg: string | null = null;
   errorMsg: string | null = null;
 
-  // Onglet actif
-  activeTab: 'list' | 'update' | 'reserve' | 'sync' | 'check' = 'list';
-
   // Données communes
   products: ProductListItem[] = [];
   productSearch: string = '';
   variants: any[] = [];
   shops: ShopResponseDto[] = [];
-  workspaces$: Observable<WorkspaceDto[]> = of([]); // Liste des workspaces
-  selectedWorkspaceId: string = ''; // Renommé de workspaceId pour cohérence
-  showWorkspaceSelectionMessage: boolean = false; // Nouveau
+  workspaces$: Observable<WorkspaceDto[]> = of([]);
+  selectedWorkspaceId: string = '';
+  showWorkspaceSelectionMessage: boolean = false;
 
-  // Update Stock
+  // Update Stock Modal
+  modalRef?: BsModalRef;
   updateSelectedProductId: string = '';
   updateSelectedVariantId: string = '';
   updateSelectedShopId: string = '';
   updateQuantity: number | null = null;
   updateType: string = 'ADJUSTMENT';
   updateNote: string = '';
-
-  // Reserve Stock
-  reserveItems: Array<{ variant_id: string; quantity: number; shop_id: string }> = [];
-  reserveProductId: string = '';
-  reserveVariantId: string = '';
-  reserveShopId: string = '';
-  reserveQuantity: number | null = null;
-
-  // Sync Stock
-  syncProductId: string = '';
-  syncVariantId: string = '';
-  syncSourceShopId: string = '';
-  syncQuantity: number | null = null;
-  syncTargetShopIds: string[] = [];
-
-  // Check Stock
-  checkItems: Array<{ variant_id: string; shop_id: string; quantity: number }> = [];
-  checkProductId: string = '';
-  checkVariantId: string = '';
-  checkShopId: string = '';
-  checkQuantity: number | null = null;
-  checkResult: any = null;
+  currentStock: any = null; // Stock actuel en cours de modification
 
   // Liste Stock
   stockList: any[] = [];
   listShopFilter: string = '';
-  listProductFilter: string = '';
   listCurrentPage: number = 1;
   listPageSize: number = 20;
   listTotalItems: number = 0;
@@ -72,61 +50,98 @@ export class ProductStockComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private shopService: ShopService,
-    private permissionService: PermissionService,
-    private workspaceService: WorkspaceService
+    public permissionService: PermissionService,
+    private workspaceService: WorkspaceService,
+    private modalService: BsModalService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadWorkspaces();
-    this.loadProducts(); // Load products for other tabs
     
     // Déterminer si le message de sélection de workspace doit être affiché
     if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
       this.showWorkspaceSelectionMessage = true;
     }
 
-    if (this.activeTab === 'list') {
-      this.loadStockList();
+    // Pour WORKSPACE_ADMIN, charger les données après que le workspace soit défini
+    if (!this.permissionService.isSuperAdmin() && !this.permissionService.isAdmin()) {
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+        this.loadProducts();
+        this.loadShopsForWorkspace();
+        this.loadStockList();
+      }
     }
   }
 
   loadWorkspaces(): void {
-    // Utiliser getWorkspaces pour obtenir les vrais workspaces (espaces) au lieu des workspace admins
-    this.workspaces$ = this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).pipe(
-      map(response => {
-        if (response.status === 'SUCCESS' && response.data?.content) {
-          return response.data.content.map((ws: any) => ({
-            id: ws.id,
-            name: ws.name,
-            adminName: undefined
-          }));
-        }
-        return [];
-      })
-    );
-
-    // Initialiser selectedWorkspaceId si l'utilisateur est SuperAdmin/Admin
+    // Pour SuperAdmin/Admin: charger tous les workspaces
     if (this.permissionService.isSuperAdmin() || this.permissionService.isAdmin()) {
+      this.workspaces$ = this.workspaceService.getWorkspaces({ page: 0, size: 1000, isActive: true }).pipe(
+        map(response => {
+          if (response.status === 'SUCCESS' && response.data?.content) {
+            return response.data.content.map((ws: any) => ({
+              id: ws.id,
+              name: ws.name,
+              adminName: undefined
+            }));
+          }
+          return [];
+        })
+      );
       // Ne pas pré-sélectionner, laisser l'utilisateur choisir
       this.selectedWorkspaceId = '';
     } else {
-      // Pour WorkspaceAdmin ou ShopManager, pré-sélectionner leur workspace
+      // Pour WorkspaceAdmin ou ShopManager: charger uniquement leur workspace depuis le token
       const tokenWorkspaceId = this.permissionService.getWorkspaceId();
       if (tokenWorkspaceId) {
         this.selectedWorkspaceId = tokenWorkspaceId;
+        this.workspaces$ = this.workspaceService.getWorkspaceById(tokenWorkspaceId).pipe(
+          map(response => {
+            if (response.status === 'SUCCESS' && response.data) {
+              return [{
+                id: response.data.id,
+                name: response.data.name,
+                adminName: undefined
+              }];
+            }
+            return [];
+          })
+        );
+        // Charger les boutiques et produits immédiatement pour WORKSPACE_ADMIN
         this.loadShopsForWorkspace();
+        this.loadProducts();
+      } else {
+        this.workspaces$ = of([]);
       }
     }
   }
 
   loadShopsForWorkspace(): void {
     this.shops = []; // Clear shops when workspace changes
-    if (!this.selectedWorkspaceId) return;
-    this.shopService.getShopsByWorkspace(this.selectedWorkspaceId).subscribe({
+    
+    // Pour WORKSPACE_ADMIN, utiliser le workspaceId du token si selectedWorkspaceId n'est pas défini
+    let workspaceId = this.selectedWorkspaceId;
+    if (!workspaceId && this.permissionService.isWorkspaceAdmin()) {
+      workspaceId = this.permissionService.getWorkspaceId() || undefined;
+    }
+    
+    if (!workspaceId) return;
+    
+    this.shopService.getShopsByWorkspace(workspaceId).subscribe({
       next: (res) => {
         if (res && res.status === 'SUCCESS' && Array.isArray(res.data)) {
           this.shops = res.data;
+          console.log('[ProductStockComponent] Shops loaded:', this.shops.length);
+        } else {
+          console.warn('[ProductStockComponent] No shops found or invalid response:', res);
         }
+      },
+      error: (err) => {
+        console.error('[ProductStockComponent] Error loading shops:', err);
+        this.errorMsg = 'Erreur lors du chargement des boutiques.';
       }
     });
   }
@@ -138,16 +153,26 @@ export class ProductStockComponent implements OnInit {
       return;
     }
 
+    // Pour WORKSPACE_ADMIN, utiliser le workspaceId du token si selectedWorkspaceId n'est pas défini
+    let workspaceId = this.selectedWorkspaceId;
+    if (!workspaceId && this.permissionService.isWorkspaceAdmin()) {
+      workspaceId = this.permissionService.getWorkspaceId() || undefined;
+    }
+
     const params: ProductSearchParams = {
       q: this.productSearch || undefined,
       state: 'ACTIVE',
       page: 1,
       page_size: 50,
-      workspace_id: this.selectedWorkspaceId || undefined // Passer le workspaceId
+      workspace_id: workspaceId || undefined
     };
     this.productService.getProducts(params).subscribe({
       next: (res) => {
         this.products = res.data || [];
+      },
+      error: (err) => {
+        console.error('[ProductStockComponent] Error loading products:', err);
+        this.errorMsg = 'Erreur lors du chargement des produits.';
       }
     });
   }
@@ -186,183 +211,13 @@ export class ProductStockComponent implements OnInit {
     });
   }
 
-  // Update Stock
-  onUpdateStock(): void {
-    this.successMsg = null;
-    this.errorMsg = null;
-
-    if (!this.updateSelectedVariantId || this.updateQuantity === null || !this.updateSelectedShopId) {
-      this.errorMsg = 'Veuillez remplir tous les champs obligatoires.';
-      return;
-    }
-
-    this.loading = true;
-    const body = {
-      quantity: this.updateQuantity,
-      type: this.updateType,
-      note: this.updateNote || undefined
-    };
-
-    this.productService.updateStock(this.updateSelectedVariantId, this.updateSelectedShopId, body).subscribe({
-      next: () => {
-        this.successMsg = 'Stock mis à jour avec succès.';
-        this.loading = false;
-        this.resetUpdateForm();
-        // Rafraîchir la liste si on est sur l'onglet liste
-        if (this.activeTab === 'list') {
-          this.loadStockList();
-        }
-      },
-      error: (err) => {
-        this.errorMsg = err?.error?.message || 'Erreur lors de la mise à jour du stock.';
-        this.loading = false;
-      }
-    });
-  }
-
-  resetUpdateForm(): void {
-    this.updateSelectedProductId = '';
-    this.updateSelectedVariantId = '';
-    this.updateSelectedShopId = '';
-    this.updateQuantity = null;
-    this.updateType = 'ADJUSTMENT';
-    this.updateNote = '';
-    this.variants = [];
-  }
-
-  // Reserve Stock
-  addReserveItem(): void {
-    if (!this.reserveVariantId || this.reserveQuantity === null || !this.reserveShopId) {
-      this.errorMsg = 'Veuillez remplir tous les champs pour ajouter un item.';
-      return;
-    }
-
-    this.reserveItems.push({
-      variant_id: this.reserveVariantId,
-      quantity: this.reserveQuantity,
-      shop_id: this.reserveShopId
-    });
-
-    this.reserveVariantId = '';
-    this.reserveQuantity = null;
-    this.reserveShopId = '';
-    this.reserveProductId = '';
-    this.variants = [];
-  }
-
-  removeReserveItem(index: number): void {
-    this.reserveItems.splice(index, 1);
-  }
-
-  onReserveStock(): void {
-    if (this.reserveItems.length === 0) {
-      this.errorMsg = 'Veuillez ajouter au moins un item à réserver.';
-      return;
-    }
-
-    this.loading = true;
-    this.productService.reserveStock(this.reserveItems).subscribe({
-      next: () => {
-        this.successMsg = 'Stock réservé avec succès.';
-        this.loading = false;
-        this.reserveItems = [];
-      },
-      error: (err) => {
-        this.errorMsg = err?.error?.message || 'Erreur lors de la réservation du stock.';
-        this.loading = false;
-      }
-    });
-  }
-
-
-  // Sync Stock
-  onSyncStock(): void {
-    if (!this.syncVariantId || !this.syncSourceShopId || this.syncQuantity === null || this.syncTargetShopIds.length === 0) {
-      this.errorMsg = 'Veuillez remplir tous les champs obligatoires.';
-      return;
-    }
-
-    this.loading = true;
-    this.productService.syncStock(this.syncVariantId, this.syncSourceShopId, this.syncQuantity, this.syncTargetShopIds).subscribe({
-      next: () => {
-        this.successMsg = 'Stock synchronisé avec succès.';
-        this.loading = false;
-        this.resetSyncForm();
-      },
-      error: (err) => {
-        this.errorMsg = err?.error?.message || 'Erreur lors de la synchronisation du stock.';
-        this.loading = false;
-      }
-    });
-  }
-
-  resetSyncForm(): void {
-    this.syncProductId = '';
-    this.syncVariantId = '';
-    this.syncSourceShopId = '';
-    this.syncQuantity = null;
-    this.syncTargetShopIds = [];
-    this.variants = [];
-  }
-
-  toggleSyncTargetShop(shopId: string): void {
-    const index = this.syncTargetShopIds.indexOf(shopId);
-    if (index > -1) {
-      this.syncTargetShopIds.splice(index, 1);
-    } else {
-      this.syncTargetShopIds.push(shopId);
-    }
-  }
-
-  // Check Stock
-  addCheckItem(): void {
-    if (!this.checkVariantId || this.checkQuantity === null || !this.checkShopId) {
-      this.errorMsg = 'Veuillez remplir tous les champs pour ajouter un item.';
-      return;
-    }
-
-    this.checkItems.push({
-      variant_id: this.checkVariantId,
-      shop_id: this.checkShopId,
-      quantity: this.checkQuantity
-    });
-
-    this.checkVariantId = '';
-    this.checkQuantity = null;
-    this.checkShopId = '';
-    this.checkProductId = '';
-    this.variants = [];
-  }
-
-  removeCheckItem(index: number): void {
-    this.checkItems.splice(index, 1);
-  }
-
-  onCheckStock(): void {
-    if (this.checkItems.length === 0) {
-      this.errorMsg = 'Veuillez ajouter au moins un item à vérifier.';
-      return;
-    }
-
-    this.loading = true;
-    this.productService.checkStock(this.checkItems).subscribe({
-      next: (res) => {
-        this.checkResult = res?.data || res;
-        this.successMsg = 'Vérification du stock effectuée.';
-        this.loading = false;
-      },
-      error: (err) => {
-        this.errorMsg = err?.error?.message || 'Erreur lors de la vérification du stock.';
-        this.loading = false;
-      }
-    });
-  }
-
-  onProductChange(productId: string, context: string): void {
+  onProductChange(productId: string): void {
     if (productId) {
       this.loadVariantsForProduct(productId);
+      this.updateSelectedVariantId = ''; // Reset variant when product changes
     } else {
       this.variants = [];
+      this.updateSelectedVariantId = '';
     }
   }
 
@@ -373,24 +228,29 @@ export class ProductStockComponent implements OnInit {
       this.stockList = [];
       this.listTotalItems = 0;
       this.showWorkspaceSelectionMessage = true;
-      this.listLoading = false; // Assurez-vous que le loading est à false
+      this.listLoading = false;
       return;
     }
-    this.showWorkspaceSelectionMessage = false; // Cacher le message si un workspace est sélectionné ou si l'utilisateur n'est pas SuperAdmin/Admin
+    this.showWorkspaceSelectionMessage = false;
 
     this.listLoading = true;
     this.errorMsg = null;
 
+    // Pour WORKSPACE_ADMIN, utiliser le workspaceId du token si selectedWorkspaceId n'est pas défini
+    let workspaceId = this.selectedWorkspaceId;
+    if (!workspaceId && this.permissionService.isWorkspaceAdmin()) {
+      workspaceId = this.permissionService.getWorkspaceId() || undefined;
+    }
+
     const params: any = {
       page: this.listCurrentPage,
       page_size: this.listPageSize,
-      workspace_id: this.selectedWorkspaceId || undefined // Passer le workspaceId
+      workspace_id: workspaceId || undefined
     };
 
     if (this.listShopFilter) {
       params.shop_id = this.listShopFilter;
     }
-
 
     this.productService.getStockList(params).subscribe({
       next: (res) => {
@@ -424,15 +284,11 @@ export class ProductStockComponent implements OnInit {
 
   onWorkspaceChange(): void {
     console.log('[ProductStockComponent] Workspace changed, loading data for workspaceId:', this.selectedWorkspaceId);
-    // For the list tab, reload the stock list
-    if (this.activeTab === 'list') {
-      this.listCurrentPage = 1;
-      this.showWorkspaceSelectionMessage = false; // Hide message once workspace is selected
-      this.loadStockList();
-    }
-    // For other tabs (update, reserve, sync, check), reload products as they depend on workspace
+    this.listCurrentPage = 1;
+    this.showWorkspaceSelectionMessage = false;
+    this.loadStockList();
     this.loadProducts();
-    this.loadShopsForWorkspace(); // Reload shops for the newly selected workspace
+    this.loadShopsForWorkspace();
   }
 
   onListFilterChange(): void {
@@ -443,39 +299,6 @@ export class ProductStockComponent implements OnInit {
   onListPageChange(page: number): void {
     this.listCurrentPage = page;
     this.loadStockList();
-  }
-
-  // Actions sur les stocks dans la liste
-  onViewStock(stock: any): void {
-    // Afficher les détails du stock (peut ouvrir un modal ou naviguer vers une page de détail)
-    const variantId = stock.product_variant_id || stock.variant_id;
-    const shopId = this.getStockShopId(stock);
-    console.log('[ProductStockComponent] View stock:', { variantId, shopId, stock });
-    // TODO: Implémenter l'affichage des détails (modal ou navigation)
-    this.successMsg = `Détails du stock - Variant ID: ${variantId}, Boutique: ${shopId}`;
-    setTimeout(() => this.successMsg = null, 3000);
-  }
-
-  onUpdateStockFromList(stock: any): void {
-    // Pré-remplir le formulaire de mise à jour avec les données du stock sélectionné
-    const variantId = stock.product_variant_id || stock.variant_id;
-    const shopId = this.getStockShopId(stock);
-    
-    // Aller à l'onglet update et pré-remplir les champs
-    this.activeTab = 'update';
-    this.updateSelectedVariantId = variantId;
-    this.updateSelectedShopId = shopId;
-    this.updateQuantity = stock.quantity || 0;
-    this.updateType = 'ADJUSTMENT';
-    this.updateNote = '';
-    
-    // Si on a un workspace, s'assurer qu'il est sélectionné
-    if (this.selectedWorkspaceId) {
-      // Charger les produits et variants pour ce workspace
-      this.loadProducts();
-    }
-    
-    console.log('[ProductStockComponent] Update stock from list:', { variantId, shopId });
   }
 
   onListPageSizeChange(size: number): void {
@@ -501,6 +324,107 @@ export class ProductStockComponent implements OnInit {
       pages.push(i);
     }
     return pages;
+  }
+
+  // Actions sur les stocks dans la liste
+  onViewStock(stock: any): void {
+    const variantId = stock.product_variant_id || stock.variant_id;
+    const shopId = this.getStockShopId(stock);
+    
+    if (!variantId || !shopId) {
+      this.errorMsg = 'Impossible de déterminer le variant ou la boutique.';
+      return;
+    }
+    
+    // Rediriger vers la page de détail
+    this.router.navigate(['/admin/product-stock/detail', variantId, shopId]);
+  }
+
+  openUpdateModal(template: TemplateRef<any>, stock: any): void {
+    // Pré-remplir le formulaire avec les données du stock
+    const variantId = stock.product_variant_id || stock.variant_id;
+    const shopId = this.getStockShopId(stock);
+    const productId = stock.product_id || stock.productId;
+    
+    this.currentStock = stock;
+    this.updateSelectedVariantId = variantId;
+    this.updateSelectedShopId = shopId;
+    this.updateQuantity = stock.quantity || 0;
+    this.updateType = 'ADJUSTMENT';
+    this.updateNote = '';
+    
+    // Si on a un productId, charger le produit et ses variants
+    if (productId) {
+      this.updateSelectedProductId = productId;
+      this.loadVariantsForProduct(productId);
+    } else {
+      this.updateSelectedProductId = '';
+      this.variants = [];
+    }
+    
+    // S'assurer que le workspace est sélectionné
+    if (!this.selectedWorkspaceId) {
+      const tokenWorkspaceId = this.permissionService.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        this.selectedWorkspaceId = tokenWorkspaceId;
+      }
+    }
+    
+    // Charger les produits et boutiques si nécessaire
+    if (this.products.length === 0) {
+      this.loadProducts();
+    }
+    if (this.shops.length === 0) {
+      this.loadShopsForWorkspace();
+    }
+    
+    this.modalRef = this.modalService.show(template, {
+      class: 'modal-lg',
+      backdrop: 'static'
+    });
+  }
+
+  onUpdateStock(): void {
+    this.successMsg = null;
+    this.errorMsg = null;
+
+    if (!this.updateSelectedVariantId || this.updateQuantity === null || !this.updateSelectedShopId) {
+      this.errorMsg = 'Veuillez remplir tous les champs obligatoires.';
+      return;
+    }
+
+    this.loading = true;
+    const body = {
+      quantity: this.updateQuantity,
+      type: this.updateType,
+      note: this.updateNote || undefined
+    };
+
+    this.productService.updateStock(this.updateSelectedVariantId, this.updateSelectedShopId, body).subscribe({
+      next: () => {
+        this.successMsg = 'Stock mis à jour avec succès.';
+        this.loading = false;
+        this.resetUpdateForm();
+        this.modalRef?.hide();
+        // Rafraîchir la liste
+        this.loadStockList();
+      },
+      error: (err) => {
+        this.errorMsg = err?.error?.message || 'Erreur lors de la mise à jour du stock.';
+        this.loading = false;
+      }
+    });
+  }
+
+  resetUpdateForm(): void {
+    this.updateSelectedProductId = '';
+    this.updateSelectedVariantId = '';
+    this.updateSelectedShopId = '';
+    this.updateQuantity = null;
+    this.updateType = 'ADJUSTMENT';
+    this.updateNote = '';
+    this.variants = [];
+    this.currentStock = null;
   }
 
   // Exposer Math pour le template

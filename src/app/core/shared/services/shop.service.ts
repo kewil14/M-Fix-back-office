@@ -39,9 +39,21 @@ export class ShopService {
   }
 
   getShops(workspaceId?: string, filters?: ShopListRequestDto): Observable<RequestResultDto<ShopResponseDto[]>> {
-    const effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId);
+    const isAdmin = this.permissionService?.isAdmin?.() || false;
+    const isSuperAdmin = this.permissionService?.isSuperAdmin?.() || false;
+    
+    // Pour les WORKSPACE_ADMIN, toujours utiliser le workspaceId du token
+    let effectiveWorkspaceId: string | null = null;
+    if (isAdmin || isSuperAdmin) {
+      effectiveWorkspaceId = this.resolveWorkspaceId(workspaceId);
+    } else {
+      // Pour les autres rôles (WORKSPACE_ADMIN, etc.), utiliser le workspaceId du token
+      effectiveWorkspaceId = this.permissionService?.getWorkspaceId() || workspaceId || null;
+    }
+    
+    // Construire l'endpoint : toujours utiliser /api/shops/{workspaceId}/shops si on a un workspaceId
     const endpoint = effectiveWorkspaceId
-      ? `/api/shops/${workspaceId}/shops`
+      ? `/api/shops/${effectiveWorkspaceId}/shops`
       : `/api/shops`;
     
     return this.http.get<RequestResultDto<ShopResponseDto[]>>(
@@ -132,8 +144,46 @@ export class ShopService {
   }
 
   getShopsByWorkspace(workspaceId: string): Observable<RequestResultDto<ShopResponseDto[]>> {
-    // Pour les WORKSPACE_ADMIN, passer workspaceId dans les filters pour que le filtrage fonctionne
-    return this.getShops(workspaceId, { workspaceId: workspaceId });
+    // Pour les WORKSPACE_ADMIN, utiliser directement l'endpoint avec le workspaceId du token
+    // Pour les ADMIN/SUPER_ADMIN, utiliser le workspaceId fourni
+    const isAdmin = this.permissionService?.isAdmin?.() || false;
+    const isSuperAdmin = this.permissionService?.isSuperAdmin?.() || false;
+    
+    // Si l'utilisateur n'est pas ADMIN/SUPER_ADMIN, utiliser le workspaceId du token
+    let effectiveWorkspaceId = workspaceId;
+    if (!isAdmin && !isSuperAdmin) {
+      // Pour WORKSPACE_ADMIN, toujours utiliser le workspaceId du token
+      const tokenWorkspaceId = this.permissionService?.getWorkspaceId();
+      if (tokenWorkspaceId) {
+        effectiveWorkspaceId = tokenWorkspaceId;
+      } else {
+        effectiveWorkspaceId = workspaceId;
+      }
+    }
+    
+    if (!effectiveWorkspaceId) {
+      throw new Error('workspaceId is required');
+    }
+    
+    console.log('[ShopService.getShopsByWorkspace] Using workspaceId:', effectiveWorkspaceId, 'for user type:', isAdmin ? 'ADMIN' : isSuperAdmin ? 'SUPER_ADMIN' : 'WORKSPACE_ADMIN');
+    
+    // Utiliser directement l'endpoint GET /api/shops/{workspaceId}/shops
+    return this.http.get<RequestResultDto<ShopResponseDto[]>>(
+      API_URLS.WORKSPACE_SERVICE_URL + `/api/shops/${effectiveWorkspaceId}/shops`
+    ).pipe(
+      map((data: RequestResultDto<ShopResponseDto[]>) => {
+        // S'assurer que data.data est un tableau
+        if (data.status === 'SUCCESS' && data.data) {
+          if (!Array.isArray(data.data)) {
+            data.data = [];
+          }
+        } else if (data.status === 'SUCCESS' && !data.data) {
+          data.data = [];
+        }
+        return data;
+      }),
+      share()
+    );
   }
 
   createShop(workspaceId: string, createShopDto: CreateShopDto): Observable<RequestResultDto<ShopResponseDto>> {

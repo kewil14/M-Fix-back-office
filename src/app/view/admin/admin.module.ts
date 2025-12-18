@@ -35,7 +35,9 @@ import { ProductCategoriesComponent } from './products/product-categories.compon
 import { CategoryEditComponent } from './products/category-edit.component';
 import { CategoryDetailComponent } from './products/category-detail.component';
 import { ProductStockComponent } from './products/product-stock.component';
+import { ProductStockDetailComponent } from './products/product-stock-detail.component';
 import { ProductVariantsComponent } from './products/product-variants.component';
+import { ProductVariantDetailComponent } from './products/product-variant-detail.component';
 import { ProductPromotionsComponent } from './products/product-promotions.component';
 import { ProductAnalyticsComponent } from './products/product-analytics.component';
 import { ProductMediaComponent } from './products/product-media.component';
@@ -101,7 +103,9 @@ import { TranslateModule } from '@ngx-translate/core';
       CategoryEditComponent,
       CategoryDetailComponent,
       ProductStockComponent,
+      ProductStockDetailComponent,
        ProductVariantsComponent,
+      ProductVariantDetailComponent,
       ProductPromotionsComponent,
       ProductAnalyticsComponent,
       ProductMediaComponent,

@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ProductService, ProductDetail, ProductListItem, ProductSearchParams } from 'src/app/core/shared/services/product.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
 import { WorkspaceService, WorkspaceDto } from 'src/app/core/shared/services/workspace.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 
 @Component({
   selector: 'app-product-variants',
@@ -31,8 +33,13 @@ export class ProductVariantsComponent implements OnInit {
   isAdminOrSuperAdmin: boolean = false;
   isLoadingWorkspaces: boolean = false;
 
-  // Formulaire variant
+  // Modal pour le formulaire variant
+  @ViewChild('variantModal') variantModalTemplate!: TemplateRef<any>;
+  @ViewChild('deleteModal') deleteModalTemplate!: TemplateRef<any>;
+  modalRef?: BsModalRef;
+  deleteModalRef?: BsModalRef;
   editingVariantId: string | null = null;
+  variantToDelete: any = null;
   variantLabel: string = '';
   variantDescription: string = '';
   variantPrice: number | null = null;
@@ -44,6 +51,9 @@ export class ProductVariantsComponent implements OnInit {
     private productService: ProductService,
     public permissionService: PermissionService,
     private workspaceService: WorkspaceService,
+    private modalService: BsModalService,
+    public router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -66,6 +76,21 @@ export class ProductVariantsComponent implements OnInit {
     } else if (this.selectedWorkspaceId) {
       this.loadProducts();
     }
+    
+    // Vérifier les paramètres de requête pour ouvrir le modal d'édition
+    this.route.queryParams.subscribe(params => {
+      if (params['productId'] && params['variantId']) {
+        this.selectedProductId = params['productId'];
+        this.loadVariants();
+        // Attendre que les variants soient chargés avant d'ouvrir le modal
+        setTimeout(() => {
+          const variant = this.variants.find((v: any) => v.id === params['variantId']);
+          if (variant && this.variantModalTemplate) {
+            this.openVariantModal(this.variantModalTemplate, variant);
+          }
+        }, 1000);
+      }
+    });
   }
 
   loadWorkspaces(): void {
@@ -164,14 +189,30 @@ export class ProductVariantsComponent implements OnInit {
 
     this.loading = true;
 
+    // Charger le produit et les variants en parallèle
+    let productLoaded = false;
+    let variantsLoaded = false;
+
+    const checkComplete = () => {
+      if (productLoaded && variantsLoaded) {
+        this.loading = false;
+      }
+    };
+
     this.productService.getProductById(this.selectedProductId).subscribe({
       next: (res) => {
         if (res && res.status === 'SUCCESS') {
           this.product = res.data as ProductDetail;
+        } else {
+          this.errorMsg = res?.message || 'Erreur lors du chargement du produit.';
         }
+        productLoaded = true;
+        checkComplete();
       },
-      error: () => {
-        this.errorMsg = 'Erreur lors du chargement du produit.';
+      error: (err) => {
+        this.errorMsg = err?.error?.message || 'Erreur lors du chargement du produit.';
+        productLoaded = true;
+        checkComplete();
       }
     });
 
@@ -184,25 +225,39 @@ export class ProductVariantsComponent implements OnInit {
         } else {
           this.errorMsg = res?.message || 'Impossible de charger les variants du produit.';
         }
-        this.loading = false;
+        variantsLoaded = true;
+        checkComplete();
       },
-      error: () => {
-        this.errorMsg = 'Erreur lors du chargement des variants.';
-        this.loading = false;
+      error: (err) => {
+        this.errorMsg = err?.error?.message || 'Erreur lors du chargement des variants.';
+        variantsLoaded = true;
+        checkComplete();
       }
     });
   }
 
-  selectVariantForEdit(variant: any): void {
-    this.successMsg = null;
+  openVariantModal(template: TemplateRef<any>, variant?: any): void {
     this.errorMsg = null;
-    this.editingVariantId = variant.id || null;
-    this.variantLabel = variant.label || '';
-    this.variantDescription = variant.description || '';
-    this.variantPrice = variant.price ?? null;
-    this.variantSku = variant.sku || '';
-    this.variantBarcode = variant.barcode || '';
-    this.variantState = variant.state || 'ACTIVE';
+    this.successMsg = null;
+    
+    if (variant) {
+      // Mode édition
+      this.editingVariantId = variant.id || null;
+      this.variantLabel = variant.label || '';
+      this.variantDescription = variant.description || '';
+      this.variantPrice = variant.price ?? null;
+      this.variantSku = variant.sku || '';
+      this.variantBarcode = variant.barcode || '';
+      this.variantState = variant.state || 'ACTIVE';
+    } else {
+      // Mode création
+      this.resetVariantForm();
+    }
+    
+    this.modalRef = this.modalService.show(template, {
+      class: 'modal-lg',
+      backdrop: 'static'
+    });
   }
 
   resetVariantForm(): void {
@@ -251,6 +306,7 @@ export class ProductVariantsComponent implements OnInit {
             ? 'Variant mis à jour avec succès.'
             : 'Variant créé avec succès.';
           this.resetVariantForm();
+          this.modalRef?.hide();
           this.loadVariants();
         } else {
           this.errorMsg = res?.message || 'Erreur lors de l\'enregistrement du variant.';
@@ -264,38 +320,58 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
-  deleteVariant(variant: any): void {
-    this.successMsg = null;
-    this.errorMsg = null;
+  onViewVariant(variant: any): void {
+    if (variant?.id && this.selectedProductId) {
+      this.router.navigate(['/admin/product-variants/detail', this.selectedProductId, variant.id]);
+    }
+  }
 
-    if (!this.selectedProductId || !variant?.id) {
-      this.errorMsg = 'Produit ou variant invalide.';
+  openDeleteModal(template: TemplateRef<any>, variant: any): void {
+    if (!variant?.id) {
+      this.errorMsg = 'Variant invalide.';
       return;
     }
+    
+    this.variantToDelete = variant;
+    this.errorMsg = null;
+    this.successMsg = null;
+    
+    this.deleteModalRef = this.modalService.show(template, {
+      class: 'modal-dialog-centered',
+      backdrop: 'static'
+    });
+  }
 
-    const confirmed = confirm(`Supprimer le variant "${variant.label}" ?`);
-    if (!confirmed) {
+  confirmDelete(): void {
+    if (!this.selectedProductId || !this.variantToDelete?.id) {
+      this.errorMsg = 'Produit ou variant invalide.';
+      this.deleteModalRef?.hide();
       return;
     }
 
     this.loading = true;
 
-    this.productService.deleteVariant(this.selectedProductId, variant.id).subscribe({
+    this.productService.deleteVariant(this.selectedProductId, this.variantToDelete.id).subscribe({
       next: (res) => {
         if (res && res.status === 'SUCCESS') {
-          this.successMsg = 'Variant supprimé avec succès.';
+          this.successMsg = `Variant "${this.variantToDelete.label}" supprimé avec succès.`;
+          this.deleteModalRef?.hide();
+          this.variantToDelete = null;
           this.loadVariants();
         } else {
           this.errorMsg = res?.message || 'Erreur lors de la suppression du variant.';
           this.loading = false;
         }
       },
-      error: () => {
-        this.errorMsg = 'Erreur lors de la suppression du variant.';
+      error: (err) => {
+        this.errorMsg = err?.error?.message || 'Erreur lors de la suppression du variant.';
         this.loading = false;
       }
     });
   }
+
+  cancelDelete(): void {
+    this.deleteModalRef?.hide();
+    this.variantToDelete = null;
+  }
 }
-
-

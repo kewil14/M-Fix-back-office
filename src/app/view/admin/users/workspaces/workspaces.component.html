@@ -5,7 +5,10 @@
         <div class="card-header border-bottom">
           <div class="row align-items-center">
             <div class="col-md-6">
-              <h4 class="card-title mb-0">{{ 'MESSAGES.ADMIN.COMMON.WORKSPACES' | translate }}</h4>
+              <h4 class="card-title mb-0">
+                <span *ngIf="isWorkspaceAdminsMode">{{ 'MESSAGES.MENU.WORKSPACE_ADMIN' | translate }}</span>
+                <span *ngIf="!isWorkspaceAdminsMode">{{ 'MESSAGES.ADMIN.COMMON.WORKSPACES' | translate }}</span>
+              </h4>
             </div>
             <div class="col-md-6">
               <div class="d-flex justify-content-end gap-2">
@@ -13,12 +16,12 @@
                   type="button" 
                   class="btn btn-sm btn-outline-info" 
                   (click)="onExportWorkspaces()"
-                  *ngIf="permissionService.isSuperAdmin()"
+                  *ngIf="!isWorkspaceAdminsMode && permissionService.isSuperAdmin()"
                   title="{{ 'MESSAGES.ADMIN.WORKSPACE.EXPORT' | translate }}">
                   <i class="mdi mdi-download"></i>
                 </button>
                 <button 
-                  *ngIf="permissionService.canCreate('workspace')"
+                  *ngIf="!isWorkspaceAdminsMode && permissionService.canCreate('workspace')"
                   type="button" 
                   class="btn btn-sm btn-success" 
                   (click)="openCreateModal()">
@@ -86,8 +89,75 @@
               </div>
             </div>
 
-            <!-- Table -->
-            <div class="table-responsive">
+            <!-- Table Workspace Admins -->
+            <div class="table-responsive" *ngIf="isWorkspaceAdminsMode">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col" style="width: 60px;">#</th>
+                    <th scope="col">Nom</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Téléphone</th>
+                    <th scope="col" class="text-center">{{ 'MESSAGES.ADMIN.SHOP.STATUS' | translate }}</th>
+                    <th scope="col">{{ 'MESSAGES.ADMIN.COMMON.CREATION_DATE' | translate }}</th>
+                    <th scope="col" class="text-center" style="width: 200px;">{{ 'MESSAGES.ADMIN.COMMON.ACTIONS' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let admin of paginatedWorkspaceAdmins; let index = index">
+                    <th scope="row">{{ (currentPage * pageSize) + index + 1 }}</th>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-sm me-2">
+                          <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                            {{ (admin.firstName?.[0] || admin.email?.[0] || 'W')?.toUpperCase() }}
+                          </div>
+                        </div>
+                        <div>
+                          <strong>{{ admin.firstName }} {{ admin.lastName }}</strong>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ admin.email }}</td>
+                    <td>{{ admin.phoneNumber || ('MESSAGES.ADMIN.SHOP.N_A' | translate) }}</td>
+                    <td class="text-center">
+                      <span class="badge" [ngClass]="admin.isActive ? 'bg-success' : 'bg-danger'">
+                        {{ admin.isActive ? ('MESSAGES.ADMIN.SHOP.ACTIVE' | translate) : ('MESSAGES.ADMIN.SHOP.INACTIVE' | translate) }}
+                      </span>
+                    </td>
+                    <td>{{ admin.createdAt ? (admin.createdAt | date: 'dd/MM/yyyy') : 'N/A' }}</td>
+                    <td>
+                      <div class="d-flex justify-content-center gap-1">
+                        <button 
+                          class="btn btn-sm btn-info btn-icon" 
+                          (click)="router.navigate(['/admin/workspace-admins/detail', admin.id])"
+                          [title]="'MESSAGES.ADMIN.COMMON.VIEW' | translate">
+                          <i class="mdi mdi-eye-outline"></i>
+                        </button>
+                        <button 
+                          class="btn btn-sm btn-warning btn-icon" 
+                          *ngIf="permissionService.canEdit('workspace')"
+                          (click)="router.navigate(['/admin/workspace-admins/edit', admin.id])"
+                          [title]="'MESSAGES.ADMIN.COMMON.EDIT' | translate">
+                          <i class="mdi mdi-pencil"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="paginatedWorkspaceAdmins.length === 0">
+                    <td colspan="7" class="text-center py-4">
+                      <div class="text-muted">
+                        <i class="ri-inbox-line" style="font-size: 48px;"></i>
+                        <p class="mt-2 mb-0">Aucun workspace admin trouvé</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Workspaces -->
+            <div class="table-responsive" *ngIf="!isWorkspaceAdminsMode">
               <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                   <tr>

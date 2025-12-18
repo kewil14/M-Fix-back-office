@@ -33,7 +33,9 @@ import { ProductCategoriesComponent } from './products/product-categories.compon
 import { CategoryEditComponent } from './products/category-edit.component';
 import { CategoryDetailComponent } from './products/category-detail.component';
 import { ProductStockComponent } from './products/product-stock.component';
+import { ProductStockDetailComponent } from './products/product-stock-detail.component';
 import { ProductVariantsComponent } from './products/product-variants.component';
+import { ProductVariantDetailComponent } from './products/product-variant-detail.component';
 import { ProductPromotionsComponent } from './products/product-promotions.component';
 import { ProductAnalyticsComponent } from './products/product-analytics.component';
 import { ProductDetailComponent } from './products/product-detail.component';
@@ -222,12 +224,24 @@ const routes: Routes = [
     canActivate: [PermissionGuard],
     data: { permissions: ['products:read'] }
   },
+  {
+    path: 'product-variants/detail/:productId/:variantId',
+    component: ProductVariantDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
+  },
   // Stock & inventaire
   {
     path: 'product-stock',
     component: ProductStockComponent,
     canActivate: [PermissionGuard],
     data: { permissions: ['products:update'] }
+  },
+  {
+    path: 'product-stock/detail/:variantId/:shopId',
+    component: ProductStockDetailComponent,
+    canActivate: [PermissionGuard],
+    data: { permissions: ['products:read'] }
   },
   // Promotions
   {

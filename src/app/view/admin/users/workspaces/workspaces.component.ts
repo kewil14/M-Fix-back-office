@@ -1,14 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { APP_COLORS, APP_ICONS } from 'src/app/core/config/app.enums.config';
 import { DeleteConfirmModalComponent } from 'src/app/shared-module/components/delete-confirm-modal/delete-confirm-modal.component';
 import { WorkspaceService } from 'src/app/core/shared/services/workspace.service';
+import { WorkspaceAdminService } from 'src/app/core/shared/services/workspace-admin.service';
 import { PermissionService } from 'src/app/core/shared/services/permission.service';
 import { WorkspaceResponseDto, WorkspaceListRequestDto } from 'src/app/core/shared/dtos/workspace-response-dto';
 import { RequestResultDto } from 'src/app/core/shared/dtos/request-result-dto.modal';
+import { EmployeeResponseDto, EmployeeListResponseDto } from 'src/app/core/shared/dtos/employee-response-dto';
+import { WorkspaceAdminListRequestDto } from 'src/app/core/shared/dtos/workspace-admin-list-request-dto';
 import { CreateWorkspaceAdminComponent } from '../create-workspace-admin/create-workspace-admin.component';
 
 @Component({
@@ -31,10 +34,19 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   sortBy: string = 'createdAt';
   sortDirection: string = 'desc';
 
-  // Frontend filtering
+  // Mode: 'workspaces' pour les espaces, 'workspace-admins' pour les utilisateurs
+  isWorkspaceAdminsMode: boolean = false;
+
+  // Frontend filtering - pour les workspaces
   allWorkspaces: WorkspaceResponseDto[] = [];
   filteredWorkspaces: WorkspaceResponseDto[] = [];
   paginatedWorkspaces: WorkspaceResponseDto[] = [];
+  
+  // Frontend filtering - pour les workspace admins
+  allWorkspaceAdmins: EmployeeResponseDto[] = [];
+  filteredWorkspaceAdmins: EmployeeResponseDto[] = [];
+  paginatedWorkspaceAdmins: EmployeeResponseDto[] = [];
+  
   totalElements: number = 0;
   totalPages: number = 0;
   
@@ -42,9 +54,11 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   constructor(
     private modalService: BsModalService,
-    private router: Router,
+    public router: Router,
+    private route: ActivatedRoute,
     private translateService: TranslateService,
     private workspaceService: WorkspaceService,
+    private workspaceAdminService: WorkspaceAdminService,
     public permissionService: PermissionService
   ) {}
 
@@ -53,8 +67,17 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Workspaces', active: true }];
-    this.loadWorkspaces();
+    // Détecter si on est sur la route workspace-admins ou workspaces
+    const url = this.router.url;
+    this.isWorkspaceAdminsMode = url.includes('/workspace-admins');
+    
+    if (this.isWorkspaceAdminsMode) {
+      this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Workspace Admins', active: true }];
+      this.loadWorkspaceAdmins();
+    } else {
+      this.breadCrumbItems = [{ label: 'Admin' }, { label: 'Workspaces', active: true }];
+      this.loadWorkspaces();
+    }
   }
 
   loadWorkspaces(): void {
@@ -92,29 +115,102 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     });
   }
 
-  applyFilters(): void {
-    // Filtrer les données localement
-    this.filteredWorkspaces = this.allWorkspaces.filter(workspace => {
-      // Filtre de recherche
-      const matchesSearch = !this.searchTerm || 
-        workspace.name?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        workspace.description?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        workspace.slug?.toLowerCase().includes(this.searchTerm.toLowerCase());
-
-      // Filtre de statut
-      const matchesStatus = this.isActiveFilter === null || workspace.isActive === this.isActiveFilter;
-
-      return matchesSearch && matchesStatus;
+  loadWorkspaceAdmins(): void {
+    this.isLoading = true;
+    const filters: WorkspaceAdminListRequestDto = {
+      page: this.currentPage,
+      size: 1000, // Charger beaucoup de données pour le filtrage frontend
+      isActive: this.isActiveFilter !== null ? this.isActiveFilter : undefined
+    };
+    
+    this.workspaceAdminService.findAllWorkspaceAdmins(filters).subscribe({
+      next: (response: RequestResultDto<EmployeeListResponseDto>) => {
+        this.isLoading = false;
+        if (response.status === 'SUCCESS' && response.data?.content) {
+          this.allWorkspaceAdmins = response.data.content;
+          this.applyFilters();
+        } else {
+          this.allWorkspaceAdmins = [];
+          this.filteredWorkspaceAdmins = [];
+          this.paginatedWorkspaceAdmins = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error loading workspace admins:', error);
+        this.messages$.next({
+          type: {icon: APP_ICONS.DANGER, color: APP_COLORS.DANGER},
+          title: APP_COLORS.DANGER,
+          message: error?.error?.message || 'Erreur lors du chargement des workspace admins',
+          dismissible: true
+        });
+      }
     });
-
-    // Trier
-    this.filteredWorkspaces = this.sortData(this.filteredWorkspaces);
-
-    // Appliquer la pagination
-    this.applyPagination();
   }
 
-  sortData(data: WorkspaceResponseDto[]): WorkspaceResponseDto[] {
+  applyFilters(): void {
+    if (this.isWorkspaceAdminsMode) {
+      // Filtrer les workspace admins
+      this.filteredWorkspaceAdmins = this.allWorkspaceAdmins.filter(admin => {
+        // Filtre de recherche
+        const matchesSearch = !this.searchTerm || 
+          admin.firstName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          admin.lastName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          admin.email?.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+        // Filtre de statut
+        const matchesStatus = this.isActiveFilter === null || admin.isActive === this.isActiveFilter;
+
+        return matchesSearch && matchesStatus;
+      });
+
+      // Trier
+      this.filteredWorkspaceAdmins = this.sortWorkspaceAdmins(this.filteredWorkspaceAdmins);
+
+      // Appliquer la pagination
+      this.applyPagination();
+    } else {
+      // Filtrer les workspaces
+      this.filteredWorkspaces = this.allWorkspaces.filter(workspace => {
+        // Filtre de recherche
+        const matchesSearch = !this.searchTerm || 
+          workspace.name?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          workspace.description?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          workspace.slug?.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+        // Filtre de statut
+        const matchesStatus = this.isActiveFilter === null || workspace.isActive === this.isActiveFilter;
+
+        return matchesSearch && matchesStatus;
+      });
+
+      // Trier
+      this.filteredWorkspaces = this.sortWorkspaces(this.filteredWorkspaces);
+
+      // Appliquer la pagination
+      this.applyPagination();
+    }
+  }
+
+  sortWorkspaces(data: WorkspaceResponseDto[]): WorkspaceResponseDto[] {
+    return [...data].sort((a, b) => {
+      let aVal: any = (a as any)[this.sortBy];
+      let bVal: any = (b as any)[this.sortBy];
+      
+      if (aVal === null || aVal === undefined) aVal = '';
+      if (bVal === null || bVal === undefined) bVal = '';
+      
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+      
+      const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return this.sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }
+
+  sortWorkspaceAdmins(data: EmployeeResponseDto[]): EmployeeResponseDto[] {
     return [...data].sort((a, b) => {
       let aVal: any = (a as any)[this.sortBy];
       let bVal: any = (b as any)[this.sortBy];
@@ -133,8 +229,15 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   applyPagination(): void {
     const startIndex = this.currentPage * this.pageSize;
     const endIndex = startIndex + this.pageSize;
-    this.paginatedWorkspaces = this.filteredWorkspaces.slice(startIndex, endIndex);
-    this.totalElements = this.filteredWorkspaces.length;
+    
+    if (this.isWorkspaceAdminsMode) {
+      this.paginatedWorkspaceAdmins = this.filteredWorkspaceAdmins.slice(startIndex, endIndex);
+      this.totalElements = this.filteredWorkspaceAdmins.length;
+    } else {
+      this.paginatedWorkspaces = this.filteredWorkspaces.slice(startIndex, endIndex);
+      this.totalElements = this.filteredWorkspaces.length;
+    }
+    
     this.totalPages = Math.ceil(this.totalElements / this.pageSize);
   }
 
@@ -145,14 +248,22 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   onFilterChange(): void {
     this.currentPage = 0;
-    this.loadWorkspaces(); // Recharger avec le nouveau filtre isActive
+    if (this.isWorkspaceAdminsMode) {
+      this.loadWorkspaceAdmins(); // Recharger avec le nouveau filtre isActive
+    } else {
+      this.loadWorkspaces(); // Recharger avec le nouveau filtre isActive
+    }
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.isActiveFilter = null;
     this.currentPage = 0;
-    this.loadWorkspaces();
+    if (this.isWorkspaceAdminsMode) {
+      this.loadWorkspaceAdmins();
+    } else {
+      this.loadWorkspaces();
+    }
   }
 
   changePage(page: number): void {

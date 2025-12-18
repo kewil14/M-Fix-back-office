@@ -1,0 +1,199 @@
+<div class="container-fluid" *ngIf="!loading && variant && product; else loadingOrError">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">Détail du variant</h4>
+      <small class="text-muted">Variant ID: <code>{{ variantId }}</code></small>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="onEdit()">
+        <i class="mdi mdi-pencil me-1"></i> Modifier
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4">
+      <!-- Informations du produit -->
+      <div class="card mb-3" *ngIf="product">
+        <div class="card-body">
+          <h5 class="card-title">Produit</h5>
+          <p class="mb-1">
+            <span class="text-muted">Nom :</span>
+            <strong>{{ product.label }}</strong>
+          </p>
+          <p class="mb-1">
+            <span class="text-muted">SKU :</span>
+            <strong>{{ product.sku }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="product.category">
+            <span class="text-muted">Catégorie :</span>
+            <strong>{{ product.category.label }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="product.brand">
+            <span class="text-muted">Marque :</span>
+            <strong>{{ product.brand.label }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="product.price">
+            <span class="text-muted">Prix de base :</span>
+            <strong>{{ product.price | number:'1.2-2' }} FCFA</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Informations du variant -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Informations du variant</h5>
+          <p class="mb-1">
+            <span class="text-muted">Label :</span>
+            <strong>{{ variant.label }}</strong>
+          </p>
+          <p class="mb-1">
+            <span class="text-muted">SKU :</span>
+            <strong>{{ variant.sku }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="variant.price">
+            <span class="text-muted">Prix :</span>
+            <strong class="fs-5">{{ variant.price | number:'1.2-2' }} FCFA</strong>
+          </p>
+          <p class="mb-1" *ngIf="variant.barcode">
+            <span class="text-muted">Code-barres :</span>
+            <strong><code>{{ variant.barcode }}</code></strong>
+          </p>
+          <p class="mb-1">
+            <span class="text-muted">État :</span>
+            <span class="badge" [ngClass]="getStateBadgeClass()">
+              {{ getVariantState() }}
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <!-- Détails du variant -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Détails du variant</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Variant ID</dt>
+            <dd class="col-sm-8">
+              <code>{{ variantId }}</code>
+            </dd>
+
+            <dt class="col-sm-4">Product ID</dt>
+            <dd class="col-sm-8">
+              <code>{{ productId }}</code>
+            </dd>
+
+            <dt class="col-sm-4">Label</dt>
+            <dd class="col-sm-8">
+              <strong>{{ variant.label }}</strong>
+            </dd>
+
+            <dt class="col-sm-4">SKU</dt>
+            <dd class="col-sm-8">
+              <strong>{{ variant.sku }}</strong>
+            </dd>
+
+            <dt class="col-sm-4">Prix</dt>
+            <dd class="col-sm-8">
+              <strong class="fs-5">{{ variant.price | number:'1.2-2' }} FCFA</strong>
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="variant.barcode">Code-barres</dt>
+            <dd class="col-sm-8" *ngIf="variant.barcode">
+              <code>{{ variant.barcode }}</code>
+            </dd>
+
+            <dt class="col-sm-4">Description</dt>
+            <dd class="col-sm-8">
+              <span *ngIf="variant.description">{{ variant.description }}</span>
+              <span *ngIf="!variant.description" class="text-muted">Aucune description</span>
+            </dd>
+
+            <dt class="col-sm-4">État</dt>
+            <dd class="col-sm-8">
+              <span class="badge" [ngClass]="getStateBadgeClass()">
+                {{ getVariantState() }}
+              </span>
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="variant.available_stock !== undefined">Stock disponible</dt>
+            <dd class="col-sm-8" *ngIf="variant.available_stock !== undefined">
+              <strong>{{ variant.available_stock }}</strong>
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="variant.created_at">Créé le</dt>
+            <dd class="col-sm-8" *ngIf="variant.created_at">
+              {{ variant.created_at | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="variant.updated_at">Mis à jour le</dt>
+            <dd class="col-sm-8" *ngIf="variant.updated_at">
+              {{ variant.updated_at | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Informations supplémentaires -->
+      <div class="card" *ngIf="variant.attributes || variant.images">
+        <div class="card-body">
+          <h5 class="card-title">Informations supplémentaires</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-4" *ngIf="variant.attributes && variant.attributes.length > 0">Attributs</dt>
+            <dd class="col-sm-8" *ngIf="variant.attributes && variant.attributes.length > 0">
+              <div *ngFor="let attr of variant.attributes">
+                <strong>{{ attr.name || attr.key }}:</strong> {{ attr.value }}
+              </div>
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="variant.images && variant.images.length > 0">Images</dt>
+            <dd class="col-sm-8" *ngIf="variant.images && variant.images.length > 0">
+              <div class="d-flex flex-wrap gap-2">
+                <div *ngFor="let img of variant.images" class="border rounded p-1">
+                  <img
+                    [src]="img.cdn_url || img.url"
+                    [alt]="img.alt_text || variant.label"
+                    style="width: 80px; height: 80px; object-fit: cover;"
+                  />
+                </div>
+              </div>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col">
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+        <div *ngIf="!loading && errorMsg" class="alert alert-danger mt-3">
+          <i class="mdi mdi-alert-circle me-2"></i>
+          {{ errorMsg }}
+          <div class="mt-2">
+            <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+              ← Retour à la liste
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+

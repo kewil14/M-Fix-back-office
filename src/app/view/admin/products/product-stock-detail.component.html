@@ -1,0 +1,282 @@
+<div class="container-fluid" *ngIf="!loading && stock; else loadingOrError">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h4 class="mb-0">Détail du stock</h4>
+      <small class="text-muted">Variant ID: <code>{{ variantId }}</code></small>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="onBack()">
+        ← Retour à la liste
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="onEdit()">
+        <i class="mdi mdi-pencil me-1"></i> Mettre à jour
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4">
+      <!-- Informations du variant -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Informations du variant</h5>
+          <div *ngIf="variant" class="mb-3">
+            <p class="mb-1">
+              <span class="text-muted">Libellé :</span>
+              <strong>{{ variant.label || variant.name }}</strong>
+            </p>
+            <p class="mb-1">
+              <span class="text-muted">SKU :</span>
+              <strong>{{ variant.sku }}</strong>
+            </p>
+            <p class="mb-1" *ngIf="variant.price">
+              <span class="text-muted">Prix :</span>
+              <strong>{{ variant.price | number:'1.2-2' }} FCFA</strong>
+            </p>
+          </div>
+          <div *ngIf="!variant" class="text-muted">
+            Informations du variant non disponibles
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations du produit -->
+      <div class="card mb-3" *ngIf="product">
+        <div class="card-body">
+          <h5 class="card-title">Produit</h5>
+          <p class="mb-1">
+            <span class="text-muted">Nom :</span>
+            <strong>{{ product.label }}</strong>
+          </p>
+          <p class="mb-1">
+            <span class="text-muted">SKU :</span>
+            <strong>{{ product.sku }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="product.category">
+            <span class="text-muted">Catégorie :</span>
+            <strong>{{ product.category.label }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="product.brand">
+            <span class="text-muted">Marque :</span>
+            <strong>{{ product.brand.label }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Informations de la boutique -->
+      <div class="card mb-3" *ngIf="shop">
+        <div class="card-body">
+          <h5 class="card-title">Boutique</h5>
+          <p class="mb-1">
+            <span class="text-muted">Nom :</span>
+            <strong>{{ shop.name }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="shop.address">
+            <span class="text-muted">Adresse :</span>
+            <strong>{{ shop.address }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="shop.city">
+            <span class="text-muted">Ville :</span>
+            <strong>{{ shop.city }}</strong>
+          </p>
+          <p class="mb-1" *ngIf="shop.phone">
+            <span class="text-muted">Téléphone :</span>
+            <strong>{{ shop.phone }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Statistiques du stock -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Statistiques</h5>
+          <div class="d-flex flex-column gap-3">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-muted">Quantité totale</span>
+                <strong class="fs-5">{{ getTotalQuantity() }}</strong>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" [style.width.%]="(getTotalQuantity() / Math.max(getTotalQuantity(), 100)) * 100"></div>
+              </div>
+            </div>
+            
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-muted">Quantité disponible</span>
+                <strong class="fs-5" [ngClass]="{'text-success': !isStockLow(), 'text-danger': isStockLow()}">
+                  {{ getAvailableQuantity() }}
+                </strong>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar" 
+                     [ngClass]="{'bg-success': !isStockLow(), 'bg-danger': isStockLow()}"
+                     [style.width.%]="(getAvailableQuantity() / Math.max(getTotalQuantity(), 1)) * 100"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-muted">Quantité réservée</span>
+                <strong class="fs-5 text-warning">{{ getReservedQuantity() }}</strong>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-warning" 
+                     [style.width.%]="(getReservedQuantity() / Math.max(getTotalQuantity(), 1)) * 100"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-muted">Seuil d'alerte</span>
+                <strong class="fs-6">
+                  <span class="badge" [ngClass]="{'bg-warning': isStockLow(), 'bg-info': !isStockLow()}">
+                    {{ getAlertThreshold() }}
+                  </span>
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <!-- Détails du stock -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Informations du stock</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Variant ID</dt>
+            <dd class="col-sm-8">
+              <code>{{ variantId }}</code>
+            </dd>
+
+            <dt class="col-sm-4">Shop ID</dt>
+            <dd class="col-sm-8">
+              <code>{{ shopId }}</code>
+            </dd>
+
+            <dt class="col-sm-4">Quantité totale</dt>
+            <dd class="col-sm-8">
+              <strong class="fs-5">{{ getTotalQuantity() }}</strong>
+            </dd>
+
+            <dt class="col-sm-4">Quantité disponible</dt>
+            <dd class="col-sm-8">
+              <strong class="fs-5" [ngClass]="{'text-success': !isStockLow(), 'text-danger': isStockLow()}">
+                {{ getAvailableQuantity() }}
+              </strong>
+              <span class="badge ms-2" 
+                    [ngClass]="{'bg-danger': isStockLow(), 'bg-success': !isStockLow()}">
+                {{ isStockLow() ? 'Stock bas' : 'Stock OK' }}
+              </span>
+            </dd>
+
+            <dt class="col-sm-4">Quantité réservée</dt>
+            <dd class="col-sm-8">
+              <strong class="text-warning">{{ getReservedQuantity() }}</strong>
+            </dd>
+
+            <dt class="col-sm-4">Seuil d'alerte</dt>
+            <dd class="col-sm-8">
+              <span class="badge bg-warning">{{ getAlertThreshold() }}</span>
+            </dd>
+
+            <dt class="col-sm-4">État</dt>
+            <dd class="col-sm-8">
+              <span class="badge" [ngClass]="getStateBadgeClass()">
+                {{ getStockState() }}
+              </span>
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="stock.last_updated">Dernière mise à jour</dt>
+            <dd class="col-sm-8" *ngIf="stock.last_updated">
+              {{ stock.last_updated | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="stock.created_at">Créé le</dt>
+            <dd class="col-sm-8" *ngIf="stock.created_at">
+              {{ stock.created_at | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+
+            <dt class="col-sm-4" *ngIf="stock.updated_at">Mis à jour le</dt>
+            <dd class="col-sm-8" *ngIf="stock.updated_at">
+              {{ stock.updated_at | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Historique des mouvements (si disponible) -->
+      <div class="card mb-3" *ngIf="stock.movements && stock.movements.length > 0">
+        <div class="card-body">
+          <h5 class="card-title">Historique des mouvements</h5>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Quantité</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let movement of stock.movements">
+                  <td>{{ movement.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span class="badge bg-secondary">{{ movement.type }}</span>
+                  </td>
+                  <td>{{ movement.quantity }}</td>
+                  <td>{{ movement.note || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations supplémentaires -->
+      <div class="card" *ngIf="stock.notes || stock.location">
+        <div class="card-body">
+          <h5 class="card-title">Informations supplémentaires</h5>
+          <dl class="row mb-0">
+            <dt class="col-sm-4" *ngIf="stock.location">Emplacement</dt>
+            <dd class="col-sm-8" *ngIf="stock.location">{{ stock.location }}</dd>
+
+            <dt class="col-sm-4" *ngIf="stock.notes">Notes</dt>
+            <dd class="col-sm-8" *ngIf="stock.notes">{{ stock.notes }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col">
+        <div *ngIf="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+        <div *ngIf="!loading && errorMsg" class="alert alert-danger mt-3">
+          <i class="mdi mdi-alert-circle me-2"></i>
+          {{ errorMsg }}
+          <div class="mt-2">
+            <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+              ← Retour à la liste
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
